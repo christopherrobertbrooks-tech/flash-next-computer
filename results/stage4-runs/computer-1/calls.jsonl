@@ -1,0 +1,4 @@
+{"time": "05:18:49", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 2238.8, "chip_tokens": 2430, "computer_seconds": 1.607}
+{"time": "05:18:58", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3156.9, "chip_tokens": 5188, "computer_seconds": 3.114}
+{"time": "05:19:04", "backend": "computer", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 1442.4, "chip_tokens": 2330, "computer_seconds": 1.406}
+{"time": "05:19:09", "backend": "computer", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 3193.5, "chip_tokens": 5303, "computer_seconds": 3.158}

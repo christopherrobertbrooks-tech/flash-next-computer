@@ -1,0 +1,1523 @@
+{
+ "summary": {
+  "inputs": 126,
+  "same": 118,
+  "differences": 8,
+  "undeclared": 8
+ },
+ "declared": {},
+ "rows": [
+  {
+   "expr": "20+469",
+   "computer": [
+    "ok",
+    "489"
+   ],
+   "python": [
+    "ok",
+    "489"
+   ],
+   "same": true
+  },
+  {
+   "expr": "3003426056939902583640--3606193617",
+   "computer": [
+    "ok",
+    "3003426056943508777257"
+   ],
+   "python": [
+    "ok",
+    "3003426056943508777257"
+   ],
+   "same": true
+  },
+  {
+   "expr": "81648622182071*13",
+   "computer": [
+    "ok",
+    "1061432088366923"
+   ],
+   "python": [
+    "ok",
+    "1061432088366923"
+   ],
+   "same": true
+  },
+  {
+   "expr": "687737//40",
+   "computer": [
+    "ok",
+    "17193"
+   ],
+   "python": [
+    "ok",
+    "17193"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-666930029041%33879547086",
+   "computer": [
+    "ok",
+    "10660912679"
+   ],
+   "python": [
+    "ok",
+    "10660912679"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(31817673160,154127178801960)",
+   "computer": [
+    "ok",
+    "3640"
+   ],
+   "python": [
+    "ok",
+    "3640"
+   ],
+   "same": true
+  },
+  {
+   "expr": "8553**5",
+   "computer": [
+    "ok",
+    "45771206483146137993"
+   ],
+   "python": [
+    "ok",
+    "45771206483146137993"
+   ],
+   "same": true
+  },
+  {
+   "expr": "997-72883*49753%6231879",
+   "computer": [
+    "ok",
+    "-5425203"
+   ],
+   "python": [
+    "ok",
+    "-5425203"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-2124327527790/21588054960420",
+   "computer": [
+    "ok",
+    "-12131389/123282822"
+   ],
+   "python": [
+    "ok",
+    "-12131389/123282822"
+   ],
+   "same": true
+  },
+  {
+   "expr": "124+(1/0)*(26/2)/(101/3)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "54+9",
+   "computer": [
+    "ok",
+    "63"
+   ],
+   "python": [
+    "ok",
+    "63"
+   ],
+   "same": true
+  },
+  {
+   "expr": "3099212631-71454048263",
+   "computer": [
+    "ok",
+    "-68354835632"
+   ],
+   "python": [
+    "ok",
+    "-68354835632"
+   ],
+   "same": true
+  },
+  {
+   "expr": "61*22543136",
+   "computer": [
+    "ok",
+    "1375131296"
+   ],
+   "python": [
+    "ok",
+    "1375131296"
+   ],
+   "same": true
+  },
+  {
+   "expr": "4624347532344395272//(-79095648)",
+   "computer": [
+    "ok",
+    "-58465258827"
+   ],
+   "python": [
+    "ok",
+    "-58465258827"
+   ],
+   "same": true
+  },
+  {
+   "expr": "8%0",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(10377884816550,360600)",
+   "computer": [
+    "ok",
+    "150"
+   ],
+   "python": [
+    "ok",
+    "150"
+   ],
+   "same": true
+  },
+  {
+   "expr": "362**13",
+   "computer": [
+    "ok",
+    "1833206620208037610752855912783872"
+   ],
+   "python": [
+    "ok",
+    "1833206620208037610752855912783872"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(40)+22",
+   "computer": [
+    "ok",
+    "62"
+   ],
+   "python": [
+    "ok",
+    "62"
+   ],
+   "same": true
+  },
+  {
+   "expr": "376731351355618230/46528255757112318",
+   "computer": [
+    "ok",
+    "2348904214555/290101728063"
+   ],
+   "python": [
+    "ok",
+    "2348904214555/290101728063"
+   ],
+   "same": true
+  },
+  {
+   "expr": "921*(-56)+(-475)",
+   "computer": [
+    "ok",
+    "-52051"
+   ],
+   "python": [
+    "ok",
+    "-52051"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2770618751+1",
+   "computer": [
+    "ok",
+    "2770618752"
+   ],
+   "python": [
+    "ok",
+    "2770618752"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1561729615347555971277-6",
+   "computer": [
+    "ok",
+    "1561729615347555971271"
+   ],
+   "python": [
+    "ok",
+    "1561729615347555971271"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1049144437751929676*75826467",
+   "computer": [
+    "ok",
+    "79552916087430249763534692"
+   ],
+   "python": [
+    "ok",
+    "79552916087430249763534692"
+   ],
+   "same": true
+  },
+  {
+   "expr": "379695698389//(-25)",
+   "computer": [
+    "ok",
+    "-15187827936"
+   ],
+   "python": [
+    "ok",
+    "-15187827936"
+   ],
+   "same": true
+  },
+  {
+   "expr": "9%0",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(65549791031212350,671961206826)",
+   "computer": [
+    "ok",
+    "72594"
+   ],
+   "python": [
+    "ok",
+    "72594"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1**22",
+   "computer": [
+    "ok",
+    "1"
+   ],
+   "python": [
+    "ok",
+    "1"
+   ],
+   "same": true
+  },
+  {
+   "expr": "((2)%61195-6397)//33156656",
+   "computer": [
+    "ok",
+    "-1"
+   ],
+   "python": [
+    "ok",
+    "-1"
+   ],
+   "same": true
+  },
+  {
+   "expr": "7170452505978047*7621/(31480116286549-7621)",
+   "computer": [
+    "ok",
+    "7170452505978047/4130706768"
+   ],
+   "python": [
+    "ok",
+    "7170452505978047/4130706768"
+   ],
+   "same": true
+  },
+  {
+   "expr": "42-848/80/(3/6)-5",
+   "computer": [
+    "ok",
+    "error (too complex: split it)"
+   ],
+   "python": [
+    "ok",
+    "79/5"
+   ],
+   "same": false
+  },
+  {
+   "expr": "120188668158320178436+522494",
+   "computer": [
+    "ok",
+    "120188668158320700930"
+   ],
+   "python": [
+    "ok",
+    "120188668158320700930"
+   ],
+   "same": true
+  },
+  {
+   "expr": "67193343805590050088-5824105282811",
+   "computer": [
+    "ok",
+    "67193337981484767277"
+   ],
+   "python": [
+    "ok",
+    "67193337981484767277"
+   ],
+   "same": true
+  },
+  {
+   "expr": "3313127*35013617085354960",
+   "computer": [
+    "ok",
+    "116004560133150822559920"
+   ],
+   "python": [
+    "ok",
+    "116004560133150822559920"
+   ],
+   "same": true
+  },
+  {
+   "expr": "8121650453862413044144//6733311621",
+   "computer": [
+    "ok",
+    "1206189600453"
+   ],
+   "python": [
+    "ok",
+    "1206189600453"
+   ],
+   "same": true
+  },
+  {
+   "expr": "7528122969567524069095435%(-14874230625)",
+   "computer": [
+    "ok",
+    "-9319969565"
+   ],
+   "python": [
+    "ok",
+    "-9319969565"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(6863656880,90898230)",
+   "computer": [
+    "ok",
+    "670"
+   ],
+   "python": [
+    "ok",
+    "670"
+   ],
+   "same": true
+  },
+  {
+   "expr": "178**8",
+   "computer": [
+    "ok",
+    "1007766734259732736"
+   ],
+   "python": [
+    "ok",
+    "1007766734259732736"
+   ],
+   "same": true
+  },
+  {
+   "expr": "((7408//917)%49)+3",
+   "computer": [
+    "ok",
+    "11"
+   ],
+   "python": [
+    "ok",
+    "11"
+   ],
+   "same": true
+  },
+  {
+   "expr": "32575345008444778925004/3752055402953787022",
+   "computer": [
+    "ok",
+    "8682"
+   ],
+   "python": [
+    "ok",
+    "8682"
+   ],
+   "same": true
+  },
+  {
+   "expr": "61*(-450)/694+90-(737/4)-(-32)/(21/6)/1",
+   "computer": [
+    "ok",
+    "error (too complex: split it)"
+   ],
+   "python": [
+    "ok",
+    "-1211201/9716"
+   ],
+   "same": false
+  },
+  {
+   "expr": "478945678680393094521+93691017745331",
+   "computer": [
+    "ok",
+    "478945772371410839852"
+   ],
+   "python": [
+    "ok",
+    "478945772371410839852"
+   ],
+   "same": true
+  },
+  {
+   "expr": "327196566092904219492--75333",
+   "computer": [
+    "ok",
+    "327196566092904294825"
+   ],
+   "python": [
+    "ok",
+    "327196566092904294825"
+   ],
+   "same": true
+  },
+  {
+   "expr": "5210746*5135271",
+   "computer": [
+    "ok",
+    "26758592822166"
+   ],
+   "python": [
+    "ok",
+    "26758592822166"
+   ],
+   "same": true
+  },
+  {
+   "expr": "44353314501644439171//971",
+   "computer": [
+    "ok",
+    "45677975799839793"
+   ],
+   "python": [
+    "ok",
+    "45677975799839793"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-7419444623326364075186543826%7944779090319",
+   "computer": [
+    "ok",
+    "7655428543911"
+   ],
+   "python": [
+    "ok",
+    "7655428543911"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(912713971686660,62040959931170)",
+   "computer": [
+    "ok",
+    "182930"
+   ],
+   "python": [
+    "ok",
+    "182930"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(-1756)**14",
+   "computer": [
+    "ok",
+    "2650593703598280848286256923177089900631556096"
+   ],
+   "python": [
+    "ok",
+    "2650593703598280848286256923177089900631556096"
+   ],
+   "same": true
+  },
+  {
+   "expr": "((69990)*4)+95",
+   "computer": [
+    "ok",
+    "280055"
+   ],
+   "python": [
+    "ok",
+    "280055"
+   ],
+   "same": true
+  },
+  {
+   "expr": "0/28504319424",
+   "computer": [
+    "ok",
+    "0"
+   ],
+   "python": [
+    "ok",
+    "0"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2*(-219)/320/77/(207/3)-(-35)",
+   "computer": [
+    "ok",
+    "9917527/283360"
+   ],
+   "python": [
+    "ok",
+    "9917527/283360"
+   ],
+   "same": true
+  },
+  {
+   "expr": "51115+6264761204343",
+   "computer": [
+    "ok",
+    "6264761255458"
+   ],
+   "python": [
+    "ok",
+    "6264761255458"
+   ],
+   "same": true
+  },
+  {
+   "expr": "5750235051119156-921793122",
+   "computer": [
+    "ok",
+    "5750234129326034"
+   ],
+   "python": [
+    "ok",
+    "5750234129326034"
+   ],
+   "same": true
+  },
+  {
+   "expr": "14308298798966*91976",
+   "computer": [
+    "ok",
+    "1316020090333696816"
+   ],
+   "python": [
+    "ok",
+    "1316020090333696816"
+   ],
+   "same": true
+  },
+  {
+   "expr": "9274150810752566837527281007//712",
+   "computer": [
+    "ok",
+    "13025492711731133198774271"
+   ],
+   "python": [
+    "ok",
+    "13025492711731133198774271"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-254956269207718976817146424502%97891701727",
+   "computer": [
+    "ok",
+    "14643654704"
+   ],
+   "python": [
+    "ok",
+    "14643654704"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(77473870512,41263854243952)",
+   "computer": [
+    "ok",
+    "1552"
+   ],
+   "python": [
+    "ok",
+    "1552"
+   ],
+   "same": true
+  },
+  {
+   "expr": "65**24",
+   "computer": [
+    "ok",
+    "32353447101972729728913030683994293212890625"
+   ],
+   "python": [
+    "ok",
+    "32353447101972729728913030683994293212890625"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(92233330)//90629//8800",
+   "computer": [
+    "ok",
+    "0"
+   ],
+   "python": [
+    "ok",
+    "0"
+   ],
+   "same": true
+  },
+  {
+   "expr": "3776933347236/796862480526",
+   "computer": [
+    "ok",
+    "1577666394/332858179"
+   ],
+   "python": [
+    "ok",
+    "1577666394/332858179"
+   ],
+   "same": true
+  },
+  {
+   "expr": "451*19/84-(889/9)/(-92)/(-9)*9/819",
+   "computer": [
+    "ok",
+    "17294162/169533"
+   ],
+   "python": [
+    "ok",
+    "17294162/169533"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2038420+867433356096836813",
+   "computer": [
+    "ok",
+    "867433356098875233"
+   ],
+   "python": [
+    "ok",
+    "867433356098875233"
+   ],
+   "same": true
+  },
+  {
+   "expr": "244335370555534261460974-9018577005198",
+   "computer": [
+    "ok",
+    "244335370546515684455776"
+   ],
+   "python": [
+    "ok",
+    "244335370546515684455776"
+   ],
+   "same": true
+  },
+  {
+   "expr": "5231466688222*717",
+   "computer": [
+    "ok",
+    "3750961615455174"
+   ],
+   "python": [
+    "ok",
+    "3750961615455174"
+   ],
+   "same": true
+  },
+  {
+   "expr": "6971//632",
+   "computer": [
+    "ok",
+    "11"
+   ],
+   "python": [
+    "ok",
+    "11"
+   ],
+   "same": true
+  },
+  {
+   "expr": "7%2",
+   "computer": [
+    "ok",
+    "1"
+   ],
+   "python": [
+    "ok",
+    "1"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(80960,599068083680)",
+   "computer": [
+    "ok",
+    "1760"
+   ],
+   "python": [
+    "ok",
+    "1760"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(-584)**1",
+   "computer": [
+    "ok",
+    "-584"
+   ],
+   "python": [
+    "ok",
+    "-584"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(933633%72674)+76759",
+   "computer": [
+    "ok",
+    "138304"
+   ],
+   "python": [
+    "ok",
+    "138304"
+   ],
+   "same": true
+  },
+  {
+   "expr": "269318761927718683920*8190942/(9773487848433498-8190942)",
+   "computer": [
+    "ok",
+    "44886460321286447320/198867803"
+   ],
+   "python": [
+    "ok",
+    "44886460321286447320/198867803"
+   ],
+   "same": true
+  },
+  {
+   "expr": "18/24*((-8)/6)*(-973)",
+   "computer": [
+    "ok",
+    "973"
+   ],
+   "python": [
+    "ok",
+    "973"
+   ],
+   "same": true
+  },
+  {
+   "expr": "  42  ",
+   "computer": [
+    "ok",
+    "42"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": false
+  },
+  {
+   "expr": " 1 + 2 ",
+   "computer": [
+    "ok",
+    "3"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": false
+  },
+  {
+   "expr": "1\t+2",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "3"
+   ],
+   "same": false
+  },
+  {
+   "expr": "1\n+2",
+   "computer": [
+    "ok",
+    "3"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": false
+  },
+  {
+   "expr": "",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": " ",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "abc",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "x",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1 2",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1/0",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "7 % 0",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "7//0",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "0**0",
+   "computer": [
+    "ok",
+    "1"
+   ],
+   "python": [
+    "ok",
+    "1"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2**-1",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "(-3)**2",
+   "computer": [
+    "ok",
+    "9"
+   ],
+   "python": [
+    "ok",
+    "9"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-3**2",
+   "computer": [
+    "ok",
+    "-9"
+   ],
+   "python": [
+    "ok",
+    "-9"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2^10",
+   "computer": [
+    "ok",
+    "1024"
+   ],
+   "python": [
+    "ok",
+    "1024"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1.5/2",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1.50*2",
+   "computer": [
+    "ok",
+    "3"
+   ],
+   "python": [
+    "ok",
+    "3"
+   ],
+   "same": true
+  },
+  {
+   "expr": "0.1+0.2",
+   "computer": [
+    "ok",
+    "0.3"
+   ],
+   "python": [
+    "ok",
+    "0.3"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-0.0*5",
+   "computer": [
+    "ok",
+    "0"
+   ],
+   "python": [
+    "ok",
+    "0"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(0,5)",
+   "computer": [
+    "ok",
+    "5"
+   ],
+   "python": [
+    "ok",
+    "5"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(-4,6)",
+   "computer": [
+    "ok",
+    "2"
+   ],
+   "python": [
+    "ok",
+    "2"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(1.5,2)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "10//-3",
+   "computer": [
+    "ok",
+    "-4"
+   ],
+   "python": [
+    "ok",
+    "-4"
+   ],
+   "same": true
+  },
+  {
+   "expr": "-7%3",
+   "computer": [
+    "ok",
+    "2"
+   ],
+   "python": [
+    "ok",
+    "2"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1e5",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1_000",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "1000"
+   ],
+   "same": false
+  },
+  {
+   "expr": "+5",
+   "computer": [
+    "ok",
+    "5"
+   ],
+   "python": [
+    "ok",
+    "5"
+   ],
+   "same": true
+  },
+  {
+   "expr": "--5",
+   "computer": [
+    "ok",
+    "5"
+   ],
+   "python": [
+    "ok",
+    "5"
+   ],
+   "same": true
+  },
+  {
+   "expr": "5-",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "()",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "((1))",
+   "computer": [
+    "ok",
+    "1"
+   ],
+   "python": [
+    "ok",
+    "1"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1,000",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1/3+1/6",
+   "computer": [
+    "ok",
+    "1/2"
+   ],
+   "python": [
+    "ok",
+    "1/2"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1/2/3",
+   "computer": [
+    "ok",
+    "1/6"
+   ],
+   "python": [
+    "ok",
+    "1/6"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2**200",
+   "computer": [
+    "ok",
+    "1606938044258990275541962092341162602522202993782792835301376"
+   ],
+   "python": [
+    "ok",
+    "1606938044258990275541962092341162602522202993782792835301376"
+   ],
+   "same": true
+  },
+  {
+   "expr": "10**61",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "10000000000000000000000000000000000000000000000000000000000000"
+   ],
+   "same": false
+  },
+  {
+   "expr": "10**62",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "99999999999999999999999999999999999999999999999999999999999999+1",
+   "computer": [
+    "refused",
+    "the call is 86 tokens; the circuit captures at most 80"
+   ],
+   "python": [
+    "refused",
+    "the call is 86 tokens; the circuit captures at most 80"
+   ],
+   "same": true
+  },
+  {
+   "expr": "999999999999999999999999999999999999999999999999999999999999999",
+   "computer": [
+    "refused",
+    "the call is 85 tokens; the circuit captures at most 80"
+   ],
+   "python": [
+    "refused",
+    "the call is 85 tokens; the circuit captures at most 80"
+   ],
+   "same": true
+  },
+  {
+   "expr": "print(1)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "__import__('os')",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "\uff12+\uff12",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "\u0661+\u0661",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "3 * (4 + 5",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(12)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "gcd(1,2,3)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "abs(-3)",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "2**3**2",
+   "computer": [
+    "ok",
+    "512"
+   ],
+   "python": [
+    "ok",
+    "512"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1.5**2",
+   "computer": [
+    "ok",
+    "error"
+   ],
+   "python": [
+    "ok",
+    "error"
+   ],
+   "same": true
+  },
+  {
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "computer": [
+    "ok",
+    "-285612/203"
+   ],
+   "python": [
+    "ok",
+    "-285612/203"
+   ],
+   "same": true
+  },
+  {
+   "expr": null,
+   "computer": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "python": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "same": true
+  },
+  {
+   "expr": 42,
+   "computer": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "python": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "same": true
+  },
+  {
+   "expr": "1</tool_call>2",
+   "computer": [
+    "refused",
+    "the expression contains the protocol marker '</tool_call>'"
+   ],
+   "python": [
+    "refused",
+    "the expression contains the protocol marker '</tool_call>'"
+   ],
+   "same": true
+  },
+  {
+   "expr": "<think>",
+   "computer": [
+    "refused",
+    "the expression contains the protocol marker '<think>'"
+   ],
+   "python": [
+    "refused",
+    "the expression contains the protocol marker '<think>'"
+   ],
+   "same": true
+  }
+ ]
+}

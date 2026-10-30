@@ -1,0 +1,36 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 29 s
+== /mcp status
+{"servers": [{"name": "computer", "transport": "stdio", "status": "starting", "error": null, "info": {}, "tools": []}], "tools": 0, "settings": {"timeout_s": 180.0, "max_result_chars": 20000, "max_rounds": 8}}
+3012659, 30638 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+== engine args: auto --spec 4 --spec-min-p 0.5 --max-context 131072 --kv int8 --resident-experts --vram-reserve-mib 700
+== pass 1
+mul           MET  HTTP 200   11.0s finish stop calls 1
+pow-floordiv  MET  HTTP 200   10.5s finish stop calls 1
+two-step      MET  HTTP 200   20.3s finish stop calls 2
+no-tool       MET  HTTP 200   24.2s finish length calls 0 | known: ran out while thinking
+INTEGRATION CHECK PASSED
+== tool calls (calls.jsonl)
+{"time": "06:26:28", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 2213.1, "rpc_id": 3, "chip_tokens": 2430, "computer_seconds": 1.588}
+{"time": "06:26:40", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3106.7, "rpc_id": 4, "chip_tokens": 5188, "computer_seconds": 3.07}
+{"time": "06:26:48", "backend": "computer", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 1421.7, "rpc_id": 5, "chip_tokens": 2330, "computer_seconds": 1.386}
+{"time": "06:26:52", "backend": "computer", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 3150.9, "rpc_id": 6, "chip_tokens": 5303, "computer_seconds": 3.115}
+== strata: tool lines, reuse
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/server.log:[strata] tool computer__calc: ok, 18 characters in 2.2 s
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/server.log:[strata] tool computer__calc: ok, 19 characters in 3.1 s
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/server.log:[strata] tool computer__calc: ok, 22 characters in 1.4 s
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/server.log:[strata] tool computer__calc: ok, 24 characters in 3.2 s
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 442 tokens = 0 reused + 442 read in 1193 ms (370.4 tok/s), 82 generated in 952 ms (86.1 tok/s), drafts accepted 38 of 50, 1 che
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 557 tokens = 523 reused + 34 read in 299 ms (113.7 tok/s), 102 generated in 1437 ms (71.0 tok/s), drafts accepted 29 of 57, 2 c
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 427 tokens = 0 reused + 427 read in 970 ms (440.3 tok/s), 404 generated in 5835 ms (69.2 tok/s), drafts accepted 104 of 214, 1 
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 865 tokens = 830 reused + 35 read in 292 ms (119.7 tok/s), 27 generated in 304 ms (88.8 tok/s), drafts accepted 13 of 18, 2 che
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 460 tokens = 0 reused + 460 read in 997 ms (461.5 tok/s), 331 generated in 4512 ms (73.4 tok/s), drafts accepted 106 of 189, 1 
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 828 tokens = 790 reused + 38 read in 314 ms (121.1 tok/s), 70 generated in 755 ms (92.7 tok/s), drafts accepted 42 of 57, 2 che
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 937 tokens = 900 reused + 37 read in 313 ms (118.3 tok/s), 628 generated in 8821 ms (71.2 tok/s), drafts accepted 194 of 396, 3
+/mnt/nvme/flashnext-test/stage4/r-no-mtp/strata.log:strata serve: prompt 422 tokens = 0 reused + 422 read in 980 ms (430.8 tok/s), 2571 generated in 23251 ms (110.6 tok/s), drafts accepted 1690 of 186
+expert cache 12288 slots
+1836 MiB of VRAM free with everything loaded
+== peak V100 MiB:  31253
+RUN OK (every declared expectation met)
+v100: clock restored; released

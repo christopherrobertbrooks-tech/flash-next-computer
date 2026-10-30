@@ -1,0 +1,32 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 31 s
+== /mcp status
+{"servers": [{"name": "computer", "transport": "stdio", "status": "starting", "error": null, "info": {}, "tools": []}], "tools": 0, "settings": {"timeout_s": 180.0, "max_result_chars": 20000, "max_rounds": 8}}
+3013384, 1430 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata-vision
+3013397, 30556 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+== engine args: --spec-min-p 0.5 --mtp /mnt/steam/Strata-data-0140/mtp/rt --max-context 131072 --kv int8 --resident-experts --vision --vram-reserve-mib 700
+== pass 1
+mul           FAIL HTTP 400    6.4s finish None calls 0 | transport: HTTP 400, finish None
+pow-floordiv  FAIL HTTP 503    0.7s finish None calls 0 | transport: HTTP 503, finish None
+two-step      MET  HTTP 200   48.5s finish stop calls 3
+no-tool       MET  HTTP 200   10.3s finish stop calls 0 | haiku completed
+INTEGRATION CHECK FAILED: mul, pow-floordiv
+== tool calls (calls.jsonl)
+{"time": "06:28:44", "backend": "computer", "expression": "98765432123 * 12345678987", "result": "1219326320002895899401", "error": null, "ms": 2478.4, "rpc_id": 3, "chip_tokens": 2616, "computer_seconds": 1.71}
+{"time": "06:28:49", "backend": "computer", "expression": "1219326320002895899401 / 7", "result": "1219326320002895899401/7", "error": null, "ms": 3330.7, "rpc_id": 4, "chip_tokens": 5611, "computer_seconds": 3.294}
+{"time": "06:28:55", "backend": "computer", "expression": "1219326320002895899401 % 7", "result": "5", "error": null, "ms": 1932.3, "rpc_id": 5, "chip_tokens": 3249, "computer_seconds": 1.892}
+== strata: tool lines, reuse
+/mnt/nvme/flashnext-test/stage4/r-vision/server.log:[strata] tool computer__calc: ok, 22 characters in 2.5 s
+/mnt/nvme/flashnext-test/stage4/r-vision/server.log:[strata] tool computer__calc: ok, 24 characters in 3.3 s
+/mnt/nvme/flashnext-test/stage4/r-vision/server.log:[strata] tool computer__calc: ok, 1 characters in 1.9 s
+/mnt/nvme/flashnext-test/stage4/r-vision/strata.log:strata serve: prompt 460 tokens = 0 reused + 460 read in 1378 ms (333.9 tok/s), 176 generated in 2374 ms (74.1 tok/s), drafts accepted 112 of 127, 1
+/mnt/nvme/flashnext-test/stage4/r-vision/strata.log:strata serve: prompt 673 tokens = 636 reused + 37 read in 347 ms (106.5 tok/s), 68 generated in 799 ms (85.1 tok/s), drafts accepted 50 of 55, 2 che
+/mnt/nvme/flashnext-test/stage4/r-vision/strata.log:strata serve: prompt 780 tokens = 741 reused + 39 read in 348 ms (112.2 tok/s), 240 generated in 3466 ms (69.3 tok/s), drafts accepted 123 of 176, 3
+/mnt/nvme/flashnext-test/stage4/r-vision/strata.log:strata serve: prompt 1036 tokens = 1021 reused + 15 read in 174 ms (86.1 tok/s), 201 generated in 2126 ms (94.6 tok/s), drafts accepted 143 of 164, 
+/mnt/nvme/flashnext-test/stage4/r-vision/strata.log:strata serve: prompt 422 tokens = 0 reused + 422 read in 1176 ms (359.0 tok/s), 754 generated in 9166 ms (82.3 tok/s), drafts accepted 474 of 624, 1
+expert cache 11642 slots
+486 MiB of VRAM free with everything loaded
+== peak V100 MiB:  32447
+RUN FAILED
+v100: clock restored; released

@@ -1,0 +1,8 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+device Tesla V100-PCIE-32GB | torch 2.14.1+cu126
+CUDA context of this process: 60 MiB (a separate process pays this once)
+bare RV32 core {"dims": 2679, "build_s": 0.6, "executor_alloc_mib": 20.8, "executor_process_growth_mib": 32.0, "exact_positions": 4166, "check_s": 16.4, "seconds_per_step": 0.000463698148727417, "tokens_per_s": 2157, "peak_alloc_mib": 63.4}
+Qwenputer circuit (core + text bridge) {"dims": 2918, "build_s": 1.7, "executor_alloc_mib": 21.2, "executor_process_growth_mib": 32.0, "exact_positions": 4166, "check_s": 15.9, "seconds_per_step": 0.000502833366394043, "tokens_per_s": 1989, "peak_alloc_mib": 67.6}
+{"context_mib": 60.0, "bare RV32 core": {"dims": 2679, "build_s": 0.6, "executor_alloc_mib": 20.8, "executor_process_growth_mib": 32.0, "exact_positions": 4166, "check_s": 16.4, "seconds_per_step": 0.000463698148727417, "tokens_per_s": 2157, "peak_alloc_mib": 63.4}, "Qwenputer circuit (core + text bridge)": {"dims": 2918, "build_s": 1.7, "executor_alloc_mib": 21.2, "executor_process_growth_mib": 32.0, "exact_positions": 4166, "check_s": 15.9, "seconds_per_step": 0.000502833366394043, "tokens_per_s": 1989, "peak_alloc_mib": 67.6}}
+v100: clock restored; released

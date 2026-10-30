@@ -1,0 +1,48 @@
+# flash-next-computer input inventory (full sha256 = complete; partial = first/last 64 MiB only), 2026-10-30T06:42:11-05:00
+git qwenputer ca13310e2f9f788d1dd3feeea8213c1b0c23913c dirty=1
+git strata fb58e0dbc8399662c0e47c76578c6e878b14f6cf
+python 2.14.1+cu126 3.8.0 5.22.0
+driver 580.173.02
+sha256 b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d 29932 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/tests/data/rv/calc-bridge.elf
+sha256 b6c518356020b1c20af6e27fed08fae88a28d16e5dfd616f50aa2085e55e151b 19184 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/chipformer/rv/env/calc/calc.c
+sha256 0a7292ef49c50d57d3acfa3956429cb2779286334b45a412cde647d5d0e02281 9641 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/chipformer/rv/calc.py
+sha256 06165bb9f8d0a6b390af0881429f20006d90e8b37757dfbfee2f106627cc0958 7733 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/chipformer/rv/bridge.py
+sha256 2df86254ccd1f4ee7ca1b64167a606bbaf90db0e3fcf9f88e4437ab3f2e8658f 13438 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/chipformer/rv/tritonexec.py
+sha256 30b0095b23d2c9b963a25ff60cff6d21281f100e777adb8b99e024201af600ad 7251 /mnt/nvme/qwenputer/qwenputer/experimental/riscv/chipformer/rv/spec.py
+sha256 2607afb30433fd36795bf427d6baf769bd6585efed3e5f93ff83303b47806aff 2093 /mnt/nvme/qwenputer/model/config.json
+sha256 e62bc08b357b900ad84d007034ce4738985a7db1908994a4c85cf2a6657c576d 2369 /mnt/nvme/qwenputer/model/chipformer.json
+sha256 e19093118788e378d474b0a7f6d7f7c321da1fabcc6fd5ef6c68c3c28cf79e66 64037683 /mnt/nvme/qwenputer/model/tokenizer.json
+sha256 89c1d6e9e68c356e67cfd1d80e4073b813922d255475550866d895020d4aa6fa 9184 /mnt/nvme/qwenputer/model/tokenizer_config.json
+sha256 a774be692179f76b5dd32492931dd7a353cdba98ecc3bbe1cfe682fb878d2351 62970688 /mnt/steam/Strata-0141/engine-cuda12/strata
+sha256 62a02981fe5a901b368952d156c6d4272941819b12c3397379e7d3799e86969e 64868336 /mnt/steam/Strata-0141/engine-cuda12/strata-vision
+sha256 017efa1f4e76d72396738555d13eb1f9898d1c1c12730cf046d9b267b29987e5 347960 /mnt/steam/Strata-0141/serve/server.py
+sha256 659c8e3c7db7d51c939870f843b2350f3efcf2ce8f1ff4b4372db4631e39b77f 31701 /mnt/steam/Strata-0141/serve/mcp.py
+sha256 095bbac7d49b19d815d2634457d14d216ba9bd4e98998a4e3b4288f20a25e923 62089 /mnt/steam/Strata-0141/serve/frontend.py
+sha256 637bd0cffecd7ea84a985ddcea4d80bc52b1afcc9460517804070756e212334b 1712 /mnt/steam/Strata-0141/strata-coder-iq1_m.json
+sha256 a017df2840546eff44d999b28358ec74e7d9f6bee907840840778a0d1ab6ded3 1387 /mnt/steam/Strata-0141/strata-coder-iq1_m-novision.json
+sha256 a514661124d5305effe9c1bcecff7dc069af398b2b19ff9d11628a2cad0a8915 98328 /mnt/steam/Strata-0141/data/expert-profile-coder.bin
+sha256 e034763477b107953df24ccfdbe01306ed0a0ad9fce08dcbc0ca3b8094194d6b 12358 /mnt/nvme/flashnext-test/computer/computer.py
+sha256 39abc35881bf80afcb84d9b5bfbb5dbac6e2811d73e9f75a40d7bca12425a766 1977 /mnt/nvme/flashnext-test/computer/contract.py
+sha256 1ed8c90327b9783c964bab0d6ffdce58335b27a56e9aaaf8397623a25175d299 3734 /mnt/nvme/flashnext-test/computer/contract_test.py
+sha256 272403d274a071b547d314a01ec3bc2fc08101d6b8d0d5088c2cc163251a41e3 6462 /mnt/nvme/flashnext-test/computer/mcp_server.py
+sha256 8b0ca3bba652b776fc01455e5ede4f529adcbfb16c2c87f6ab13f0796fb4a2d9 8273 /mnt/nvme/flashnext-test/computer/stage4_requests.py
+sha256 1b3b2c2292eaa935836611240995e76623c94a6e0a7d0623a87781d3afda453b 10848 /mnt/nvme/flashnext-test/computer/test_computer.py
+sha256 4a0f068aaf9e6cd6350e1a8f0988556c96d3bbf9c3ddd372a8590906c8c4031a 3836 /mnt/nvme/qwenputer/stage4_mcp_test.sh
+partial 1a71a187949d67bb7e3b7e584e1a61246d9c65dd7b83ea45dc88538aaab3c65f 29608446496 1791121612 /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf
+partial b96e4102a0da8659cadaab05ef99f419b73966d03bfb7be36a0c7964ccfd1d16 28800138432 1791122744 /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf
+partial 7076c831bcba9aaa6547109c72d40360cb7de6ee0e1d2de52597d28d15450f0c 907543008 1791124480 /mnt/steam/Strata-data-0140/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf
+sha256 c724dc0b0822ada5d2977bf5bde821605feabaa64ea2e0045b67ca656329070a 116099072 /mnt/steam/Strata-data-0140/mtp/rt/dense.bin
+sha256 991456cf4eb266eb8a888c349e548d11bc640f5dbd9149439aa9786af0f732fd 1851 /mnt/steam/Strata-data-0140/mtp/rt/dense.txt
+sha256 b1e1d3a7a9e4bf862dcd5923ce661fb59bbd07907e594df5cf86a62ac235cb91 425196 /mnt/steam/Strata-data-0140/mtp/rt/draft_vocab.bin
+partial 2809e178f2b8580707db47808d4e2dcb6e3b9aa82f585be6bf1bb17975bdc461 707788800 1791123289 /mnt/steam/Strata-data-0140/mtp/rt/experts.bin
+sha256 c82cdadb5cc2b0678d2cccad07430181e031fc05022c9cf31cec997a8cd35c3c 306 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/conversions.json
+partial 5316d9062b8c9da7ac7361b933008d7deaeb21ef45579f28a98aa782880f840d 1475120640 1791122751 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/dense.bin
+partial 5106bd65f155ecf840fef881ddfadc11a86174188d8dc4eb8579d5a077700508 25146163200 1791122887 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/experts.bin
+sha256 22b9e0976d367eb3078037145c66014a9d01d822fec8fedec39f32c8dcac71fe 373 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/experts.bin.src.json
+sha256 2cb3352786bcae81ea4d933eee6b2d5db45774069320c924a6dea48eb65a3cd3 93633 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/index.txt
+sha256 9ace1b92e1fe12595de469409e69dd52c8d5418c7981c405d9a51aa9d574dd3b 3269 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/native_experts.txt
+sha256 12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce 9993 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/chat_template.jinja
+sha256 4ba698529766c7a2f5052083ea10cdf2485577f5237a332ee291054eb11e3332 3353258 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/merges.txt
+sha256 c0bd435efbc6c3b28964b47999afe16c4ad268c7c7c4e8cb3af410796a6f30bf 541 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/tokenizer.json
+sha256 5088c8c298fc06af8382ddb3b76c888703ac2634e82263b97eedcc2ad202738b 744960 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/token_type.json
+sha256 4ba64f0332abcfb0b600b7df1537d1e836e68009d5fb7cdb77339738dc6365c4 5737005 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/vocab.json

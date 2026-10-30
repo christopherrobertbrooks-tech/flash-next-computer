@@ -1,0 +1,498 @@
+{
+ "replies": [
+  {
+   "name": "mul",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "What is 123456789 * 987654321? Use the calc tool, then give the exact answer."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "121932631112635269"
+    ],
+    "answer": "121932631112635269"
+   },
+   "http": 200,
+   "seconds": 10.9,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 557,
+    "completion_tokens": 203,
+    "total_tokens": 760,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "The exact answer is:\n\n**121932631112635269**\n\n(That is, 123,456,789 \u00d7 987,654,321 = 121,932,631,112,635,269)",
+   "reasoning_chars": 166,
+   "tool_calls": [
+    {
+     "time": "06:25:04",
+     "backend": "computer",
+     "expression": "123456789 * 987654321",
+     "result": "121932631112635269",
+     "error": null,
+     "ms": 2234.2,
+     "rpc_id": 3,
+     "chip_tokens": 2430,
+     "computer_seconds": 1.609
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-dec955701c0b42f299236061",
+    "object": "chat.completion",
+    "created": 1793359500,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "The exact answer is:\n\n**121932631112635269**\n\n(That is, 123,456,789 \u00d7 987,654,321 = 121,932,631,112,635,269)",
+       "reasoning_content": "The user wants me to compute 123456789 * 987654321 using the calc tool.\nThe calculation is done. The result is 121932631112635269. I should present the exact answer.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_e1a084e5168a440fa6b23180",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_e1a084e5168a440fa6b23180",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "123456789 * 987654321"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_e1a084e5168a440fa6b23180",
+         "ok": true,
+         "text": "121932631112635269",
+         "chars": 18,
+         "truncated": false,
+         "ms": 2234
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 557,
+     "completion_tokens": 203,
+     "total_tokens": 760,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 557,
+     "prompt_ms": 1016.0,
+     "prompt_per_token_ms": 1.824,
+     "prompt_per_second": 548.2,
+     "predicted_n": 121,
+     "predicted_ms": 1121.9,
+     "predicted_per_token_ms": 9.272,
+     "predicted_per_second": 107.9,
+     "draft_n": 95,
+     "draft_n_accepted": 84
+    }
+   }
+  },
+  {
+   "name": "pow-floordiv",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Compute (2**64 - 1) // 7 exactly. Use the calc tool."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "2635249153387078802"
+    ],
+    "answer": "2635249153387078802"
+   },
+   "http": 200,
+   "seconds": 9.4,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 848,
+    "completion_tokens": 414,
+    "total_tokens": 1262,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "2635249153387078802",
+   "reasoning_chars": 567,
+   "tool_calls": [
+    {
+     "time": "06:25:14",
+     "backend": "computer",
+     "expression": "(2**64 - 1) // 7",
+     "result": "2635249153387078802",
+     "error": null,
+     "ms": 3136.3,
+     "rpc_id": 4,
+     "chip_tokens": 5188,
+     "computer_seconds": 3.099
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-d883023c487646939bbe541a",
+    "object": "chat.completion",
+    "created": 1793359507,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "2635249153387078802",
+       "reasoning_content": "We need answer compute (2**64 - 1) // 7 exactly using calc tool. Need call calc. Then final answer. Let's compute maybe 18467440737095516161? Let's verify: 2^64-1 = 18446744073709551615. Divide by 7 floor. 7*2635249153387078802 = 18446744073709551614? Let's calculate. 2^64 mod 7: 2^3=8=1 mod7, 64 mod3=1, so 2^64 mod7=2, minus1 mod7=1, floor = (2^64-2)/7. 2^64=18446744073709551616, minus2=18446744073709551614 /7 = 2635249153387078802? Let's multiply 2,635,249,153,387,078,802 *7 = 18,446,744,073,709,551,614 yes. So answer. Need use calc tool.\nNeed final concise.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_0d87361998f2455cb1834eab",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_0d87361998f2455cb1834eab",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "(2**64 - 1) // 7"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_0d87361998f2455cb1834eab",
+         "ok": true,
+         "text": "2635249153387078802",
+         "chars": 19,
+         "truncated": false,
+         "ms": 3136
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 848,
+     "completion_tokens": 414,
+     "total_tokens": 1262,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 848,
+     "prompt_ms": 1335.7,
+     "prompt_per_token_ms": 1.575,
+     "prompt_per_second": 634.9,
+     "predicted_n": 27,
+     "predicted_ms": 236.2,
+     "predicted_per_token_ms": 8.748,
+     "predicted_per_second": 114.3,
+     "draft_n": 21,
+     "draft_n_accepted": 21
+    }
+   }
+  },
+  {
+   "name": "two-step",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Multiply 98765432123 by 12345678987, then divide that product by 7. Use the calc tool for each step and give the exact final value as a reduced fraction."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "1219326320002895899401",
+     "1219326320002895899401/7"
+    ],
+    "answer": "1219326320002895899401/7"
+   },
+   "http": 200,
+   "seconds": 18.4,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 996,
+    "completion_tokens": 687,
+    "total_tokens": 1683,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "Using the calc tool:\n\n1. \\(98765432123 \\times 12345678987 = 1219326320002895899401\\)\n2. \\(\\dfrac{1219326320002895899401}{7}\\) is already reduced because the numerator is not divisible by 7.\n\nExact final value:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+   "reasoning_chars": 1157,
+   "tool_calls": [
+    {
+     "time": "06:25:21",
+     "backend": "computer",
+     "expression": "98765432123 * 12345678987",
+     "result": "1219326320002895899401",
+     "error": null,
+     "ms": 1606.8,
+     "rpc_id": 5,
+     "chip_tokens": 2616,
+     "computer_seconds": 1.571
+    },
+    {
+     "time": "06:25:26",
+     "backend": "computer",
+     "expression": "1219326320002895899401 / 7",
+     "result": "1219326320002895899401/7",
+     "error": null,
+     "ms": 3357.7,
+     "rpc_id": 6,
+     "chip_tokens": 5611,
+     "computer_seconds": 3.32
+    },
+    {
+     "time": "06:25:31",
+     "backend": "computer",
+     "expression": "1219326320002895899401 % 7",
+     "result": "5",
+     "error": null,
+     "ms": 1947.4,
+     "rpc_id": 7,
+     "chip_tokens": 3249,
+     "computer_seconds": 1.911
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-4bad8820408c48f0940f2a91",
+    "object": "chat.completion",
+    "created": 1793359516,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Using the calc tool:\n\n1. \\(98765432123 \\times 12345678987 = 1219326320002895899401\\)\n2. \\(\\dfrac{1219326320002895899401}{7}\\) is already reduced because the numerator is not divisible by 7.\n\nExact final value:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+       "reasoning_content": "We need answer user: Multiply 98765432123 by 12345678987, then divide that product by 7. Use calc tool for each step and give exact final value as reduced fraction.\n\nNeed use calc tool for each step. We can call calc for product, then calc for product/7. Need exact final reduced fraction. Let's compute carefully. Could use tool. Need maybe two calls: first product, second divide by 7. Since second depends on first, sequential.\n\nLet's compute product: 98,765,432,123 * 12,345,678,987. Need exact. Let's use calc.\nNow divide by 7: 1219326320002895899401 / 7. Need reduced fraction. Check divisibility by 7? Let's compute exact fraction reduced. Use calc.\nIt returned fraction unchanged, meaning not divisible by 7? Need verify gcd maybe. Could compute mod 7. Let's check: 1,219,326,320,002,895,899,401 mod 7. Use calc maybe %.\nNot divisible by 7. Since numerator product maybe gcd with 7? 7 prime, remainder 5, so reduced fraction is product/7. Need present steps. Ensure exact final value as reduced fraction: 1219326320002895899401/7. Could also mixed number? They ask reduced fraction. Provide.\n\nNeed maybe mention product and division. Final concise.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_c6c4859a9fa5424db2cb8734",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_c6c4859a9fa5424db2cb8734",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "98765432123 * 12345678987"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_c6c4859a9fa5424db2cb8734",
+         "ok": true,
+         "text": "1219326320002895899401",
+         "chars": 22,
+         "truncated": false,
+         "ms": 1606
+        },
+        {
+         "event": "start",
+         "id": "call_75ce4f5f45234bfea20212fe",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_75ce4f5f45234bfea20212fe",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 / 7"
+         },
+         "round": 2
+        },
+        {
+         "event": "result",
+         "id": "call_75ce4f5f45234bfea20212fe",
+         "ok": true,
+         "text": "1219326320002895899401/7",
+         "chars": 24,
+         "truncated": false,
+         "ms": 3357
+        },
+        {
+         "event": "start",
+         "id": "call_d091332f112e4fe3a8a620d0",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_d091332f112e4fe3a8a620d0",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 % 7"
+         },
+         "round": 3
+        },
+        {
+         "event": "result",
+         "id": "call_d091332f112e4fe3a8a620d0",
+         "ok": true,
+         "text": "5",
+         "chars": 1,
+         "truncated": false,
+         "ms": 1947
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 996,
+     "completion_tokens": 687,
+     "total_tokens": 1683,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 996,
+     "prompt_ms": 1399.9,
+     "prompt_per_token_ms": 1.406,
+     "prompt_per_second": 711.5,
+     "predicted_n": 243,
+     "predicted_ms": 2388.0,
+     "predicted_per_token_ms": 9.827,
+     "predicted_per_second": 101.8,
+     "draft_n": 195,
+     "draft_n_accepted": 162
+    }
+   }
+  },
+  {
+   "name": "no-tool",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Write a three-line haiku about rain. Don't use any tools."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": false
+   },
+   "http": 200,
+   "seconds": 10.9,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 955,
+    "total_tokens": 1377,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "Rain taps the window\npuddles mirror the grey sky\nthe soil drinks it all",
+   "reasoning_chars": 2301,
+   "tool_calls": [],
+   "problems": [],
+   "note": "haiku completed",
+   "raw": {
+    "id": "chatcmpl-786b4755f7d74d118797f111",
+    "object": "chat.completion",
+    "created": 1793359534,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Rain taps the window\npuddles mirror the grey sky\nthe soil drinks it all",
+       "reasoning_content": "The user wants a three-line haiku about rain. No tools needed. I should just write a haiku. Traditional haiku is 5-7-5 syllables (or 5-7-5 in English often). Let me craft something nice.\n\nLine 1: \"Silver threads fall\" \u2014 3 syllables. Let's count properly.\n\nTry 5-7-5:\n\"Soft rain taps glass\" \u2014 Soft(1) rain(1) taps(1) glass(1) = 4. Hmm.\n\nLet me do:\n\"The rain drums low\" \u2014 The(1) rain(1) drums(1) low(1) = 4.\n\nBetter:\n\"Rain falls on tin\" = Rain(1) falls(1) on(1) tin(1) = 4.\n\nLet me aim for 5-7-5:\nLine 1: \"Cold rain stitches\" \u2014 Cold(1) rain(1) stitches(2) = 4. Hmm \"stitches\" is 2 syllables. So 4.\n\nLine 1: \"Rain taps the pane\" = Rain(1) taps(1) the(1) pane(1) = 4.\nAdd: \"Rain taps the window\" = Rain(1) taps(1) the(1) win-dow(2) = 5. Good.\n\nLine 2 (7): \"silver threads stitch the dark\" = sil-ver(2) threads(1) stitch(1) the(1) dark(1) = 6. Add \"the night\": \"silver threads stitch the night\" = 2+1+1+1+1 = 6. Hmm need 7. \"silver threads are stitching dark\" = sil-ver(2) threads(1) are(1) stitch-ing(2) dark(1) = 7. Good but awkward.\n\nAlternative: \"each drop a silver bell\" = each(1) drop(1) a(1) sil-ver(2) bell(1) = 6. \"each drop rings like a bell\" = each(1) drop(1) rings(1) like(1) a(1) bell(1) = 6. \"each drop rings like a small bell\" = 7. Hmm.\n\nLet me try: \"the street turns to mirrors\" = the(1) street(1) turns(1) to(1) mir-rors(2) = 6.\n\nLine 2: \"puddles hold the drowned moon\" = pud-dles(2) hold(1) the(1) drowned(1) moon(1) = 6. \"puddles hold the drowned moon's light\"? too long.\n\nTry: \"puddles mirror the grey sky\" = pud-dles(2) mir-ror(2) the(1) grey(1) sky(1) = 7. \n\nLine 3 (5): \"then silence\" = then(1) si-len-ce(2) = 3. \"the world exhales\" = the(1) world(1) ex-hales(2) = 4. \"smell of wet stone\" = smell(1) of(1) wet(1) stone(1) = 4. \"and the smell of soil\" = and(1) the(1) smell(1) of(1) soil(1) = 5. Good.\n\nOr \"the earth drinks deep\" = the(1) earth(1) drinks(1) deep(1) = 4. \"the earth drinks, and drinks\" = 5? the(1) earth(1) drinks(1) and(1) drinks(1) = 5. Hmm.\n\n\"the garden drinks it in\" = the(1) gar-den(2) drinks(1) it(1) in(1) = 6.\n\n\"the soil drinks it all\" = the(1) soil(1) drinks(1) it(1) all(1) = 5. Good.\n\nSo:\nRain taps the window\npuddles mirror the grey sky\nthe soil drinks it all\n\nSyllables: 5 / 7 / 5. Nice. Maybe capitalize lines.\n\nI'll present just the haiku, no tool use.\n"
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 422,
+     "completion_tokens": 955,
+     "total_tokens": 1377,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 422,
+     "prompt_ms": 878.7,
+     "prompt_per_token_ms": 2.082,
+     "prompt_per_second": 480.3,
+     "predicted_n": 955,
+     "predicted_ms": 10061.6,
+     "predicted_per_token_ms": 10.536,
+     "predicted_per_second": 94.9,
+     "draft_n": 856,
+     "draft_n_accepted": 619
+    }
+   }
+  }
+ ]
+}

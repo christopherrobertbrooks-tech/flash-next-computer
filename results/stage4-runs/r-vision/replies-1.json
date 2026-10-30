@@ -1,0 +1,340 @@
+{
+ "replies": [
+  {
+   "name": "mul",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "What is 123456789 * 987654321? Use the calc tool, then give the exact answer."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "121932631112635269"
+    ],
+    "answer": "121932631112635269"
+   },
+   "http": 400,
+   "seconds": 6.4,
+   "finish": null,
+   "usage": null,
+   "content": null,
+   "reasoning_chars": 0,
+   "tool_calls": [],
+   "problems": [
+    "transport: HTTP 400, finish None"
+   ],
+   "note": null,
+   "raw": {
+    "error": "{\"error\": {\"type\": \"invalid_request_error\", \"message\": \"verify: instantiate: out of memory\"}}"
+   }
+  },
+  {
+   "name": "pow-floordiv",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Compute (2**64 - 1) // 7 exactly. Use the calc tool."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "2635249153387078802"
+    ],
+    "answer": "2635249153387078802"
+   },
+   "http": 503,
+   "seconds": 0.7,
+   "finish": null,
+   "usage": null,
+   "content": null,
+   "reasoning_chars": 0,
+   "tool_calls": [],
+   "problems": [
+    "transport: HTTP 503, finish None"
+   ],
+   "note": null,
+   "raw": {
+    "error": "{\"error\": {\"type\": \"server_error\", \"message\": \"the engine stopped unexpectedly (exit code 1); the next request restarts it\"}}"
+   }
+  },
+  {
+   "name": "two-step",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Multiply 98765432123 by 12345678987, then divide that product by 7. Use the calc tool for each step and give the exact final value as a reduced fraction."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "1219326320002895899401",
+     "1219326320002895899401/7"
+    ],
+    "answer": "1219326320002895899401/7"
+   },
+   "http": 200,
+   "seconds": 48.5,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 1036,
+    "completion_tokens": 685,
+    "total_tokens": 1721,
+    "prompt_tokens_details": {
+     "cached_tokens": 1021
+    }
+   },
+   "content": "Product:\n\n\\[\n98765432123 \\times 12345678987 = 1219326320002895899401\n\\]\n\nDividing by 7:\n\n\\[\n\\frac{1219326320002895899401}{7}\n\\]\n\nSince the numerator is not divisible by 7, the exact reduced fraction is:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+   "reasoning_chars": 1326,
+   "tool_calls": [
+    {
+     "time": "06:28:44",
+     "backend": "computer",
+     "expression": "98765432123 * 12345678987",
+     "result": "1219326320002895899401",
+     "error": null,
+     "ms": 2478.4,
+     "rpc_id": 3,
+     "chip_tokens": 2616,
+     "computer_seconds": 1.71
+    },
+    {
+     "time": "06:28:49",
+     "backend": "computer",
+     "expression": "1219326320002895899401 / 7",
+     "result": "1219326320002895899401/7",
+     "error": null,
+     "ms": 3330.7,
+     "rpc_id": 4,
+     "chip_tokens": 5611,
+     "computer_seconds": 3.294
+    },
+    {
+     "time": "06:28:55",
+     "backend": "computer",
+     "expression": "1219326320002895899401 % 7",
+     "result": "5",
+     "error": null,
+     "ms": 1932.3,
+     "rpc_id": 5,
+     "chip_tokens": 3249,
+     "computer_seconds": 1.892
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-7eb1498391994f83ada0d30a",
+    "object": "chat.completion",
+    "created": 1793359718,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Product:\n\n\\[\n98765432123 \\times 12345678987 = 1219326320002895899401\n\\]\n\nDividing by 7:\n\n\\[\n\\frac{1219326320002895899401}{7}\n\\]\n\nSince the numerator is not divisible by 7, the exact reduced fraction is:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+       "reasoning_content": "We need answer user: Multiply 98765432123 by 12345678987, then divide that product by 7. Use calc tool for each step and give exact final value as reduced fraction.\n\nNeed use calc tool for each step. We can call calc for product, then calc for product/7. Need exact final reduced fraction. Let's compute carefully. Could use tool. Need maybe two calls: first product, second divide by 7. Since second depends on first, sequential.\n\nLet's compute with calc.\nNow divide by 7 exact reduced fraction. Need call calc.\nNeed ensure reduced fraction. Check if numerator divisible by 7? The calc returned same fraction, likely not divisible. Let's verify mod 7 maybe. Need final exact value as reduced fraction. Could mention product and final fraction. Need maybe use calc for each step: done. Need final answer.\n\nLet's verify divisibility: 1,219,326,320,002,895,899,401 / 7. Sum? Let's compute mod 7 maybe. Use mental or calc? Could call calc for numerator % 7. But user asked use calc for each step; already did. Could call calc to check gcd? Maybe not necessary but to ensure reduced. Let's call calc for modulo? It says use calc tool for each step; extra okay. Need final. Let's compute mod 7: Use calc maybe.\nNot divisible by 7, reduced. Final fraction 1219326320002895899401/7. Could also decimal? exact fraction. Need concise.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_68c5a872da614ba6acb73195",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_68c5a872da614ba6acb73195",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "98765432123 * 12345678987"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_68c5a872da614ba6acb73195",
+         "ok": true,
+         "text": "1219326320002895899401",
+         "chars": 22,
+         "truncated": false,
+         "ms": 2478
+        },
+        {
+         "event": "start",
+         "id": "call_39e7532a7b104dd4b43cb725",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_39e7532a7b104dd4b43cb725",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 / 7"
+         },
+         "round": 2
+        },
+        {
+         "event": "result",
+         "id": "call_39e7532a7b104dd4b43cb725",
+         "ok": true,
+         "text": "1219326320002895899401/7",
+         "chars": 24,
+         "truncated": false,
+         "ms": 3330
+        },
+        {
+         "event": "start",
+         "id": "call_bd9106608b614316ac841552",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_bd9106608b614316ac841552",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 % 7"
+         },
+         "round": 3
+        },
+        {
+         "event": "result",
+         "id": "call_bd9106608b614316ac841552",
+         "ok": true,
+         "text": "5",
+         "chars": 1,
+         "truncated": false,
+         "ms": 1932
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 1036,
+     "completion_tokens": 685,
+     "total_tokens": 1721,
+     "prompt_tokens_details": {
+      "cached_tokens": 1021
+     }
+    },
+    "timings": {
+     "cache_n": 1021,
+     "prompt_n": 15,
+     "prompt_ms": 174.2,
+     "prompt_per_token_ms": 11.613,
+     "prompt_per_second": 86.1,
+     "predicted_n": 201,
+     "predicted_ms": 2125.8,
+     "predicted_per_token_ms": 10.576,
+     "predicted_per_second": 94.6,
+     "draft_n": 164,
+     "draft_n_accepted": 143
+    }
+   }
+  },
+  {
+   "name": "no-tool",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Write a three-line haiku about rain. Don't use any tools."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": false
+   },
+   "http": 200,
+   "seconds": 10.3,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 754,
+    "total_tokens": 1176,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "Rain taps the window  \neach drop rings on the wet leaves  \nroots drink the dark rain",
+   "reasoning_chars": 2123,
+   "tool_calls": [],
+   "problems": [],
+   "note": "haiku completed",
+   "raw": {
+    "id": "chatcmpl-37703e5e0d7345e6b10dc1e2",
+    "object": "chat.completion",
+    "created": 1793359737,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Rain taps the window  \neach drop rings on the wet leaves  \nroots drink the dark rain",
+       "reasoning_content": "We need answer user: \"Write a three-line haiku about rain. Don't use any tools.\" Need final only haiku three lines. Ensure no tools. Could do 5-7-5? Haiku traditionally 5-7-5 syllables in English maybe. Need three lines about rain. Let's craft:\n\"Rain taps the glass\" syllables? Rain(1) taps(1) the(1) glass(1)=4 not 5. Need 5-7-5 maybe.\nLine1: \"Soft rain falls down\" Soft(1) rain(1) falls(1) down(1)=4. \"The rain falls soft\" 5? The(1) rain(1) falls(1) soft(1)=4. \"Rain on the roof\" Rain(1) on(1) the(1) roof(1)=4. \"Rain taps the window\" Rain1 taps2 the3 window4? window 2 syllables? win-dow, so total 4? Rain(1)+taps(1)+the(1)+window(2)=5. Good.\nLine2 7: \"each drop makes a ring\" each1 drop2 makes3 a4 ring5 =5. Need 7. \"each drop rings on leaves\" each1 drop2 rings3 on4 leaves5? leaves 1? maybe 5. \"each drop rings a tiny bell\" each1 drop2 rings3 a4 tiny5 bell6 =6. \"each drop rings like a bell\" each1 drop2 rings3 like4 a5 bell6 =6. \"each drop rings through the dusk\" each1 drop2 rings3 through4 the5 dusk6 =6. \"each drop rings in the dusk\" 6. \"each drop rings on the leaves\" each1 drop2 rings3 on4 the5 leaves6. Need 7: \"each drop rings on the wet leaves\" each1 drop2 rings3 on4 the5 wet6 leaves7. Good.\nLine3 5: \"night smells green\" night1 smells2 green3 =3. \"the night smells green\" the1 night2 smells3 green4 =4. \"night air smells green\" night1 air2 smells3 green4. \"the air smells green\" the1 air2 smells3 green4. \"night air is green\" 4. \"rain makes night green\" rain1 makes2 night3 green4. \"the world drinks rain\" the1 world2 drinks3 rain4. \"roots drink the rain\" roots1 drink2 the3 rain4. \"roots drink rain deep\" roots1 drink2 rain3 deep4. \"roots drink the rain\" 4. Need 5: \"roots drink the dark rain\" roots1 drink2 the3 dark4 rain5. Good.\nHaiku:\nRain taps the window\neach drop rings on the wet leaves\nroots drink the dark rain\nSyllables: Rain(1) taps(1) the(1) window(2)=5. each(1) drop(1) rings(1) on(1) the(1) wet(1) leaves(1?) leaves often 1 syllable? Yes leaves = 1? Some pronounce /li\u02d0vz/ one syllable. total 7. roots(1) drink(1) the(1) dark(1) rain(1)=5. Good.\nNeed final only three lines. Ensure no tools.\n"
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 422,
+     "completion_tokens": 754,
+     "total_tokens": 1176,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 422,
+     "prompt_ms": 1175.6,
+     "prompt_per_token_ms": 2.786,
+     "prompt_per_second": 359.0,
+     "predicted_n": 754,
+     "predicted_ms": 9166.5,
+     "predicted_per_token_ms": 12.157,
+     "predicted_per_second": 82.3,
+     "draft_n": 624,
+     "draft_n_accepted": 474
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,2 @@
+strata ready: 1 after 29 s
+tool ready after 38 s from launch

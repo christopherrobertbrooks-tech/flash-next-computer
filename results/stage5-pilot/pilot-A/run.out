@@ -1,0 +1,27 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 30 s
+== /mcp: {"servers": [], "tools": 0}
+eee173f5e11159a20c7f46170af6aae866d3f51400c822ab2823ac6908d58fde  /mnt/nvme/flashnext-test/stage5/pilot-questions.jsonl
+  1/17 warmup-1         HTTP 200 12.32s finish stop calls 0
+  2/17 warmup-2         HTTP 200 4.19s finish stop calls 0
+  3/17 pilot-1-001      HTTP 200 76.62s finish length calls 0
+  4/17 pilot-1-002      HTTP 200 24.96s finish stop calls 0
+  5/17 pilot-1-003      HTTP 200 80.79s finish length calls 0
+  6/17 pilot-2-001      HTTP 200 78.19s finish length calls 0
+  7/17 pilot-2-002      HTTP 200 30.88s finish stop calls 0
+  8/17 pilot-2-003      HTTP 200 59.6s finish stop calls 0
+  9/17 pilot-3-001      HTTP 200 5.73s finish stop calls 0
+ 10/17 pilot-3-002      HTTP 200 6.69s finish stop calls 0
+ 11/17 pilot-3-003      HTTP 200 19.29s finish stop calls 0
+ 12/17 pilot-4-001      HTTP 200 81.96s finish length calls 0
+ 13/17 pilot-4-002      HTTP 200 69.01s finish stop calls 0
+ 14/17 pilot-4-003      HTTP 200 41.76s finish length calls 0
+ 15/17 pilot-5a-001     HTTP 200 1.94s finish stop calls 0
+ 16/17 pilot-5a-002     HTTP 200 4.13s finish stop calls 0
+ 17/17 pilot-5b-001     HTTP 200 23.39s finish stop calls 0
+done: 17 requests (2 warm-up), harness errors 0
+expert cache 12288 slots
+== peak V100 MiB:  32003
+ask.py exit 0
+v100: clock restored; released

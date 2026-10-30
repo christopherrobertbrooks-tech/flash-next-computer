@@ -1,0 +1,54 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 29 s
+tool ready after 38 s from launch
+== /mcp: {"servers": [{"name": "math", "transport": "stdio", "status": "ready", "error": null, "info": {"name": "calc-computer", "version": "0.1", "protocol": "2025-06-18"}, "tools": [{"name": "math__calc", "tool": "calc", "description": "Evaluate an arithmetic expression exactly, with numbers of up to 62 di
+3f97781ee43bccd2641d191afba79b8cd533f826be84585cdfad5e77d5a10bb9  /mnt/nvme/flashnext-test/stage5/final-questions.jsonl
+  1/42 warmup-1         HTTP 200 12.64s finish stop calls 1
+  2/42 warmup-2         HTTP 200 5.85s finish stop calls 1
+  3/42 final-1-001      HTTP 200 10.89s finish stop calls 2
+  4/42 final-1-005      HTTP 200 5.58s finish stop calls 1
+  5/42 final-1-009      HTTP 200 44.13s finish stop calls 4
+  6/42 final-1-013      HTTP 200 37.26s finish stop calls 1
+  7/42 final-1-017      HTTP 200 28.12s finish stop calls 1
+  8/42 final-1-021      HTTP 200 5.54s finish stop calls 1
+  9/42 final-1-025      HTTP 200 22.71s finish stop calls 2
+ 10/42 final-1-029      HTTP 200 17.71s finish stop calls 1
+ 11/42 final-1-033      HTTP 200 17.41s finish stop calls 2
+ 12/42 final-1-037      HTTP 200 19.49s finish stop calls 4
+ 13/42 final-1-041      HTTP 200 23.79s finish stop calls 2
+ 14/42 final-1-045      HTTP 200 12.8s finish stop calls 3
+ 15/42 final-1-049      HTTP 200 12.62s finish stop calls 2
+ 16/42 final-1-053      HTTP 200 32.97s finish stop calls 2
+ 17/42 final-1-057      HTTP 200 31.58s finish stop calls 2
+ 18/42 final-1-061      HTTP 200 6.84s finish stop calls 1
+ 19/42 final-1-065      HTTP 200 18.43s finish stop calls 4
+ 20/42 final-1-069      HTTP 200 12.93s finish stop calls 1
+ 21/42 final-2-003      HTTP 200 42.84s finish stop calls 4
+ 22/42 final-2-007      HTTP 200 56.39s finish stop calls 1
+ 23/42 final-3-001      HTTP 200 13.7s finish stop calls 3
+ 24/42 final-3-005      HTTP 200 9.96s finish stop calls 1
+ 25/42 final-3-009      HTTP 200 8.99s finish stop calls 1
+ 26/42 final-3-013      HTTP 200 10.36s finish stop calls 1
+ 27/42 final-3-017      HTTP 200 7.07s finish stop calls 1
+ 28/42 final-3-021      HTTP 200 8.71s finish stop calls 0
+ 29/42 final-3-025      HTTP 200 9.33s finish stop calls 0
+ 30/42 final-3-029      HTTP 200 6.14s finish stop calls 1
+ 31/42 final-3-033      HTTP 200 15.79s finish stop calls 4
+ 32/42 final-3-037      HTTP 200 7.33s finish stop calls 0
+ 33/42 final-4-001      HTTP 200 45.87s finish stop calls 7
+ 34/42 final-4-005      HTTP 200 19.82s finish stop calls 6
+ 35/42 final-4-009      HTTP 200 28.88s finish stop calls 8
+ 36/42 final-4-013      HTTP 200 45.64s finish stop calls 1
+ 37/42 final-4-017      HTTP 200 26.29s finish stop calls 7
+ 38/42 final-4-021      HTTP 200 55.55s finish stop calls 10
+ 39/42 final-4-025      HTTP 200 33.76s finish stop calls 7
+ 40/42 final-4-029      HTTP 200 94.4s finish stop calls 7
+ 41/42 final-4-033      HTTP 200 57.62s finish stop calls 0
+ 42/42 final-4-037      HTTP 200 65.77s finish stop calls 17
+done: 42 requests (2 warm-up), harness errors 0
+tool process pid 3235305 host RSS MiB now (snapshot): 1661
+expert cache 12288 slots
+== peak V100 MiB:  32461
+ask.py exit 0
+v100: clock restored; released

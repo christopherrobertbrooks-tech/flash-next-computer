@@ -1,0 +1,58 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 30 s
+== /mcp status
+{"servers": [{"name": "computer", "transport": "stdio", "status": "starting", "error": null, "info": {}, "tools": []}], "tools": 0, "settings": {"timeout_s": 180.0, "max_result_chars": 20000, "max_rounds": 8}}
+3010977, 31814 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+== engine args: 4 --spec-min-p 0.5 --mtp /mnt/steam/Strata-data-0140/mtp/rt --max-context 131072 --kv int8 --resident-experts --vram-reserve-mib 700
+== pass 1
+mul           MET  HTTP 200   10.8s finish stop calls 1
+pow-floordiv  MET  HTTP 200    8.6s finish stop calls 1
+two-step      MET  HTTP 200   16.6s finish stop calls 2
+no-tool       MET  HTTP 200   23.8s finish length calls 0 | known: ran out while thinking
+INTEGRATION CHECK PASSED
+== pass 2
+mul           MET  HTTP 200    4.5s finish stop calls 1
+pow-floordiv  MET  HTTP 200    8.5s finish stop calls 1
+two-step      MET  HTTP 200   16.5s finish stop calls 2
+no-tool       MET  HTTP 200   23.7s finish length calls 0 | known: ran out while thinking
+INTEGRATION CHECK PASSED
+== tool calls (calls.jsonl)
+{"time": "06:22:36", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 2249.1, "rpc_id": 3, "chip_tokens": 2430, "computer_seconds": 1.618}
+{"time": "06:22:46", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3162.8, "rpc_id": 4, "chip_tokens": 5188, "computer_seconds": 3.126}
+{"time": "06:22:52", "backend": "computer", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 1443.0, "rpc_id": 5, "chip_tokens": 2330, "computer_seconds": 1.407}
+{"time": "06:22:56", "backend": "computer", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 3203.9, "rpc_id": 6, "chip_tokens": 5303, "computer_seconds": 3.167}
+{"time": "06:23:30", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 1479.4, "rpc_id": 7, "chip_tokens": 2430, "computer_seconds": 1.443}
+{"time": "06:23:39", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3082.6, "rpc_id": 8, "chip_tokens": 5188, "computer_seconds": 3.046}
+{"time": "06:23:46", "backend": "computer", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 1430.4, "rpc_id": 9, "chip_tokens": 2330, "computer_seconds": 1.394}
+{"time": "06:23:50", "backend": "computer", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 3170.5, "rpc_id": 10, "chip_tokens": 5303, "computer_seconds": 3.134}
+== strata: tool lines, reuse
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 18 characters in 2.2 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 19 characters in 3.2 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 22 characters in 1.4 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 24 characters in 3.2 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 18 characters in 1.5 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 19 characters in 3.1 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 22 characters in 1.4 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/server.log:[strata] tool computer__calc: ok, 24 characters in 3.2 s
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 442 tokens = 0 reused + 442 read in 1270 ms (347.9 tok/s), 82 generated in 759 ms (108.0 tok/s), drafts accepted 62 of 69, 
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 557 tokens = 526 reused + 31 read in 293 ms (105.8 tok/s), 102 generated in 1024 ms (99.6 tok/s), drafts accepted 68 of 87,
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 427 tokens = 0 reused + 427 read in 972 ms (439.4 tok/s), 404 generated in 3892 ms (103.8 tok/s), drafts accepted 278 of 35
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 865 tokens = 832 reused + 33 read in 282 ms (116.8 tok/s), 27 generated in 236 ms (114.3 tok/s), drafts accepted 21 of 21, 
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 460 tokens = 0 reused + 460 read in 999 ms (460.6 tok/s), 331 generated in 3494 ms (94.7 tok/s), drafts accepted 202 of 249
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 828 tokens = 792 reused + 36 read in 308 ms (117.0 tok/s), 70 generated in 674 ms (103.8 tok/s), drafts accepted 50 of 57, 
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 937 tokens = 900 reused + 37 read in 313 ms (118.1 tok/s), 628 generated in 6115 ms (102.7 tok/s), drafts accepted 413 of 4
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 422 tokens = 0 reused + 422 read in 982 ms (429.7 tok/s), 2567 generated in 22806 ms (112.6 tok/s), drafts accepted 1843 of
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 442 tokens = 0 reused + 442 read in 983 ms (449.4 tok/s), 82 generated in 708 ms (115.8 tok/s), drafts accepted 62 of 65, 1
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 557 tokens = 526 reused + 31 read in 271 ms (114.4 tok/s), 102 generated in 1013 ms (100.7 tok/s), drafts accepted 68 of 85
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 427 tokens = 0 reused + 427 read in 973 ms (438.9 tok/s), 404 generated in 3887 ms (103.9 tok/s), drafts accepted 277 of 34
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 865 tokens = 832 reused + 33 read in 282 ms (117.0 tok/s), 27 generated in 236 ms (114.3 tok/s), drafts accepted 21 of 21, 
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 460 tokens = 0 reused + 460 read in 997 ms (461.3 tok/s), 331 generated in 3541 ms (93.5 tok/s), drafts accepted 200 of 253
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 828 tokens = 792 reused + 36 read in 306 ms (117.7 tok/s), 70 generated in 674 ms (103.8 tok/s), drafts accepted 49 of 57, 
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 937 tokens = 899 reused + 38 read in 318 ms (119.5 tok/s), 628 generated in 6057 ms (103.7 tok/s), drafts accepted 414 of 4
+/mnt/nvme/flashnext-test/stage4/r-two-passes/strata.log:strata serve: prompt 422 tokens = 0 reused + 422 read in 982 ms (429.7 tok/s), 2563 generated in 22722 ms (112.8 tok/s), drafts accepted 1841 of
+expert cache 12288 slots
+660 MiB of VRAM free with everything loaded
+== peak V100 MiB:  32419
+RUN OK (every declared expectation met)
+v100: clock restored; released

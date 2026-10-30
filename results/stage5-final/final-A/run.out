@@ -1,0 +1,192 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 29 s
+== /mcp: {"servers": [], "tools": 0}
+3f97781ee43bccd2641d191afba79b8cd533f826be84585cdfad5e77d5a10bb9  /mnt/nvme/flashnext-test/stage5/final-questions.jsonl
+  1/182 warmup-1         HTTP 200 12.3s finish stop calls 0
+  2/182 warmup-2         HTTP 200 4.18s finish stop calls 0
+  3/182 final-1-001      HTTP 200 73.77s finish stop calls 0
+  4/182 final-1-002      HTTP 200 46.64s finish length calls 0
+  5/182 final-1-003      HTTP 200 71.96s finish length calls 0
+  6/182 final-1-004      HTTP 200 49.49s finish length calls 0
+  7/182 final-1-005      HTTP 200 73.26s finish length calls 0
+  8/182 final-1-006      HTTP 200 76.67s finish length calls 0
+  9/182 final-1-007      HTTP 200 49.41s finish stop calls 0
+ 10/182 final-1-008      HTTP 200 74.51s finish stop calls 0
+ 11/182 final-1-009      HTTP 200 72.68s finish length calls 0
+ 12/182 final-1-010      HTTP 200 73.3s finish length calls 0
+ 13/182 final-1-011      HTTP 200 71.27s finish length calls 0
+ 14/182 final-1-012      HTTP 200 75.92s finish length calls 0
+ 15/182 final-1-013      HTTP 200 69.18s finish stop calls 0
+ 16/182 final-1-014      HTTP 200 71.51s finish length calls 0
+ 17/182 final-1-015      HTTP 200 69.89s finish stop calls 0
+ 18/182 final-1-016      HTTP 200 73.24s finish length calls 0
+ 19/182 final-1-017      HTTP 200 21.53s finish stop calls 0
+ 20/182 final-1-018      HTTP 200 75.44s finish length calls 0
+ 21/182 final-1-019      HTTP 200 76.47s finish length calls 0
+ 22/182 final-1-020      HTTP 200 76.12s finish length calls 0
+ 23/182 final-1-021      HTTP 200 36.27s finish length calls 0
+ 24/182 final-1-022      HTTP 200 72.92s finish length calls 0
+ 25/182 final-1-023      HTTP 200 75.13s finish length calls 0
+ 26/182 final-1-024      HTTP 200 43.47s finish length calls 0
+ 27/182 final-1-025      HTTP 200 76.38s finish length calls 0
+ 28/182 final-1-026      HTTP 200 28.65s finish stop calls 0
+ 29/182 final-1-027      HTTP 200 37.42s finish length calls 0
+ 30/182 final-1-028      HTTP 200 16.35s finish stop calls 0
+ 31/182 final-1-029      HTTP 200 74.86s finish length calls 0
+ 32/182 final-1-030      HTTP 200 34.46s finish stop calls 0
+ 33/182 final-1-031      HTTP 200 71.97s finish length calls 0
+ 34/182 final-1-032      HTTP 200 74.51s finish length calls 0
+ 35/182 final-1-033      HTTP 200 40.81s finish stop calls 0
+ 36/182 final-1-034      HTTP 200 73.09s finish length calls 0
+ 37/182 final-1-035      HTTP 200 72.96s finish length calls 0
+ 38/182 final-1-036      HTTP 200 74.91s finish length calls 0
+ 39/182 final-1-037      HTTP 200 65.27s finish stop calls 0
+ 40/182 final-1-038      HTTP 200 60.71s finish stop calls 0
+ 41/182 final-1-039      HTTP 200 45.86s finish stop calls 0
+ 42/182 final-1-040      HTTP 200 37.53s finish length calls 0
+ 43/182 final-1-041      HTTP 200 39.03s finish stop calls 0
+ 44/182 final-1-042      HTTP 200 61.75s finish length calls 0
+ 45/182 final-1-043      HTTP 200 61.48s finish stop calls 0
+ 46/182 final-1-044      HTTP 200 73.78s finish length calls 0
+ 47/182 final-1-045      HTTP 200 51.27s finish stop calls 0
+ 48/182 final-1-046      HTTP 200 57.95s finish stop calls 0
+ 49/182 final-1-047      HTTP 200 67.36s finish length calls 0
+ 50/182 final-1-048      HTTP 200 74.57s finish length calls 0
+ 51/182 final-1-049      HTTP 200 41.87s finish stop calls 0
+ 52/182 final-1-050      HTTP 200 72.75s finish length calls 0
+ 53/182 final-1-051      HTTP 200 36.96s finish length calls 0
+ 54/182 final-1-052      HTTP 200 33.4s finish length calls 0
+ 55/182 final-1-053      HTTP 200 42.83s finish stop calls 0
+ 56/182 final-1-054      HTTP 200 26.65s finish stop calls 0
+ 57/182 final-1-055      HTTP 200 12.7s finish stop calls 0
+ 58/182 final-1-056      HTTP 200 78.25s finish length calls 0
+ 59/182 final-1-057      HTTP 200 78.93s finish stop calls 0
+ 60/182 final-1-058      HTTP 200 9.97s finish stop calls 0
+ 61/182 final-1-059      HTTP 200 74.51s finish length calls 0
+ 62/182 final-1-060      HTTP 200 78.99s finish length calls 0
+ 63/182 final-1-061      HTTP 200 76.48s finish length calls 0
+ 64/182 final-1-062      HTTP 200 30.59s finish stop calls 0
+ 65/182 final-1-063      HTTP 200 74.44s finish length calls 0
+ 66/182 final-1-064      HTTP 200 76.68s finish length calls 0
+ 67/182 final-1-065      HTTP 200 74.41s finish length calls 0
+ 68/182 final-1-066      HTTP 200 43.45s finish length calls 0
+ 69/182 final-1-067      HTTP 200 73.44s finish length calls 0
+ 70/182 final-1-068      HTTP 200 71.64s finish length calls 0
+ 71/182 final-1-069      HTTP 200 47.33s finish length calls 0
+ 72/182 final-1-070      HTTP 200 74.02s finish length calls 0
+ 73/182 final-2-001      HTTP 200 30.25s finish stop calls 0
+ 74/182 final-2-002      HTTP 200 49.63s finish stop calls 0
+ 75/182 final-2-003      HTTP 200 25.58s finish stop calls 0
+ 76/182 final-2-004      HTTP 200 23.6s finish stop calls 0
+ 77/182 final-2-005      HTTP 200 73.37s finish length calls 0
+ 78/182 final-2-006      HTTP 200 24.23s finish stop calls 0
+ 79/182 final-2-007      HTTP 200 77.67s finish length calls 0
+ 80/182 final-2-008      HTTP 200 21.9s finish stop calls 0
+ 81/182 final-2-009      HTTP 200 4.98s finish stop calls 0
+ 82/182 final-2-010      HTTP 200 26.41s finish stop calls 0
+ 83/182 final-3-001      HTTP 200 38.75s finish stop calls 0
+ 84/182 final-3-002      HTTP 200 16.41s finish stop calls 0
+ 85/182 final-3-003      HTTP 200 13.28s finish stop calls 0
+ 86/182 final-3-004      HTTP 200 79.95s finish length calls 0
+ 87/182 final-3-005      HTTP 200 16.46s finish stop calls 0
+ 88/182 final-3-006      HTTP 200 45.54s finish stop calls 0
+ 89/182 final-3-007      HTTP 200 37.94s finish length calls 0
+ 90/182 final-3-008      HTTP 200 7.29s finish stop calls 0
+ 91/182 final-3-009      HTTP 200 28.26s finish stop calls 0
+ 92/182 final-3-010      HTTP 200 17.56s finish stop calls 0
+ 93/182 final-3-011      HTTP 200 47.27s finish stop calls 0
+ 94/182 final-3-012      HTTP 200 72.9s finish stop calls 0
+ 95/182 final-3-013      HTTP 200 14.71s finish stop calls 0
+ 96/182 final-3-014      HTTP 200 19.46s finish stop calls 0
+ 97/182 final-3-015      HTTP 200 49.27s finish stop calls 0
+ 98/182 final-3-016      HTTP 200 10.44s finish stop calls 0
+ 99/182 final-3-017      HTTP 200 10.64s finish stop calls 0
+100/182 final-3-018      HTTP 200 5.09s finish stop calls 0
+101/182 final-3-019      HTTP 200 15.49s finish stop calls 0
+102/182 final-3-020      HTTP 200 6.99s finish stop calls 0
+103/182 final-3-021      HTTP 200 7.86s finish stop calls 0
+104/182 final-3-022      HTTP 200 70.3s finish length calls 0
+105/182 final-3-023      HTTP 200 15.17s finish stop calls 0
+106/182 final-3-024      HTTP 200 41.58s finish stop calls 0
+107/182 final-3-025      HTTP 200 11.05s finish stop calls 0
+108/182 final-3-026      HTTP 200 16.09s finish stop calls 0
+109/182 final-3-027      HTTP 200 50.08s finish stop calls 0
+110/182 final-3-028      HTTP 200 9.7s finish stop calls 0
+111/182 final-3-029      HTTP 200 9.11s finish stop calls 0
+112/182 final-3-030      HTTP 200 79.62s finish length calls 0
+113/182 final-3-031      HTTP 200 7.24s finish stop calls 0
+114/182 final-3-032      HTTP 200 16.32s finish stop calls 0
+115/182 final-3-033      HTTP 200 17.18s finish stop calls 0
+116/182 final-3-034      HTTP 200 16.72s finish stop calls 0
+117/182 final-3-035      HTTP 200 25.86s finish stop calls 0
+118/182 final-3-036      HTTP 200 16.08s finish stop calls 0
+119/182 final-3-037      HTTP 200 6.47s finish stop calls 0
+120/182 final-3-038      HTTP 200 6.0s finish stop calls 0
+121/182 final-3-039      HTTP 200 33.48s finish stop calls 0
+122/182 final-3-040      HTTP 200 61.55s finish stop calls 0
+123/182 final-4-001      HTTP 200 76.06s finish length calls 0
+124/182 final-4-002      HTTP 200 68.19s finish stop calls 0
+125/182 final-4-003      HTTP 200 32.72s finish stop calls 0
+126/182 final-4-004      HTTP 200 64.52s finish stop calls 0
+127/182 final-4-005      HTTP 200 34.98s finish stop calls 0
+128/182 final-4-006      HTTP 200 75.09s finish length calls 0
+129/182 final-4-007      HTTP 200 75.89s finish length calls 0
+130/182 final-4-008      HTTP 200 48.82s finish stop calls 0
+131/182 final-4-009      HTTP 200 40.56s finish stop calls 0
+132/182 final-4-010      HTTP 200 70.09s finish stop calls 0
+133/182 final-4-011      HTTP 200 52.68s finish stop calls 0
+134/182 final-4-012      HTTP 200 77.84s finish length calls 0
+135/182 final-4-013      HTTP 200 72.18s finish stop calls 0
+136/182 final-4-014      HTTP 200 70.41s finish stop calls 0
+137/182 final-4-015      HTTP 200 76.3s finish length calls 0
+138/182 final-4-016      HTTP 200 34.83s finish stop calls 0
+139/182 final-4-017      HTTP 200 31.97s finish stop calls 0
+140/182 final-4-018      HTTP 200 75.63s finish length calls 0
+141/182 final-4-019      HTTP 200 77.94s finish length calls 0
+142/182 final-4-020      HTTP 200 36.21s finish length calls 0
+143/182 final-4-021      HTTP 200 75.02s finish length calls 0
+144/182 final-4-022      HTTP 200 62.83s finish stop calls 0
+145/182 final-4-023      HTTP 200 75.49s finish length calls 0
+146/182 final-4-024      HTTP 200 76.19s finish length calls 0
+147/182 final-4-025      HTTP 200 58.46s finish stop calls 0
+148/182 final-4-026      HTTP 200 75.99s finish length calls 0
+149/182 final-4-027      HTTP 200 77.95s finish length calls 0
+150/182 final-4-028      HTTP 200 77.37s finish length calls 0
+151/182 final-4-029      HTTP 200 75.36s finish length calls 0
+152/182 final-4-030      HTTP 200 48.73s finish stop calls 0
+153/182 final-4-031      HTTP 200 78.99s finish length calls 0
+154/182 final-4-032      HTTP 200 77.19s finish length calls 0
+155/182 final-4-033      HTTP 200 77.49s finish length calls 0
+156/182 final-4-034      HTTP 200 77.95s finish length calls 0
+157/182 final-4-035      HTTP 200 77.62s finish length calls 0
+158/182 final-4-036      HTTP 200 28.43s finish stop calls 0
+159/182 final-4-037      HTTP 200 75.69s finish length calls 0
+160/182 final-4-038      HTTP 200 56.07s finish length calls 0
+161/182 final-4-039      HTTP 200 77.22s finish length calls 0
+162/182 final-4-040      HTTP 200 71.15s finish stop calls 0
+163/182 final-5a-001     HTTP 200 3.99s finish stop calls 0
+164/182 final-5a-002     HTTP 200 2.93s finish stop calls 0
+165/182 final-5a-003     HTTP 200 3.18s finish stop calls 0
+166/182 final-5a-004     HTTP 200 2.08s finish stop calls 0
+167/182 final-5a-005     HTTP 200 2.89s finish stop calls 0
+168/182 final-5a-006     HTTP 200 10.73s finish stop calls 0
+169/182 final-5a-007     HTTP 200 2.52s finish stop calls 0
+170/182 final-5a-008     HTTP 200 2.57s finish stop calls 0
+171/182 final-5a-009     HTTP 200 2.37s finish stop calls 0
+172/182 final-5a-010     HTTP 200 2.6s finish stop calls 0
+173/182 final-5b-001     HTTP 200 3.39s finish stop calls 0
+174/182 final-5b-002     HTTP 200 3.35s finish stop calls 0
+175/182 final-5b-003     HTTP 200 11.55s finish stop calls 0
+176/182 final-5b-004     HTTP 200 4.56s finish stop calls 0
+177/182 final-5b-005     HTTP 200 10.04s finish stop calls 0
+178/182 final-5b-006     HTTP 200 3.48s finish stop calls 0
+179/182 final-5b-007     HTTP 200 28.77s finish stop calls 0
+180/182 final-5b-008     HTTP 200 3.98s finish stop calls 0
+181/182 final-5b-009     HTTP 200 7.5s finish stop calls 0
+182/182 final-5b-010     HTTP 200 2.65s finish stop calls 0
+done: 182 requests (2 warm-up), harness errors 0
+expert cache 12288 slots
+== peak V100 MiB:  32005
+ask.py exit 0
+v100: clock restored; released

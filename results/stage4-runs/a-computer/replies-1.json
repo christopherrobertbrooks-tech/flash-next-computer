@@ -1,0 +1,518 @@
+{
+ "replies": [
+  {
+   "name": "mul",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "What is 123456789 * 987654321? Use the calc tool, then give the exact answer. End your reply with one line: ANSWER: <the exact value>."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "121932631112635269"
+    ],
+    "answer": "121932631112635269"
+   },
+   "http": 200,
+   "seconds": 10.2,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 584,
+    "completion_tokens": 147,
+    "total_tokens": 731,
+    "prompt_tokens_details": {
+     "cached_tokens": 552
+    }
+   },
+   "content": "121932631112635269\n\nANSWER: 121932631112635269",
+   "reasoning_chars": 171,
+   "tool_calls": [
+    {
+     "time": "06:42:59",
+     "backend": "computer",
+     "expression": "123456789 * 987654321",
+     "result": "121932631112635269",
+     "error": null,
+     "ms": 2225.7,
+     "rpc_id": 3,
+     "chip_tokens": 2430,
+     "computer_seconds": 1.602
+    }
+   ],
+   "problems": [],
+   "verdicts": {
+    "transport": "met",
+    "tool": "met",
+    "answer": "met",
+    "note": null
+   },
+   "raw": {
+    "id": "chatcmpl-8e48c19c9153424d883d1699",
+    "object": "chat.completion",
+    "created": 1793360575,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "121932631112635269\n\nANSWER: 121932631112635269",
+       "reasoning_content": "We need answer user asks compute 123456789 * 987654321 using calc tool, then exact answer ending ANSWER: value. Need call calc.\nNeed final concise with exact answer line.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_a3fc4b40d8814e8ca7a829b9",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_a3fc4b40d8814e8ca7a829b9",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "123456789 * 987654321"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_a3fc4b40d8814e8ca7a829b9",
+         "ok": true,
+         "text": "121932631112635269",
+         "chars": 18,
+         "truncated": false,
+         "ms": 2225
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 584,
+     "completion_tokens": 147,
+     "total_tokens": 731,
+     "prompt_tokens_details": {
+      "cached_tokens": 552
+     }
+    },
+    "timings": {
+     "cache_n": 552,
+     "prompt_n": 32,
+     "prompt_ms": 278.5,
+     "prompt_per_token_ms": 8.703,
+     "prompt_per_second": 114.9,
+     "predicted_n": 53,
+     "predicted_ms": 496.9,
+     "predicted_per_token_ms": 9.375,
+     "predicted_per_second": 106.7,
+     "draft_n": 43,
+     "draft_n_accepted": 39
+    }
+   }
+  },
+  {
+   "name": "pow-floordiv",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Compute (2**64 - 1) // 7 exactly. Use the calc tool. End your reply with one line: ANSWER: <the exact value>."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "2635249153387078802"
+    ],
+    "answer": "2635249153387078802"
+   },
+   "http": 200,
+   "seconds": 8.6,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 862,
+    "completion_tokens": 420,
+    "total_tokens": 1282,
+    "prompt_tokens_details": {
+     "cached_tokens": 829
+    }
+   },
+   "content": "ANSWER: 2635249153387078802",
+   "reasoning_chars": 548,
+   "tool_calls": [
+    {
+     "time": "06:43:08",
+     "backend": "computer",
+     "expression": "(2**64 - 1) // 7",
+     "result": "2635249153387078802",
+     "error": null,
+     "ms": 3135.0,
+     "rpc_id": 4,
+     "chip_tokens": 5188,
+     "computer_seconds": 3.098
+    }
+   ],
+   "problems": [],
+   "verdicts": {
+    "transport": "met",
+    "tool": "met",
+    "answer": "met",
+    "note": null
+   },
+   "raw": {
+    "id": "chatcmpl-0a28434bc6b842f5a5af11d4",
+    "object": "chat.completion",
+    "created": 1793360580,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "ANSWER: 2635249153387078802",
+       "reasoning_content": "We need answer compute (2**64 - 1)//7 exactly using calc tool. Need call calc. Then final with ANSWER. Let's compute maybe 18446744073709551615 // 7. 2^64-1 = 18446744073709551615. Divide by 7: 7*2635249153387078802 = 18446744073709551614? Let's calculate. 2^64 = 18446744073709551616. minus 1. /7 floor. Since 2^3=8 \u22611 mod7, 2^63 \u22611, 2^64 \u22612, so 2^64-1 \u22611 mod7, floor = (2^64-2)/7. (18446744073709551614)/7 = 2635249153387078802? Check 2,635,249,153,387,078,802 *7 = 18,446,744,073,709,551,614 yes. Need use calc tool.\nNeed final one line ANSWER.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_c1e6f3e6ee2841e0b59ba25b",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_c1e6f3e6ee2841e0b59ba25b",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "(2**64 - 1) // 7"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_c1e6f3e6ee2841e0b59ba25b",
+         "ok": true,
+         "text": "2635249153387078802",
+         "chars": 19,
+         "truncated": false,
+         "ms": 3135
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 862,
+     "completion_tokens": 420,
+     "total_tokens": 1282,
+     "prompt_tokens_details": {
+      "cached_tokens": 829
+     }
+    },
+    "timings": {
+     "cache_n": 829,
+     "prompt_n": 33,
+     "prompt_ms": 282.2,
+     "prompt_per_token_ms": 8.552,
+     "prompt_per_second": 116.9,
+     "predicted_n": 34,
+     "predicted_ms": 321.7,
+     "predicted_per_token_ms": 9.462,
+     "predicted_per_second": 105.7,
+     "draft_n": 28,
+     "draft_n_accepted": 25
+    }
+   }
+  },
+  {
+   "name": "two-step",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Multiply 98765432123 by 12345678987, then divide that product by 7. Use the calc tool for each step and give the exact final value as a reduced fraction. End your reply with one line: ANSWER: <the exact value>."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "1219326320002895899401",
+     "1219326320002895899401/7"
+    ],
+    "answer": "1219326320002895899401/7"
+   },
+   "http": 200,
+   "seconds": 16.6,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 906,
+    "completion_tokens": 770,
+    "total_tokens": 1676,
+    "prompt_tokens_details": {
+     "cached_tokens": 891
+    }
+   },
+   "content": "Product: 98765432123 \u00d7 12345678987 = 1219326320002895899401\n\nDividing by 7 gives the reduced fraction:\n\nANSWER: 1219326320002895899401/7",
+   "reasoning_chars": 1469,
+   "tool_calls": [
+    {
+     "time": "06:43:13",
+     "backend": "computer",
+     "expression": "98765432123 * 12345678987",
+     "result": "1219326320002895899401",
+     "error": null,
+     "ms": 1604.4,
+     "rpc_id": 5,
+     "chip_tokens": 2616,
+     "computer_seconds": 1.568
+    },
+    {
+     "time": "06:43:18",
+     "backend": "computer",
+     "expression": "1219326320002895899401 / 7",
+     "result": "1219326320002895899401/7",
+     "error": null,
+     "ms": 3356.7,
+     "rpc_id": 6,
+     "chip_tokens": 5611,
+     "computer_seconds": 3.321
+    },
+    {
+     "time": "06:43:21",
+     "backend": "computer",
+     "expression": "1219326320002895899401 % 7",
+     "result": "5",
+     "error": null,
+     "ms": 1948.4,
+     "rpc_id": 7,
+     "chip_tokens": 3249,
+     "computer_seconds": 1.912
+    }
+   ],
+   "problems": [],
+   "verdicts": {
+    "transport": "met",
+    "tool": "met",
+    "answer": "met",
+    "note": null
+   },
+   "raw": {
+    "id": "chatcmpl-d9b6b9c089a946b8a33a057f",
+    "object": "chat.completion",
+    "created": 1793360589,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Product: 98765432123 \u00d7 12345678987 = 1219326320002895899401\n\nDividing by 7 gives the reduced fraction:\n\nANSWER: 1219326320002895899401/7",
+       "reasoning_content": "We need answer user's arithmetic. Need use calc tool for each step. Need multiply 98765432123 * 12345678987, then divide by 7, exact reduced fraction. Need likely call calc twice. Could do product then division. Need ensure exact. Let's compute maybe with tool. Need final line ANSWER: value.\n\nLet's use calc.\nNow divide by 7 exact fraction. Need reduced fraction. Compute gcd? 1219326320002895899401 / 7. Check divisibility by 7. Let's calc division exact maybe returns fraction.\nNeed reduced fraction. Need check if numerator divisible by 7. Let's compute mod 7. Use calc maybe % 7.\nNot divisible by 7. Since denominator 7 prime, fraction reduced. Need maybe present steps. Ensure final line exactly ANSWER: 1219326320002895899401/7. Could include product. Need maybe verify product? Let's independently check? Could use calc for product maybe already. Need maybe if product is correct. Let's verify with alternative? Could compute using Python mentally? Let's check product: 98,765,432,123 * 12,345,678,987. Approx 9.8765e10 * 1.2345678987e10 = 1.2193e21. Product 1,219,326,320,002,895,899,401? Wait digits: 1219326320002895899401 = 1,219,326,320,002,895,899,401 (22 digits). Approx 1.2193e21 yes.\n\nNeed maybe use calc for each step: done. Could mention product and division. Final line. Ensure no extra after final line? It says End your reply with one line: ANSWER: <the exact value>. So final line exactly. Could include preceding explanation. Need final answer.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_4733f9c7ec354e73a5e38d55",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_4733f9c7ec354e73a5e38d55",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "98765432123 * 12345678987"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_4733f9c7ec354e73a5e38d55",
+         "ok": true,
+         "text": "1219326320002895899401",
+         "chars": 22,
+         "truncated": false,
+         "ms": 1604
+        },
+        {
+         "event": "start",
+         "id": "call_d0c16a8d3f3b4a10a2a87a92",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_d0c16a8d3f3b4a10a2a87a92",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 / 7"
+         },
+         "round": 2
+        },
+        {
+         "event": "result",
+         "id": "call_d0c16a8d3f3b4a10a2a87a92",
+         "ok": true,
+         "text": "1219326320002895899401/7",
+         "chars": 24,
+         "truncated": false,
+         "ms": 3356
+        },
+        {
+         "event": "start",
+         "id": "call_3c1beae560164e999ddcdabd",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_3c1beae560164e999ddcdabd",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 % 7"
+         },
+         "round": 3
+        },
+        {
+         "event": "result",
+         "id": "call_3c1beae560164e999ddcdabd",
+         "ok": true,
+         "text": "5",
+         "chars": 1,
+         "truncated": false,
+         "ms": 1948
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 906,
+     "completion_tokens": 770,
+     "total_tokens": 1676,
+     "prompt_tokens_details": {
+      "cached_tokens": 891
+     }
+    },
+    "timings": {
+     "cache_n": 891,
+     "prompt_n": 15,
+     "prompt_ms": 164.6,
+     "prompt_per_token_ms": 10.973,
+     "prompt_per_second": 91.1,
+     "predicted_n": 431,
+     "predicted_ms": 4319.1,
+     "predicted_per_token_ms": 10.021,
+     "predicted_per_second": 99.8,
+     "draft_n": 322,
+     "draft_n_accepted": 272
+    }
+   }
+  },
+  {
+   "name": "no-tool",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Write a three-line haiku about rain. Don't use any tools."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": false
+   },
+   "http": 200,
+   "seconds": 23.8,
+   "finish": "length",
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 2560,
+    "total_tokens": 2982,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": null,
+   "reasoning_chars": 6862,
+   "tool_calls": [],
+   "problems": [],
+   "verdicts": {
+    "transport": "met",
+    "tool": "met (none)",
+    "answer": "n/a",
+    "note": "known: ran out while thinking"
+   },
+   "raw": {
+    "id": "chatcmpl-08b86080500b4b78ac3deda8",
+    "object": "chat.completion",
+    "created": 1793360605,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": null,
+       "reasoning_content": "We need answer user: \"Write a three-line haiku about rain. Don't use any tools.\" Need final only haiku. Ensure three lines. Maybe 5-7-5 syllables? Let's craft:\nRain taps the window\nPuddles hold gray sky\nLeaves drink the storm\nSyllables? Rain(1) taps(2) the(3) window(4) not 5. Need haiku 5-7-5 maybe.\nLine1: \"Rain taps the glass\" Rain(1) taps(2) the(3) glass(4) no. \"Soft rain taps glass\" Soft(1) rain(2) taps(3) glass(4). \"Rain on the roof\" 4. \"Rain falls softly\" Rain(1) falls(2) softly(3). Need 5: \"Rain falls on leaves\" Rain(1) falls(2) on(3) leaves(4). \"Rain drops on leaves\" Rain(1) drops(2) on(3) leaves(4). \"Rain hits the roof\" 4. \"Rain hits the roof\" Rain 1 hits 2 the 3 roof 4. \"Rain hits the window\" 5? Rain(1) hits(2) the(3) window(4) actually window 2 syllables? win-dow, so Rain(1) hits(2) the(3) window(4,5) =5. Good.\nLine2 7: \"Puddles mirror gray sky\" Puddles(2) mirror(2)=4 gray(1)=5 sky(1)=6. \"Puddles mirror the sky\" Puddles 2 mirror 2 the 1 sky 1 =6. \"Puddles hold gray light\" Puddles2 hold1 gray1 light1=5. \"Puddles hold gray light\" 5. Need 7: \"Puddles hold gray light\" maybe Puddles (2), hold (1), gray (1), light (1) =5. \"Puddles hold the gray sky\" Puddles2 hold1 the1 gray1 sky1=6. \"Puddles hold the gray sky\" 6. \"Puddles hold gray sky light\" Puddles2 hold1 gray1 sky1 light1=6. \"Puddles hold gray sky light\" 6. \"Puddles hold the gray sky\" 6. \"Puddles hold the gray sky\" maybe sky one. Need 7: \"Puddles hold the gray sky\" 6. \"Puddles hold the gray sky\" no. \"Puddles hold the gray sky\" 6. \"Puddles hold the gray sky\" 6. \"Puddles hold the gray sky\" 6. \"Puddles hold the gray sky\" 6.\nLine2: \"Puddles mirror the sky\" 6. \"Puddles mirror the gray sky\" 7? Puddles 2, mirror 2, the 1, gray 1, sky 1 =7. Good.\nLine3 5: \"Leaves drink the storm\" Leaves1 drink1 the1 storm1 =4. \"Leaves drink the rain\" Leaves1 drink1 the1 rain1=4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" rain one. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the rain\" 4. \"Leaves drink the"
+      },
+      "finish_reason": "length"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 422,
+     "completion_tokens": 2560,
+     "total_tokens": 2982,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 422,
+     "prompt_ms": 983.5,
+     "prompt_per_token_ms": 2.331,
+     "prompt_per_second": 429.1,
+     "predicted_n": 2560,
+     "predicted_ms": 22791.4,
+     "predicted_per_token_ms": 8.892,
+     "predicted_per_second": 112.5,
+     "draft_n": 2016,
+     "draft_n_accepted": 1839
+    }
+   }
+  }
+ ]
+}

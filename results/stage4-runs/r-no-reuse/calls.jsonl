@@ -1,0 +1,5 @@
+{"time": "06:25:04", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 2234.2, "rpc_id": 3, "chip_tokens": 2430, "computer_seconds": 1.609}
+{"time": "06:25:14", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3136.3, "rpc_id": 4, "chip_tokens": 5188, "computer_seconds": 3.099}
+{"time": "06:25:21", "backend": "computer", "expression": "98765432123 * 12345678987", "result": "1219326320002895899401", "error": null, "ms": 1606.8, "rpc_id": 5, "chip_tokens": 2616, "computer_seconds": 1.571}
+{"time": "06:25:26", "backend": "computer", "expression": "1219326320002895899401 / 7", "result": "1219326320002895899401/7", "error": null, "ms": 3357.7, "rpc_id": 6, "chip_tokens": 5611, "computer_seconds": 3.32}
+{"time": "06:25:31", "backend": "computer", "expression": "1219326320002895899401 % 7", "result": "5", "error": null, "ms": 1947.4, "rpc_id": 7, "chip_tokens": 3249, "computer_seconds": 1.911}

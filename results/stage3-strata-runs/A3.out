@@ -1,0 +1,67 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+== start 03:27:22
+772724, 7312 MiB, /home/chris/.omnivoice/engines/indextts2/index-tts-2.5/.venv/bin/python
+13 MiB, 32768 MiB
+Mem:           15815        2556       12693          23         926       13259
+strata ready: 1 after 34 s
+== strata loaded 03:27:56
+772724, 7312 MiB, /home/chris/.omnivoice/engines/indextts2/index-tts-2.5/.venv/bin/python
+2945458, 31814 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+31835 MiB, 32768 MiB
+Mem:           15815        8131        7304        4280        4999        7684
+request took 9.6 s
+usage {'prompt_tokens': 1446, 'completion_tokens': 600, 'total_tokens': 2046, 'prompt_tokens_details': {'cached_tokens': 0}}
+), content and tool calls in the template's XML form (
+== after request 03:28:06
+772724, 7312 MiB, /home/chris/.omnivoice/engines/indextts2/index-tts-2.5/.venv/bin/python
+2945458, 31982 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+32003 MiB, 32768 MiB
+Mem:           15815        8601        6794        4281        5037        7214
+== end 03:28:09
+772724, 7312 MiB, /home/chris/.omnivoice/engines/indextts2/index-tts-2.5/.venv/bin/python
+13 MiB, 32768 MiB
+Mem:           15815        2757       12577          28         847       13058
+== peak V100 MiB during the run:  32003
+== strata log: memory and slots
+[strata] 2026-10-30 03:27:22 engine started: /mnt/steam/Strata-0141/engine-cuda12/strata --serve --pack /mnt/steam/Strata-data-0140/packs/coder-iq1_m --native /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf --ple-gguf /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf --expert-profile /mnt/steam/Strata-0141/data/expert-profile-coder.bin --expert-cache auto --prefill auto --spec 4 --spec-min-p 0.5 --mtp /mnt/steam/Strata-data-0140/mtp/rt --max-context 131072 --kv int8 --resident-experts --vram-reserve-mib 700
+strata generate: profile /mnt/steam/Strata-0141/data/expert-profile-coder.bin: 12288 ranked pairs, built for 12288 slots
+strata mtp: draft layer loaded, 950 MiB of VRAM (experts 675, dense 111), files read in 0.66 s (1193 MiB/s)
+strata trace: 25074 MiB free after the weights, the session and the drafter
+strata generate: expert cache auto: 24.49 GiB free, 700 MiB reserved (+218 MiB for the draft head) -> 9513 slots
+strata generate: expert cache 12288 slots, 23.42 GiB of VRAM; policy is
+strata trace: 1092 MiB free after opening the expert cache
+strata trace: 1092 MiB free after the profile fill
+strata generate: pre-filled 12288 of 12288 slots from the profile in 21.0 s (1198 MB/s); slot 0 verified
+strata trace: 1092 MiB free after the R4 hit path
+strata trace: 1092 MiB free after the expert cache and the graphs
+FileExpertSource: 0.27 GiB really free for a 3.40 GiB page-locked complement; the model files' cached pages were released: 11.75 GiB free
+FileExpertSource: mapped pinned cache complement ready: resident 3.40 GiB, pinned 3.40 GiB in 5 s; page-locked and mapped
+FileExpertSource: 1781 of the prompt path's 1781 lendable slots keep their experts in RAM too
+strata serve: the prompt path borrows 1781 CUDA0 cache slots (3.40 GiB)
+strata trace: 956 MiB free after the head and the prompt path
+strata verify: window up to 6 tokens, 75.1 MiB of device buffers (100% VRAM resident: zero-doorbell graph)
+strata mtp: draft head over 106299 tokens (212.9 MiB)
+strata trace: 660 MiB free after the verifier and the drafter's binding
+strata serve: 660 MiB of VRAM free with everything loaded
+strata trace: request 1446 0
+strata trace: prompt start 1445 -1
+strata trace: lent 502 slots for 1536 tokens in 0.1 ms
+strata trace: prompt chunk 0 of 1441
+strata trace: read 1441 tokens (batched) in 1803.4 ms
+strata trace: refill start 502 -1
+strata trace: refilled 502 slots on 1 stage(s) in 311.9 ms
+strata verify: capturing the 4-token window (570 MiB of VRAM free)
+strata trace: read 4 tokens (windows) in 47.7 ms
+strata trace: prompt done (slots refilled) -1 -1
+strata trace: window 1445 1
+strata verify: capturing the 1-token window (554 MiB of VRAM free)
+strata trace: window 1446 4
+strata trace: window 1450 3
+strata verify: capturing the 3-token window (540 MiB of VRAM free)
+strata trace: window 1453 1
+strata trace: window 1454 4
+strata trace: window 1455 4
+strata trace: window 1457 4
+strata trace: window 1461 1
+v100: clock restored; released

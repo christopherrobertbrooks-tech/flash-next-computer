@@ -1,0 +1,2 @@
+3168466, 31982 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+3168719, 464 MiB, /mnt/nvme/qwenputer/.venv/bin/python
