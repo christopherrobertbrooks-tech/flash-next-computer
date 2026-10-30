@@ -85,3 +85,69 @@ The write-up must retain three qualifications (to be checked in pass 2):
 Remaining provenance limitation: the annotated tag, source equality, question commit/hash, saved configs and ordered logs are internally consistent, and current deployed source hashes match. They are not a time-of-launch immutable snapshot proving absence of all unrecorded code changes, trials or hardware variation. The general input inventory predates the final run and is not a new per-launch full-content manifest. State these bounds rather than invent a proven cause for C's repeat differences.
 
 Blind verdict: the saved data support the registered equivalence/practicality verdict **with these resource/repeatability limits**. The extra C repeat is diagnostic evidence, not a replacement primary experiment. No product changes or fresh inference were performed; guided questions and results prose remain unopened until this pass is pushed.
+
+# Pass 2 (guided)
+
+Blind pass `ff80127` was successfully pushed before opening `REVIEW-STAGE5-RESULTS-PASS2.md`, `results/stage5-results.md` or README status. The guided pass answers the six questions below. It does not change the registered scores or substitute the diagnostic C repeat.
+
+## 1. Agreement with the write-up and findings
+
+The write-up's core accuracy table, paired table, corrected interval, median practicality rule, recovered counts, normal-behavior totals and sampled memory maxima agree with the independent audit. Its conclusion of no demonstrated practical accuracy advantage over Python is supported for this frozen benchmark. Its resource/repeatability disclosures are materially useful.
+
+The following prose needs correction; no fresh model runs are required to make these edits:
+
+1. **REDLINE — the diagnostic does not establish either a causal state switch or absence of a co-residency effect.** The write-up moves from “the computer's presence … seemed to change” to “the computer's presence doesn't change Flash-Next's output,” then says Strata “switched into a different state” and “something accumulates.” README retains the opposite, stronger old claim that the computer's presence changes long generations. The observed short repeat excludes an **inevitable** effect of simply having a computer process present on every launch; it does not exclude a duration/history/resource-dependent co-residency effect, and no specific state or accumulation variable was measured. **Smallest replacement in both places:** “The original long C run diverged on later questions; a fresh short C diagnostic matched Python on its 40-question subset. The cause and any dependence on shared-GPU resource history remain unresolved.” Replace “switched state” with the observed task/order boundary, without naming an unmeasured mechanism. Confidence: high.
+
+2. **REDLINE — the budget description incorrectly turns censored/loop-stopped failures into evidence that the model almost never makes mathematical errors.** The table labels all budget cases “ran out of the 8,192-token room,” and the text says “almost never gets the maths wrong.” Of A's 75 length failures, **16 stop below 8192**, and server logs record **17 reasoning-loop stops** (one coincides with 8192). B has a 3072-token reasoning-loop stop. A non-answer/loop termination does not establish that the unfinished computation would have been correct. **Replacement table label:** “budget/length termination (token cap or reasoning-loop stop).” **Replacement sentence:** “Of A's 81 failures, 75 ended as length without an accepted final answer and six stopped with a wrong answer. Length terminations include token-cap and reasoning-loop stops.” Keep these failures counted as registered. Confidence: high.
+
+3. **NIT — diagnostic counts, indexing and tool-free wording need precision.** Diagnostic C matches B on **40/40 final texts**, as claimed, but differs from original C on **8/40 final texts**, not nine. Counting full reasoning changes as well yields ten, not nine; final text and reasoning must be named separately. The first chain is `final-4-001`: **scored question 121 / total request 123 including two warm-ups**, not request 122. The last 20 questions are not entirely tool-free: original C makes five calls on `final-5b-007` (one refusal and four OOM errors). **Smallest edit:** correct those counts and say “including many tool-free code/reading questions.” Confidence: high; direct ID-keyed comparisons.
+
+4. **NIT — “no errors in either server log” and an apparent 300 MiB margin are too broad.** Saved C `server.log` contains tool-error entries, including four consecutive 708-character error results corresponding to the OOMs; refusals also log as errors. No engine restart or warning explaining the drift was identified, which is a narrower statement. And 32768 minus a sampled peak is not guaranteed allocator headroom: the actual exception reports ~28 MiB free. **Replacement:** “No engine restart or diagnostic identifying the drift was found; tool errors, including the four OOMs, were recorded. The sampled device maximum was 32,467 MiB; this is not a safe memory-margin guarantee.” Confidence: high.
+
+## 2. What the divergence and diagnostic establish
+
+The main pre-result observation is verified. Restricting to the **41 differing final replies**, first tool-call expression/presence differs on **21 questions**: 20 chains and one code-reading task. Their concatenated reasoning texts first differ at **8–1440 characters**, matching the write-up. Their request dictionaries are identical. First engine prompt token counts, zero reused tokens and first prefill chunk metadata also match for those 21. This supports **generation-path divergence before a tool answer**, rather than different arithmetic tool results causing every later difference.
+
+Identical counts/chunk sizes are not saved token-ID or state-byte equality. Source inspection makes a tool-list/server-info explanation less likely: `McpHub.template_tools` renders only tool name, description and input schema; both backends return the same TOOL constant under configured server name `math`. The backend-specific MCP `serverInfo.name` is not included by that template-tool builder. Still, rendered input IDs/tool-schema fingerprints were not saved at each invocation, so the metadata alone should not be called a complete prompt-byte proof.
+
+The boundary is also a change of task family and prompt/decoding demands, not only elapsed session age. In the original B/C comparison, all group-1 and group-3 final and reasoning texts match; group 2 has one final/two reasoning differences; all **40 chain reasoning texts differ**, but only 27 chain final texts differ. In group 5a final texts match 6/10 and reasoning 3/10; in group 5b both match 1/10. This is a concentrated later-block pattern, but it does not by itself identify a single permanent state switch.
+
+The short diagnostic reproduces B on all 40 **final texts**, while changing eight original-C final texts and ten original-C reasoning texts. It contains fewer preceding requests and a different overall execution history from the original long C run. It favors a history/task/resource-sensitive hypothesis over “any computer process always changes the result,” but does not establish causality or eliminate transient nondeterminism.
+
+Plausible candidates, and evidence needed to distinguish them if investigating further:
+
+- **Executor allocation/cache growth and headroom:** `_emb` retains embeddings in `emb_cache` across machine resets. That is a concrete persistent allocation path; the OOM record shows ~68 MiB live Torch allocation. Per-call cache size/allocated/reserved memory, plus a matching device-memory timeline, would show whether growth precedes the divergence. Its existence is not proof that it changes Strata's arithmetic or execution path.
+- **Strata K/V/checkpoint state:** compare selected checkpoint IDs, resumed token positions, live/host K/V layouts, GDN/PLE/indexer fingerprints and per-round allocation decisions at the first differing question. Inspected logs contain no explicit elastic-KV resize/shrink diagnostic explaining this event; absence of such a line is not proof that layout/state behavior stayed identical.
+- **Expert-slot lending/refill:** counts can match while contents/order/readiness differ. Slot residency/content checksums and stream-completion markers would discriminate this, while retaining the observed 12,288-slot configuration.
+- **MTP/suffix/verification paths or CUDA concurrency:** record draft source, accepted tokens, window shapes, graph-capture state and synchronized state at the first differing generated token. Matching headline acceptance counts or a fixed temperature does not certify identical intermediate arithmetic.
+- **Prompt/tool rendering:** save actual input token IDs and tool-schema hashes. Current source/request evidence argues against backend identity being intentionally inserted in the prompt, but direct fingerprints would settle it.
+
+An identical “660 MiB free” startup header is not evidence of equal memory available throughout decoding; C's separate process subsequently occupies GPU memory. A controlled long-run replication or one-factor instrumentation could test these hypotheses later. None is needed to correct the present write-up, and no new diagnostic/GPU run was requested or launched by this review.
+
+## 3. The OOM event
+
+It is fairly disclosed as one affected question with **four failed computer calls**, recovered by the model, and it remains in the raw data. Under explicit v3 rules, those soft execution errors can coexist with a correct final answer. The first primary comparison is unaffected because this is group 5, outside the 160 primary questions.
+
+The event is strong evidence that this layout lacks a robust allocation margin. It occurs near the end, whereas the observed divergence begins much earlier, so it cannot retrospectively prove what caused the first divergent chain. It is consistent with a resource-history hypothesis and worth noting, not a causal diagnosis. A higher reserve was successful on earlier stage-4 prompts, but that changes expert residency; its stability/performance over the full stage-5 workload has not been measured here. Do not describe it as a proven remedy for the divergence.
+
+For call accounting, **534 C MCP call attempts** comprise **487 complete reference-clean responses**, **43 refusals**, and **4 execution errors**, including warm-ups. Zero observed trace mismatches is valid; 534 is not a count of 534 successfully completed circuit calculations.
+
+## 4. Does the equivalence verdict survive path variation?
+
+**Yes, as the registered end-to-end benchmark result.** The original paired table is unchanged: 153 both right, 3 C-only, 2 B-only, 2 both wrong. The interval [-2.98, +4.41] points lies strictly within ±5. All five discordant correctness cases are chains. The evidence supports practical accuracy equivalence under the chosen margin and the specific pipeline, with observed C request latency ~1.63x B.
+
+Path variation limits attribution: the one-question C advantage cannot be credited to superior calculator semantics, and the result is not proof of perfect model/pipeline determinism. The interval accounts for the declared question-level paired outcomes under its assumptions; it does not estimate unmeasured between-launch/session noise from one main run per arm. Retain that limitation and the post-hoc diagnostic. Do not replace original C's `final-4-029` with its successful repeat or claim a new primary interval for a hand-picked combination of attempts.
+
+## 5. Recovered counts and failure policy
+
+B 37 / C 43 recovered questions are reproduced. They do not hide a registered hard failure in these data: hard checks remain applied before final-answer correctness, and no recorded trace mismatch/harness/transport/fence stop was found. The four OOMs are execution errors returned through successful HTTP responses, which v3 treats as recoverable soft backend faults; explicit HTTP OOM errors would instead be hard failures. This distinction should stay visible.
+
+Refusals and firmware `error (too complex)` responses are not successes of the tool; a later correct model answer is a success of the whole question under the frozen rule. The raw call logs and recovered column preserve that difference. Group-2 primary inclusion and the 150-question sensitivity breakdown remain as predeclared. No post-hoc exclusion of difficult cases is justified.
+
+## 6. Does the finish-line conclusion hold?
+
+The finish line is answered fairly **for this server-side MCP implementation and frozen synthetic benchmark**: Flash-Next calls the checked computer, both tools improve the measured task outcome substantially over alone, and C shows no demonstrated practical accuracy advantage over Python while adding latency/memory and the observed OOM episode. The property of reference checking is distinct from a measured accuracy gain. Stored-state advantages were not tested because every call starts a new calculator session, as the write-up acknowledges.
+
+Prefer “No accuracy advantage over host Python was established within the registered ±5-point tolerance” to an unqualified assertion that C can never be better. The positive upper confidence limit still allows small differences, and the experiment is not every possible firmware/task design. Equally, a clean short repeat does not erase the resource fault or prove general state isolation.
+
+**Final review verdict:** all reported primary scores and the pre-registered equivalence/practicality calculation check out. Fix the causal/determinism and budget-censoring prose (findings 1–2), plus the smaller repeat/index/log wording errors. The numerical result does not need a replacement run to support its bounded conclusion. Review only; no fresh model/GPU work, public posting or product-branch merge was performed.
