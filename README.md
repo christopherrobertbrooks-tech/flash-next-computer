@@ -14,8 +14,10 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 - 2026-10-30: **Stage 5 done: the measured answer.** 160 maths questions, frozen protocol (`STAGE5-PLAN.md` v3, tag
   `stage5-freeze`): Flash-Next alone 81, with Python 155, with the computer 156. Computer vs Python: **practically
   equivalent** (+0.6 points, 95% interval -3.0 to +4.4), 1.6x slower (practical by the agreed rule), no reference
-  mismatches, one out-of-memory moment. Open: the computer's presence changes Flash-Next's long generations even
-  before any tool result (Python repeated itself 40/40). `results/stage5-results.md`; Codex review pending.
+  mismatches, one question with four out-of-memory call failures. Open: the original long computer run diverged from
+  Python on later questions, even before any tool result; a fresh short computer run matched Python on its
+  40-question subset. The cause, and any dependence on shared-GPU resource history, remain unresolved. Codex
+  reproduced the scores (ff80127 / 3d12646). `results/stage5-results.md`.
 - 2026-10-30: Codex review of 60a4a33 (c2d2b77): the stage 4 answer check is now exact (a declared ANSWER line,
   parsed and compared as a value; 25-case self-test), declared backend differences are exact triples, and the input
   inventory covers Flash-Next's tokenizer and chat template. Live re-run with the new prompts: computer and Python
