@@ -11,6 +11,10 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 `qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
 
 ## Status
+- 2026-10-30: Codex review of 60a4a33 (c2d2b77): the stage 4 answer check is now exact (a declared ANSWER line,
+  parsed and compared as a value; 25-case self-test), declared backend differences are exact triples, and the input
+  inventory covers Flash-Next's tokenizer and chat template. Live re-run with the new prompts: computer and Python
+  both pass, identical replies. `results/stage4-bridge.md`.
 - 2026-10-30: Stage 4 robustness: two conversations in a row and MTP on/off give identical outputs; vision + computer
   ran out of memory as configured (Strata leaves 486 MiB) and works with `--vram-reserve-mib 1200` (-255 expert
   slots, ~2%); `--prompt-cache 0` turned out not to be a clean pause/resume test (it changes fresh reads too), so

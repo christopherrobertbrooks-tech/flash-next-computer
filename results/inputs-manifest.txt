@@ -1,4 +1,4 @@
-# flash-next-computer frozen inputs, 2026-10-30T06:31:30-05:00
+# flash-next-computer input inventory (full sha256 = complete; partial = first/last 64 MiB only), 2026-10-30T06:42:11-05:00
 git qwenputer ca13310e2f9f788d1dd3feeea8213c1b0c23913c dirty=1
 git strata fb58e0dbc8399662c0e47c76578c6e878b14f6cf
 python 2.14.1+cu126 3.8.0 5.22.0
@@ -31,13 +31,18 @@ sha256 4a0f068aaf9e6cd6350e1a8f0988556c96d3bbf9c3ddd372a8590906c8c4031a 3836 /mn
 partial 1a71a187949d67bb7e3b7e584e1a61246d9c65dd7b83ea45dc88538aaab3c65f 29608446496 1791121612 /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00001-of-00002.gguf
 partial b96e4102a0da8659cadaab05ef99f419b73966d03bfb7be36a0c7964ccfd1d16 28800138432 1791122744 /mnt/steam/Strata-data-0140/models/coder-IQ1_M/Qwen3.8-Flash-Next-GSQ-RCO-IQ1_M-00002-of-00002.gguf
 partial 7076c831bcba9aaa6547109c72d40360cb7de6ee0e1d2de52597d28d15450f0c 907543008 1791124480 /mnt/steam/Strata-data-0140/models/mmproj-Qwen3.8-Flash-Next-BF16.gguf
-partial c20d29c73a0d8ad8c2fc7cc9c4dfa345b6fe3bc6d91f74ca0bf7d97367ccc52b 306 1791122751 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/conversions.json
+sha256 c724dc0b0822ada5d2977bf5bde821605feabaa64ea2e0045b67ca656329070a 116099072 /mnt/steam/Strata-data-0140/mtp/rt/dense.bin
+sha256 991456cf4eb266eb8a888c349e548d11bc640f5dbd9149439aa9786af0f732fd 1851 /mnt/steam/Strata-data-0140/mtp/rt/dense.txt
+sha256 b1e1d3a7a9e4bf862dcd5923ce661fb59bbd07907e594df5cf86a62ac235cb91 425196 /mnt/steam/Strata-data-0140/mtp/rt/draft_vocab.bin
+partial 2809e178f2b8580707db47808d4e2dcb6e3b9aa82f585be6bf1bb17975bdc461 707788800 1791123289 /mnt/steam/Strata-data-0140/mtp/rt/experts.bin
+sha256 c82cdadb5cc2b0678d2cccad07430181e031fc05022c9cf31cec997a8cd35c3c 306 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/conversions.json
 partial 5316d9062b8c9da7ac7361b933008d7deaeb21ef45579f28a98aa782880f840d 1475120640 1791122751 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/dense.bin
 partial 5106bd65f155ecf840fef881ddfadc11a86174188d8dc4eb8579d5a077700508 25146163200 1791122887 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/experts.bin
-partial 5126399fad50a5d3b7b6cba367fc3c01adb065b58f015bf516037650223d848b 373 1791122887 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/experts.bin.src.json
-partial 26d92316e6b1d83af19eb3c12d23d62236590261b6fe0044f13675fd91fdc9a8 93633 1791122751 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/index.txt
-partial d60c539d7056df3b92a060103dc182db9777fc69072b44ca760e0bb141d32149 3269 1791122755 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/native_experts.txt
-partial 9db3941abc9724cfc1920ecb2b2f174028651db620535cd8e2d9b70d9ab69cb0 116099072 1791123291 /mnt/steam/Strata-data-0140/mtp/rt/dense.bin
-partial e88e57a35b769c43212744678b2e622818166d7d25f9e376ae9e46dcbbbc6fe1 1851 1791123291 /mnt/steam/Strata-data-0140/mtp/rt/dense.txt
-partial 7205131ac38f948a091f6304493d87901011fcea1696ceab9dd61516f256c301 425196 1791123291 /mnt/steam/Strata-data-0140/mtp/rt/draft_vocab.bin
-partial 2809e178f2b8580707db47808d4e2dcb6e3b9aa82f585be6bf1bb17975bdc461 707788800 1791123289 /mnt/steam/Strata-data-0140/mtp/rt/experts.bin
+sha256 22b9e0976d367eb3078037145c66014a9d01d822fec8fedec39f32c8dcac71fe 373 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/experts.bin.src.json
+sha256 2cb3352786bcae81ea4d933eee6b2d5db45774069320c924a6dea48eb65a3cd3 93633 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/index.txt
+sha256 9ace1b92e1fe12595de469409e69dd52c8d5418c7981c405d9a51aa9d574dd3b 3269 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/native_experts.txt
+sha256 12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce 9993 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/chat_template.jinja
+sha256 4ba698529766c7a2f5052083ea10cdf2485577f5237a332ee291054eb11e3332 3353258 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/merges.txt
+sha256 c0bd435efbc6c3b28964b47999afe16c4ad268c7c7c4e8cb3af410796a6f30bf 541 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/tokenizer.json
+sha256 5088c8c298fc06af8382ddb3b76c888703ac2634e82263b97eedcc2ad202738b 744960 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/token_type.json
+sha256 4ba64f0332abcfb0b600b7df1537d1e836e68009d5fb7cdb77339738dc6365c4 5737005 /mnt/steam/Strata-data-0140/packs/coder-iq1_m/tokenizer/vocab.json

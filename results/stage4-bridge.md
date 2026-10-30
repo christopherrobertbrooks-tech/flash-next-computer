@@ -127,3 +127,26 @@ both backends exactly as the MCP server calls them: 70 random calls (seed 2, not
 
   Stage 5 must count these: on such inputs, the computer answers "error" where Python gives a value.
 - The gate after moving the rules into `contract.py`: 118/0, exit 0 (`stage3-gate3.log`).
+
+## Codex review of 60a4a33 (c2d2b77) and the fixes
+- **19 (redline): the answer check accepted wrong answers.** It searched for the digits anywhere in the reply, so
+  `-121932631112635269`, `121932631112635269.5` and "Not 121932631112635269; the answer is 0" all passed. Fixed:
+  the prompts now ask for a final `ANSWER: <the exact value>` line. The checker parses the last such line as one
+  integer, decimal or p/q (after removing markdown, commas and LaTeX `\frac`) and compares it exactly. Tool correctness
+  and final-answer correctness are now separate verdicts. `--selftest`: 25 cases, including those three wrong answers,
+  a missing ANSWER line and a non-numeric one, all classified correctly; a deliberately broken copy exits 1. Runs made
+  before the ANSWER line can only be re-checked with a weaker "legacy" check (the expected number as a whole signed
+  token somewhere in the reply), reported as "mentioned (weak)", not final-answer correctness. All saved runs pass it,
+  except r-vision's two out-of-memory requests.
+- **Live, with the ANSWER line** (`stage4-runs/a-computer`, `a-python`): both `INTEGRATION CHECK PASSED`, tool and
+  answer verdicts met on all three arithmetic prompts. The computer and Python replies are again identical (text and
+  token counts) on all four prompts. The new prompts changed the replies themselves (e.g. the two-step now makes 3
+  calls), so these two runs are the new baseline.
+- **20: the inventory missed Flash-Next's tokenizer and chat template.** Fixed: every regular file under the pack is
+  included, recursively (vocab, merges, token types, `chat_template.jinja`, tokenizer metadata, which match Codex's
+  independent fingerprints). Files over 256 MiB are labelled partial fingerprints (first/last 64 MiB), which can't
+  detect a change in the middle: this is provenance, not a full-content freeze of the weights.
+- **21: declared differences were broader than observed.** Fixed: `contract_test.py` now accepts only the five exact
+  observed (expression, computer outcome, Python outcome) triples. `--selftest` proves that `2+2` -> "too complex",
+  `2**2` -> error, a tab case where Python crashed, a different `10**61` result, and a `1_000` computer failure are
+  all undeclared. Re-applied to the saved contract-2 data: still 121/126 same, 5 declared.

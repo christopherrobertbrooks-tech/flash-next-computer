@@ -1,0 +1,5 @@
+{"time": "06:44:29", "backend": "python", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 3.7, "rpc_id": 3}
+{"time": "06:44:35", "backend": "python", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 0.3, "rpc_id": 4}
+{"time": "06:44:38", "backend": "python", "expression": "98765432123 * 12345678987", "result": "1219326320002895899401", "error": null, "ms": 0.3, "rpc_id": 5}
+{"time": "06:44:39", "backend": "python", "expression": "1219326320002895899401 / 7", "result": "1219326320002895899401/7", "error": null, "ms": 0.3, "rpc_id": 6}
+{"time": "06:44:40", "backend": "python", "expression": "1219326320002895899401 % 7", "result": "5", "error": null, "ms": 0.3, "rpc_id": 7}
