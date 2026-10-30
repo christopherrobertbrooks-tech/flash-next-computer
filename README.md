@@ -1,0 +1,21 @@
+# flash-next-computer
+
+Can an exact, deterministic computer (from [Qwenputer](https://github.com/divagr18/qwenputer)) work with
+Qwen3.8-Flash-Next Coder served by Strata on Chris's Tesla V100, and does it beat the same model alone and the same
+model with an ordinary Python tool?
+
+**Finish line:** Flash-Next Coder on the V100 able to call an exact computer, with a measured answer to whether it does
+better than Flash-Next alone and Flash-Next with host Python (accuracy, latency, memory).
+
+The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseline it builds on is the private
+`qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
+
+## Status
+- 2026-10-30: Stage 1 remainder: Codex verifying the last 40 paired records (`qwenputer-v100`, `REVIEW-40.md`).
+- 2026-10-30: Stage 2 started: read-only map of the **deployed** Strata (v0.1.41, `fb58e0d`, not the public 0.2.x the
+  plan's source notes describe) -> `mapping/`.
+
+## Rules
+Private until Chris says otherwise. No model downloads, posts or merges without his OK. Read-only on the live Strata
+setup until a test is agreed; tests run as their own launch, never by changing llama-swap's live config. Sprocket's
+voice stays on the 4070. Codex reviews are two-pass (blind first).
