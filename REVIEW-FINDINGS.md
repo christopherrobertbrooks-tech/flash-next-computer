@@ -227,3 +227,58 @@ The MCP adapter keeps trace execution in a separate process, resets for each cal
 **Verdict:** the two prior service redlines are closed, and the new positive controls materially improve the evidence. The initial MCP arithmetic proof checks out. Narrow the stage-4 isolation wording and add an enforcing, artifact-preserving integration checker before relying on the new harness as a gate. Vision coexistence, cancellation, explicit state isolation, MTP on/off, consecutive conversations and frozen inputs remain open as the report already states.
 
 Validation: actual-method CPU exception/reset/deadline probes, actual reply-validator error probe, deliberately wrong stage-4 transport probe, independent JSON/arithmetic/signature/config comparisons, read-only raw CSV recount, shell syntax, and `git diff --check`. Only this findings file changed.
+
+# Stage-4 completion re-check: `60a4a33`
+
+Reviewed the stage3 update at `60a4a33` in a separate temporary worktree. Nothing was merged. This pass covers fixes for 15–18, the shared input contract, new robustness runs, and provenance inventory. No GPU execution, Strata launch, install, or gateway mutation was performed. Gateway access was limited to saved CSV/log reads, source excerpts and tokenizer fingerprints.
+
+## What is verified and closed
+
+- **15 substantially addressed:** the new driver requires tool calls, expected tool results, no tool errors, a stopped arithmetic answer containing the expected value, and no tools for the haiku. Its CPU-only `--selftest` actually ran **15 cases**, all passing their expected good/bad classifications, including the original no-tool/wrong-result controls. It now makes the historical no-tool `length` outcome explicit rather than calling it a completed haiku. A remaining final-answer false positive is finding 19 below.
+- **16 closed:** the report now distinguishes matching saved outputs from unproven byte-identical internal state. Direct pause/resume isolation remains explicitly open.
+- **17 closed for new runs:** every new request saves its request body, full raw reply, associated per-request call-log slice and verdict. New MCP logs carry RPC IDs. Old summaries remain identified as historical, rather than being presented as full raw replies.
+- **18 closed:** cold Python timings and timing-resolution limitations are now correctly disclosed.
+- Shared validation was factored into `contract.py` without changing the machine execution loop. All six local service/driver source files covered by the manifest match their recorded full SHA256 values. `stage3-gate3.log` reports the retained 118/0 gate after the refactor; this was not rerun on a GPU by the reviewer.
+
+## Raw robustness evidence
+
+I re-executed the **actual current `check()` function** on every new saved raw reply and its stored per-request tool calls. Each recomputed verdict matches its saved `problems` list: computer-3 4/4; r-two-passes 4/4 in each pass; r-no-mtp 4/4; r-no-reuse 4/4; r-vision **2/4**; r-vision-reserve 4/4. The comparison includes the known no-tool empty/length outcome where declared, not four completed user tasks.
+
+The repeated-pass and no-MTP output claims hold for final text, generated/prompt token totals and reasoning-character lengths. Some **cache reuse counts differ**: no-MTP multiplication cached 523 instead of 526 and power 830 instead of 832; the repeated second pass's two-step cached 899 instead of 900. This does not contradict matching generated outputs, but the complete usage dictionaries are not byte-identical. No token-ID or hidden-state equality was inferred.
+
+Independent read-only gateway CSV recount:
+
+| Run | Samples (500 ms) | Maximum device MiB | Effective expert slots |
+| --- | ---: | ---: | --- |
+| computer-3 | 187 | 32,417 | 12,288 |
+| r-two-passes | 298 | 32,419 | 12,288 |
+| r-no-mtp | 196 | 31,253 | 12,288 |
+| r-no-reuse | 169 | 32,427 | 12,288 |
+| r-vision | 205 | 32,447 | 11,642 initially, 11,438 after restart |
+| r-vision-reserve | 177 | 32,129 | 11,387 |
+
+The vision failure is real and appropriately retained: `r-vision/server.log` records `verify: instantiate: out of memory`, HTTP 400 and engine exit code 1; the next request restarts it. The enlarged-reserve run succeeds on the declared prompts. This demonstrates that configuration for this workload, not full-context capacity or an indefinitely safe memory ceiling. Fresh-read and expert-residency changes are plausible explanations for output changes, but do not isolate their causal contribution as cleanly as matched fixed-layout controls would.
+
+`--prompt-cache 0` is correctly identified as an inadequate substitute for a direct state-isolation comparison. Two sequential passes through the prompt set support repeatability and checkpoint reuse on these prompts; they do not test concurrent conversations or cancellation. Those remain unclaimed.
+
+## Shared-contract evidence
+
+Independently recounted the committed comparison JSONs: contract-1 has **126 inputs, 118 identical / 8 different**; contract-2 has **126 inputs, 121 identical / 5 different**. The three corrected whitespace cases and the five remaining declared differences match the prose. These five are two register-exhaustion errors, the `10**61` error, tab syntax and underscore syntax. Firmware source explicitly has `MAXD=62`, a seven-allocatable-register pool, error 2 for register exhaustion, and bounded big-number multiplication in its power routine. The declarations are experimental diagnoses, not independently measured proofs of every individual failure's cause.
+
+The report correctly says stage 5 must **count**, rather than discard, these backend differences. Sharing input validation does not make firmware/Python execution semantics identical; the declared exceptions should remain part of the baseline definition. Normalization of leading/trailing spaces and dropped newlines is now applied to Python intentionally and disclosed.
+
+## Remaining findings
+
+19. **REDLINE before using this checker as final-answer correctness evidence — digit matching accepts wrong signed/decimal answers and quoted non-answers.** `computer/stage4_requests.py:check` searches for the positive expected string with boundaries excluding only digits and `/`, after removing formatting. With correct tool-call logs, the real checker returns **no problems** for each of these final contents: `-121932631112635269`, `121932631112635269.5`, and `Not 121932631112635269; the answer is 0`. I reproduced all three by importing only the CPU-safe request module and calling its actual `check()`. The first two contain a different numeric value; the third mentions but explicitly denies the expected answer. Thus the documented “exact final value” gate still has false positives, despite its 15 passing controls. **Smallest fix:** at least enforce signed integer/fraction/decimal token boundaries and add these negative controls; for a reliable final-answer gate, declare a specific final-value field/marker and parse/compare that value rather than searching anywhere in prose. Preserve separate tool-result correctness and model-final-answer correctness verdicts. This is not evidence that any saved arithmetic response is wrong; it limits what a passing checker certifies. Confidence: high.
+
+20. **NIT — the “frozen inputs” inventory omits Flash-Next's deployed tokenizer/template and is not a full-content weight freeze.** `scripts/inputs_manifest.sh` walks only regular files immediately under the pack directory, so its `tokenizer/` subdirectory is skipped. It hashes the Qwenputer tokenizer, but not the distinct Flash-Next vocab, merges, special-token types or chat template controlling call parsing/re-rendering. Multi-GB weights are intentionally first/last-chunk hashes, which cannot detect interior changes; that limitation is disclosed and should stay explicit. **Smallest fix:** include full hashes of all regular files under the deployed pack's `tokenizer/` directory and the saved per-run configurations, and call the current weight entries partial fingerprints rather than complete content hashes. The inventory is useful provenance, not an exhaustive proof that every run input was immutable. For reference, read-only current gateway fingerprints are tokenizer metadata `c0bd435efbc6c3b28964b47999afe16c4ad268c7c7c4e8cb3af410796a6f30bf`, vocab `4ba64f0332abcfb0b600b7df1537d1e836e68009d5fb7cdb77339738dc6365c4`, chat template `12827f24b742ea4e80cdc12dbcf9622227056b9f797252a3149263d4f9aaadce`. These observations were taken at review time, not retroactively at run start. Confidence: high.
+
+21. **NIT — declared-difference predicates are broader than the observed exceptions.** `contract_test.py` says each rule must match the difference exactly, but any expression whose computer result is “too complex” is accepted as a known register limit, and any power expression returning an error while Python succeeds is accepted as a 62-digit power limit. The tab/underscore rules do not even require a successful expected Python outcome. CPU-only execution of the actual predicates accepts (a) `2+2` -> computer “too complex” / Python 4, (b) `2**2` -> computer error / Python 4, and (c) a tab case where the Python backend raises an unrelated RuntimeError. **Smallest fix:** for this frozen corpus, use the exact five observed `(expression, computer outcome, Python outcome)` triples, or enforce precise invariants for broader rules. Add these controls so unrelated regressions cannot be relabeled as declared limitations. Keep all differences visible and counted in future accuracy results. Confidence: high. The current 121/126 recount remains valid.
+
+## Completion verdict
+
+The working **server-side MCP bridge and its bounded robustness experiment are demonstrated**, including the disclosed default-vision OOM and successful larger-reserve remedy. Earlier output-isolation overclaims are corrected and evidence retention is much better. No advantage over Python is established, and no merged-weight/engine-internal computer is claimed.
+
+I would treat this as a completed **bounded bridge proof**, with a final-answer scoring redline to close before trusting future accuracy totals. Full internal-state isolation, cancellation and broad resource bounds remain explicitly outside the demonstrated result. Preserve those limitations when moving to stage 5; fix the scorer, tighten declared exception rules, and complete the small-file provenance inventory before freezing that evaluation. No merge was performed.
+
+Checks: 15-case CPU self-test; replay of every new saved integration verdict; deliberate signed/decimal/non-answer and declared-exception controls; independent comparison/contract recounts; local source hashes; gateway CSV/OOM-log verification; shell syntax; `git diff --check`. Only this findings file changed.
