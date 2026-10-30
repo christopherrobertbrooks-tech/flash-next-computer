@@ -168,3 +168,26 @@ Guided re-check following `REVIEW-STAGE5-RECHECK.md`, against protocol v3. I bro
 The fixes materially improve the tooling, and the supplied controls really exercise and pass the original reported failures. The interval, regenerated capture validation, explicit hard/soft failure policy, chains and offline reference diagnosis are in much better shape.
 
 **Two redlines remain before a clean pilot recommendation:** separate candidate failure from wall bootstrap failure, and make call-completion identities unique across backend restarts. The missing-hash check is also a small worthwhile fix before recording pilot artifacts. Add the two reproduced negative controls, rerun CPU checks, then re-check that limited diff. No implementation changes or pilot runs were made by this reviewer.
+
+# Second re-check: `524a1ff` (findings 11–15 only)
+
+Checked the newly pushed update following the added second-recheck section of `REVIEW-STAGE5-RECHECK.md`. Upstream fixes were brought into the existing review branch as authorized. This is the requested limited re-check, not a new full protocol review. No implementation changes by the reviewer, GPU/model work, Strata launches, installs, gateway writes or product-branch merges.
+
+**No new findings in this scope. Findings 11–15 are closed.**
+
+| Finding | Evidence and disposition |
+| --- | --- |
+| 11. Candidate stderr misclassified as wall failure | **Closed.** stderr is discarded. Candidate nonzero status is a failed code test when the independent trusted canary succeeds; a genuinely failing canary raises `WallError`. The actual bwrap control prints `bwrap:` and exits 1, and now scores as wrong code rather than harness failure. Independent substituted-canary control also confirms a real wall failure is rejected. |
+| 12. RPC reuse across restarts | **Closed for the reproduced failure.** Both begin/end records carry a server-instance ID; completion matching uses `(instance, rpc_id)`. The previous fixture now retains the new instance's call as open despite the old instance's completed identical RPC ID. The full local HTTP fixture confirms the restarted call stays with its question and the following request waits. A never-ending call exits 5 before the next question and preserves the open-call record. The runner also fences an HTTP-200 response when a call remains open. |
+| 13. Absent question hash accepted | **Closed.** An absent/unreadable/empty fingerprint is rejected, as is a different hash. The expanded integrity controls pass. |
+| 14. Boolean/float accepted as integer | **Closed.** Parent-side recursive type equality rejects booleans for 1/0 and floats for integers; the same tests pass with actual integers. Tuple-to-list normalization remains explicitly allowed. |
+| 15. Unbounded capture / unavailable diagnostic treated as a value | **Closed for the stated defects.** Output is read in chunks and stopped at the cap rather than buffered in full before testing. The 100 MB-output controls fail with `output too large`. Helper exceptions now return None; independent helper-plus-scorer control classifies a resulting error as `unknown`. |
+
+Validation completed on the reviewed source:
+
+- Expanded `stage5/score.py --selftest`: **passes**, including interval fixtures/coverage, real bwrap good/bad/forgery/type/output/timeout controls, classifiers, chains and hash/ID integrity.
+- `stage5/test_ask_fake.py`: **passes all 11 assertions**, including original late-call/error cases, restarted ID reuse, never-ending call with retained evidence, and missing-status refusal. All activity was a local synthetic HTTP fixture, not Strata.
+- Additional actual-function probes confirm instance-aware open-call matching, helper-exception `unknown`, and trusted-canary failure handling.
+- Diff inspection and `git diff --check`: pass.
+
+**Pilot recommendation:** the remaining scoped redlines are closed; the bounded pilot may proceed under the reviewed protocol. This is a tooling-readiness conclusion from CPU controls, not a claim that the V100 pilot has already succeeded. Keep the pilot separate from the final questions, retain failures, and check in with Chris before the full overnight run as planned. No pilot or overnight run was launched or scheduled by this review.
