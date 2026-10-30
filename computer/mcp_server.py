@@ -114,7 +114,7 @@ def main():
                     result, err, info = backend.run(expr)
                 ms = round((time.time() - t0) * 1000, 1)
                 logf.write(json.dumps({"time": time.strftime("%X"), "backend": a.backend, "expression": expr,
-                                       "result": result, "error": err, "ms": ms, **info}) + "\n")
+                                       "result": result, "error": err, "ms": ms, "rpc_id": mid, **info}) + "\n")
                 text = result if err is None else f"error: {err}"
                 send({"jsonrpc": "2.0", "id": mid, "result": {"content": [{"type": "text", "text": text}],
                                                               "isError": err is not None}})

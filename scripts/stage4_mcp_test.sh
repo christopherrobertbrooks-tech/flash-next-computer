@@ -39,10 +39,11 @@ echo "strata ready: $ok after $(( $(date +%s) - t0 )) s"
 sleep 3
 echo "== /mcp status"; curl -s localhost:8091/mcp | python3 -c "import json,sys;d=json.load(sys.stdin);print(json.dumps(d)[:600])"
 nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader | grep -v -E "sunshine|indextts"
-python3 /mnt/nvme/flashnext-test/computer/stage4_requests.py http://localhost:8091 $T/replies.json || FAIL=1
+: > $T/calls.jsonl                   # per-request tool calls are read from this log
+python3 /mnt/nvme/flashnext-test/computer/stage4_requests.py http://localhost:8091 $T/replies.json $T/calls.jsonl || FAIL=1
 echo "== tool calls (calls.jsonl)"; cat $T/calls.jsonl 2>/dev/null
 echo "== strata: tool lines, reuse"; grep -E "tool computer__calc|reused|prompt [0-9]+ tokens" $T/server.log $T/strata.log 2>/dev/null | cut -c1-200 | tail -30
 grep -o "expert cache [0-9]* slots" $T/strata.log | head -1; grep -o "[0-9]* MiB of VRAM free with everything loaded" $T/strata.log | head -1
 echo "== peak V100 MiB: $(cut -d, -f2 $T/mem.csv | sort -n | tail -1)"
-[ $FAIL = 0 ] && echo "RUN OK" || echo "RUN FAILED"
+[ $FAIL = 0 ] && echo "RUN OK (every declared expectation met)" || echo "RUN FAILED"
 exit $FAIL

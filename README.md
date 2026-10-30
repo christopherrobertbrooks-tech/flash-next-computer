@@ -12,8 +12,10 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 
 ## Status
 - 2026-10-30: Stage 4 first proof: Flash-Next called the computer by itself through Strata's MCP tools, 4/4 exact;
-  with the computer and with Python it wrote the same words (Python twice: identical, so the comparison holds).
-  Cost: 1.4-3.2 s per call (Python ~0.1 ms) and ~430 MiB of VRAM (peak 32,417 of 32,768 MiB). `results/stage4-bridge.md`.
+  on these four prompts, the final replies were identical with the computer and with Python (Python twice: identical).
+  State isolation isn't shown by that and stays open. Cost: 1.4-3.2 s per call (Python milliseconds or less) and
+  ~430 MiB of VRAM (peak 32,417 of 32,768 MiB). Codex's re-check (3443e87): the request driver now enforces declared
+  expectations (self-test proves wrong answers fail) and saves every raw reply. `results/stage4-bridge.md`.
 - 2026-10-30: Stage 1 done: Codex verified the last 40 paired records locally, no findings (`qwenputer-v100`, `REVIEW-40-FINDINGS.md`): all 200 pairs identical across both computer paths.
 - 2026-10-30: Codex reviewed stages 2-3 (`REVIEW-FINDINGS.md`): fail-open paths in the first service and runner,
   memory measured on a stand-in, some overstated wording. The recorded service failures and the runner were improved;
