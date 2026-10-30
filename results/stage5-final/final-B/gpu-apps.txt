@@ -1,0 +1,1 @@
+3150122, 31990 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
