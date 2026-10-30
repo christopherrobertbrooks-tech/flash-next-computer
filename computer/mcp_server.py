@@ -52,15 +52,25 @@ class ComputerBackend:
 
 
 class PythonBackend:
+    """Upstream's exact calculator behind the same accepted-input contract as the computer (contract.py)."""
     name = "python"
 
     def __init__(self, model):
-        from chipformer.rv import calc
+        from transformers import AutoTokenizer
+        from chipformer.rv import bridge as BR, calc
+        from contract import first_special_id
         self.calc = calc
+        self.tok = AutoTokenizer.from_pretrained(model)
+        self.T = BR.Text(Path(model) / "tokenizer.json")
+        self.first_special = first_special_id(self.tok)
 
     def run(self, expr):
-        if not isinstance(expr, str):
-            return None, "refused: the expression must be a string", {}
+        from contract import CallRefused, check_input
+        try:
+            check_input(expr, self.tok, self.T, self.first_special)
+        except CallRefused as e:
+            return None, f"refused: {e}", {}
+        expr = expr.replace("\n", "").strip(" ")   # read the input as the firmware does: newlines dropped, spaces skipped
         try:
             return self.calc.expected(expr).strip(), None, {}
         except Exception as e:  # noqa: BLE001

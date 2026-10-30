@@ -11,6 +11,12 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 `qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
 
 ## Status
+- 2026-10-30: Stage 4 robustness: two conversations in a row and MTP on/off give identical outputs; vision + computer
+  ran out of memory as configured (Strata leaves 486 MiB) and works with `--vram-reserve-mib 1200` (-255 expert
+  slots, ~2%); `--prompt-cache 0` turned out not to be a clean pause/resume test (it changes fresh reads too), so
+  direct state isolation stays open; no cancellation. Both backends now share one input contract: 121/126 inputs
+  identical, the 5 differences are the computer's declared limits (too complex, 62-digit power steps, tab, `1_000`).
+  Frozen inputs in `results/inputs-manifest.txt`. `results/stage4-bridge.md`.
 - 2026-10-30: Stage 4 first proof: Flash-Next called the computer by itself through Strata's MCP tools, 4/4 exact;
   on these four prompts, the final replies were identical with the computer and with Python (Python twice: identical).
   State isolation isn't shown by that and stays open. Cost: 1.4-3.2 s per call (Python milliseconds or less) and

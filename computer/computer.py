@@ -32,17 +32,11 @@ from chipformer.rv import core, elf, ref
 from chipformer.rv import spec as S
 from chipformer.rv.tritonexec import Executor2
 
-CALL = "<tool_call>\n<function=calc>\n<parameter=expression>\n{expr}\n</parameter>\n</function>\n</tool_call>"
-MARKERS = ("<tool_call>", "</tool_call>", "<tool_response>", "</tool_response>", "<function", "</function",
-           "<parameter", "</parameter", "<think>", "</think>", "<|im_start|>", "<|im_end|>", "<|endoftext|>")
+from contract import CALL, MARKERS, CallRefused, check_input, first_special_id  # noqa: F401  (re-exported)
 
 
 class _Late(Exception):
     """The deadline passed inside the reference run."""
-
-
-class CallRefused(Exception):
-    """The call was not run (invalid session or input)."""
 
 
 class Computer:
@@ -69,7 +63,7 @@ class Computer:
         self.emb_cache, self.graph, self.lock = {}, None, None
         self.valid = False
         self.mutex = threading.Lock()
-        self.first_special = min(i for i in self.tok.all_special_ids if i > 1000)   # Qwen's specials start here
+        self.first_special = first_special_id(self.tok)
 
     # --- the executor, as upstream's chat.ExecRow drives it ------------------------------------------------
     def _emb(self, ids):
@@ -153,21 +147,6 @@ class Computer:
         self.ex.load_init()
         self.lock.history(ids)
 
-    def _check_input(self, expr, ids):
-        if not isinstance(expr, str):
-            raise CallRefused("the expression must be a string")
-        for mk in MARKERS:
-            if mk in expr:
-                raise CallRefused(f"the expression contains the protocol marker {mk!r}")
-        inner = self.tok.encode(expr, add_special_tokens=False)
-        if any(i >= self.first_special for i in inner):
-            raise CallRefused("the expression encodes to a special token")
-        if ids.count(self.T.TCO) != 1 or ids.count(self.T.TCC) != 1 or ids[-1] != self.T.TCC:
-            raise CallRefused("the call must contain exactly one <tool_call> ... </tool_call>")
-        captured = len(ids) - ids.index(self.T.TCO) - 2
-        if captured > S.CAP_MAX:
-            raise CallRefused(f"the call is {captured} tokens; the circuit captures at most {S.CAP_MAX}")
-
     MAX_SESSION_TOKENS = 2_000_000           # the reference's history grows with every call; start a new session
 
     @torch.no_grad()
@@ -187,8 +166,7 @@ class Computer:
             if len(self.lock.toks) > self.MAX_SESSION_TOKENS:
                 self.valid = False
                 raise CallRefused("the session's history is full: call new_session()")
-            ids = self.tok.encode(CALL.format(expr=expr) if isinstance(expr, str) else "", add_special_tokens=False)
-            self._check_input(expr, ids)          # refusals change nothing
+            ids = check_input(expr, self.tok, self.T, self.first_special)   # refusals change nothing
             self.valid = False                    # from here on the state changes: valid again only on success
             out = self._call(expr, ids, max_chip, max_seconds, deadline)
             if out["error"] is None:

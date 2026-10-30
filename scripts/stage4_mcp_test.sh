@@ -1,6 +1,8 @@
 #!/bin/bash
 # Stage 4: Strata 0.1.41 (vision off, its own launch on port 8091, live config untouched) with the calc MCP tool.
-# usage: stage4_mcp_test.sh LABEL computer|python   (inside the V100 lock)
+# usage: [CFG=config.json] [DROP="--mtp"] [ADD="--prompt-cache 0"] [PASSES=N] stage4_mcp_test.sh LABEL computer|python
+#   (inside the V100 lock). CFG defaults to the novision config; DROP removes each named flag and its value; ADD
+#   appends args; PASSES runs the prompt set N times in one server session (replies-1.json ... replies-N.json).
 # Every backend runs the same layout: --resident-experts keeps all 12,288 experts in VRAM (it overrides
 # --expert-cache, so a smaller slot count can't be set this way); the computer then fits in the ~660 MiB left.
 set -uo pipefail
@@ -10,8 +12,12 @@ S=/mnt/steam/Strata-0141; V100=GPU-9c9e042a-edd4-dbf9-b6a4-c0d88b33a796
 if curl -s -o /dev/null localhost:8091/health; then echo "ABORT: something already answers on port 8091"; exit 1; fi
 python3 - <<PY
 import json
-c = json.load(open("$S/strata-coder-iq1_m-novision.json"))
+c = json.load(open("$S/${CFG:-strata-coder-iq1_m-novision.json}"))
 c["log"] = "$T/strata.log"
+a = c["args"]
+for flag in "${DROP:-}".split():
+    i = a.index(flag); del a[i:i + 2]
+a += "${ADD:-}".split()
 c["mcp_servers"] = {"computer": {
     "command": "/mnt/nvme/qwenputer/.venv/bin/python",
     "args": ["/mnt/nvme/flashnext-test/computer/mcp_server.py", "--backend", "$BACKEND",
@@ -39,8 +45,12 @@ echo "strata ready: $ok after $(( $(date +%s) - t0 )) s"
 sleep 3
 echo "== /mcp status"; curl -s localhost:8091/mcp | python3 -c "import json,sys;d=json.load(sys.stdin);print(json.dumps(d)[:600])"
 nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader | grep -v -E "sunshine|indextts"
+python3 -c "import json;print('== engine args:', ' '.join(json.load(open('$T/config.json'))['args'][-12:]))"
 : > $T/calls.jsonl                   # per-request tool calls are read from this log
-python3 /mnt/nvme/flashnext-test/computer/stage4_requests.py http://localhost:8091 $T/replies.json $T/calls.jsonl || FAIL=1
+for p in $(seq 1 ${PASSES:-1}); do
+  echo "== pass $p"
+  python3 /mnt/nvme/flashnext-test/computer/stage4_requests.py http://localhost:8091 $T/replies-$p.json $T/calls.jsonl || FAIL=1
+done
 echo "== tool calls (calls.jsonl)"; cat $T/calls.jsonl 2>/dev/null
 echo "== strata: tool lines, reuse"; grep -E "tool computer__calc|reused|prompt [0-9]+ tokens" $T/server.log $T/strata.log 2>/dev/null | cut -c1-200 | tail -30
 grep -o "expert cache [0-9]* slots" $T/strata.log | head -1; grep -o "[0-9]* MiB of VRAM free with everything loaded" $T/strata.log | head -1

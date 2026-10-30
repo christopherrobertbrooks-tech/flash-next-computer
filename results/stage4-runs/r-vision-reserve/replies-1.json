@@ -1,0 +1,498 @@
+{
+ "replies": [
+  {
+   "name": "mul",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "What is 123456789 * 987654321? Use the calc tool, then give the exact answer."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "121932631112635269"
+    ],
+    "answer": "121932631112635269"
+   },
+   "http": 200,
+   "seconds": 20.4,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 1413,
+    "completion_tokens": 1026,
+    "total_tokens": 2439,
+    "prompt_tokens_details": {
+     "cached_tokens": 1382
+    }
+   },
+   "content": "121932631112635269",
+   "reasoning_chars": 1451,
+   "tool_calls": [
+    {
+     "time": "06:30:47",
+     "backend": "computer",
+     "expression": "123456789 * 987654321",
+     "result": "121932631112635269",
+     "error": null,
+     "ms": 2267.7,
+     "rpc_id": 3,
+     "chip_tokens": 2430,
+     "computer_seconds": 1.618
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-daee763e35684f55a26f825a",
+    "object": "chat.completion",
+    "created": 1793359833,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "121932631112635269",
+       "reasoning_content": "We need answer user asks compute 123456789 * 987654321 using calc tool then exact answer. Need call calc. Then final exact. Let's compute maybe 121932637415957? Let's verify. 987654321*123456789. Known 123456789*987654321 = 121932637415957? Let's calculate: 987,654,321 * 123,456,789.\n987,654,321*123,000,000 = 121,481,481,483,000,000? Wait 987,654,321*123 = 121,481,481,483? Let's do: 987,654,321*100=98,765,432,100; *20=19,753,086,420; *3=2,962,962,963 sum=121,481,481,483. times 1,000,000 = 121,481,481,483,000,000.\n*456,789 = *456,000 + *789. *456 = *400 395,061,728,400; *50 49,382,716,050; *6 5,925,925,926 sum 450,370,370,376 times 1000 = 450,370,370,376,000. *789 = *800 - *11 = 790,123,456,800 - 10,864,197,531 = 779,259,259,269. Sum *456,789 = 451,149,629,635,269. Add to 121,481,481,483,000,000 = 121,932,631,112,635,269? Wait that's 18 digits? Let's align: 121,481,481,483,000,000 + 451,149,629,635,269 = 121,932,631,112,635,269. But known maybe 121,932,637,415,957? That's 15 digits? Let's check magnitude: 1.234e8 * 9.876e8 = 1.219e17, so 18 digits. 121,932,631,112,635,269 is 18 digits. My earlier known 121932637415957 is 15 digits, wrong maybe for 123456789*987654321? Let's recalc carefully.\nUse calc tool.\nNeed final exact answer. Could mention calc result. Ensure no extra? User asks use calc then give exact answer. Final: 121,932,631,112,635,269 maybe exact. Include comma? Exact answer can be with commas. Better plain integer.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_012a5a8e9ad14e1297d6eadb",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_012a5a8e9ad14e1297d6eadb",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "123456789 * 987654321"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_012a5a8e9ad14e1297d6eadb",
+         "ok": true,
+         "text": "121932631112635269",
+         "chars": 18,
+         "truncated": false,
+         "ms": 2267
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 1413,
+     "completion_tokens": 1026,
+     "total_tokens": 2439,
+     "prompt_tokens_details": {
+      "cached_tokens": 1382
+     }
+    },
+    "timings": {
+     "cache_n": 1382,
+     "prompt_n": 31,
+     "prompt_ms": 301.7,
+     "prompt_per_token_ms": 9.732,
+     "prompt_per_second": 102.8,
+     "predicted_n": 88,
+     "predicted_ms": 1088.9,
+     "predicted_per_token_ms": 12.374,
+     "predicted_per_second": 80.8,
+     "draft_n": 68,
+     "draft_n_accepted": 55
+    }
+   }
+  },
+  {
+   "name": "pow-floordiv",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Compute (2**64 - 1) // 7 exactly. Use the calc tool."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "2635249153387078802"
+    ],
+    "answer": "2635249153387078802"
+   },
+   "http": 200,
+   "seconds": 9.3,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 859,
+    "completion_tokens": 425,
+    "total_tokens": 1284,
+    "prompt_tokens_details": {
+     "cached_tokens": 826
+    }
+   },
+   "content": "2635249153387078802",
+   "reasoning_chars": 580,
+   "tool_calls": [
+    {
+     "time": "06:30:57",
+     "backend": "computer",
+     "expression": "(2**64 - 1) // 7",
+     "result": "2635249153387078802",
+     "error": null,
+     "ms": 3167.7,
+     "rpc_id": 4,
+     "chip_tokens": 5188,
+     "computer_seconds": 3.131
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-82b2a24144e540b9bdf07d0a",
+    "object": "chat.completion",
+    "created": 1793359848,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "2635249153387078802",
+       "reasoning_content": "We need answer compute (2**64 - 1) // 7 exactly using calc tool. Need call calc. Then final answer. Let's compute maybe 18467440737095516161? Let's verify: 2^64-1 = 18446744073709551615. Divide by 7 floor. 7*2635249153387078802 = 18446744073709551614? Let's calculate. Actually (2^64-1)/7 =? Since 2^3=8 \u22611 mod7, 2^63 \u22611, 2^64 \u22612, so 2^64-1 \u22611 mod7, floor = (2^64-2)/7. 2^64=18446744073709551616, minus2=18446744073709551614 /7 = 2635249153387078802? Let's multiply 2,635,249,153,387,078,802 *7 = 18,446,744,073,709,551,614 yes. So answer. Need use calc tool.\nNeed final concise.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_715879b1eb144646a7f89109",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_715879b1eb144646a7f89109",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "(2**64 - 1) // 7"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_715879b1eb144646a7f89109",
+         "ok": true,
+         "text": "2635249153387078802",
+         "chars": 19,
+         "truncated": false,
+         "ms": 3167
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 859,
+     "completion_tokens": 425,
+     "total_tokens": 1284,
+     "prompt_tokens_details": {
+      "cached_tokens": 826
+     }
+    },
+    "timings": {
+     "cache_n": 826,
+     "prompt_n": 33,
+     "prompt_ms": 300.3,
+     "prompt_per_token_ms": 9.1,
+     "prompt_per_second": 109.9,
+     "predicted_n": 27,
+     "predicted_ms": 267.2,
+     "predicted_per_token_ms": 9.896,
+     "predicted_per_second": 101.0,
+     "draft_n": 21,
+     "draft_n_accepted": 21
+    }
+   }
+  },
+  {
+   "name": "two-step",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Multiply 98765432123 by 12345678987, then divide that product by 7. Use the calc tool for each step and give the exact final value as a reduced fraction."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": true,
+    "results": [
+     "1219326320002895899401",
+     "1219326320002895899401/7"
+    ],
+    "answer": "1219326320002895899401/7"
+   },
+   "http": 200,
+   "seconds": 15.3,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 912,
+    "completion_tokens": 565,
+    "total_tokens": 1477,
+    "prompt_tokens_details": {
+     "cached_tokens": 897
+    }
+   },
+   "content": "Using the calc tool:\n\n1. Product:  \n   \\(98765432123 \\times 12345678987 = 1219326320002895899401\\)\n\n2. Divide by 7:  \n   \\(\\frac{1219326320002895899401}{7}\\)\n\nSince the numerator is not divisible by 7, the exact reduced fraction is:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+   "reasoning_chars": 822,
+   "tool_calls": [
+    {
+     "time": "06:31:02",
+     "backend": "computer",
+     "expression": "98765432123 * 12345678987",
+     "result": "1219326320002895899401",
+     "error": null,
+     "ms": 1620.6,
+     "rpc_id": 5,
+     "chip_tokens": 2616,
+     "computer_seconds": 1.585
+    },
+    {
+     "time": "06:31:07",
+     "backend": "computer",
+     "expression": "1219326320002895899401 / 7",
+     "result": "1219326320002895899401/7",
+     "error": null,
+     "ms": 3401.3,
+     "rpc_id": 6,
+     "chip_tokens": 5611,
+     "computer_seconds": 3.366
+    },
+    {
+     "time": "06:31:11",
+     "backend": "computer",
+     "expression": "1219326320002895899401 % 7",
+     "result": "5",
+     "error": null,
+     "ms": 1973.7,
+     "rpc_id": 7,
+     "chip_tokens": 3249,
+     "computer_seconds": 1.935
+    }
+   ],
+   "problems": [],
+   "note": null,
+   "raw": {
+    "id": "chatcmpl-e6bb8a3635284ae0b76b1bf1",
+    "object": "chat.completion",
+    "created": 1793359858,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Using the calc tool:\n\n1. Product:  \n   \\(98765432123 \\times 12345678987 = 1219326320002895899401\\)\n\n2. Divide by 7:  \n   \\(\\frac{1219326320002895899401}{7}\\)\n\nSince the numerator is not divisible by 7, the exact reduced fraction is:\n\n\\[\n\\boxed{\\frac{1219326320002895899401}{7}}\n\\]",
+       "reasoning_content": "We need answer user: Multiply 98765432123 by 12345678987, then divide that product by 7. Use calc tool for each step and give exact final value as reduced fraction.\n\nNeed use calc tool for each step. We can call calc for product, then calc for product/7. Need exact final reduced fraction. Let's compute carefully. Could use tool. Need maybe two calls: first product, second divide by 7. Since second depends on first, sequential.\n\nLet's compute with calc.\nNow divide by 7 exact reduced fraction. Need calc: 1219326320002895899401 / 7. Check divisibility? Let's compute.\nIt returned fraction unchanged, meaning not divisible by 7? Need verify gcd maybe. Could compute mod 7. Let's check.\nFinal reduced fraction is 1219326320002895899401/7. Need present steps. Ensure exact final value. Could mention product and division.\n",
+       "strata_mcp": [
+        {
+         "event": "start",
+         "id": "call_22ab3a8357d043c89b2f03ad",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_22ab3a8357d043c89b2f03ad",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "98765432123 * 12345678987"
+         },
+         "round": 1
+        },
+        {
+         "event": "result",
+         "id": "call_22ab3a8357d043c89b2f03ad",
+         "ok": true,
+         "text": "1219326320002895899401",
+         "chars": 22,
+         "truncated": false,
+         "ms": 1620
+        },
+        {
+         "event": "start",
+         "id": "call_0185263608744106bb73ec46",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_0185263608744106bb73ec46",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 / 7"
+         },
+         "round": 2
+        },
+        {
+         "event": "result",
+         "id": "call_0185263608744106bb73ec46",
+         "ok": true,
+         "text": "1219326320002895899401/7",
+         "chars": 24,
+         "truncated": false,
+         "ms": 3401
+        },
+        {
+         "event": "start",
+         "id": "call_708bdd017813434d918d7cbc",
+         "name": "computer__calc"
+        },
+        {
+         "event": "call",
+         "id": "call_708bdd017813434d918d7cbc",
+         "name": "computer__calc",
+         "server": "computer",
+         "tool": "calc",
+         "arguments": {
+          "expression": "1219326320002895899401 % 7"
+         },
+         "round": 3
+        },
+        {
+         "event": "result",
+         "id": "call_708bdd017813434d918d7cbc",
+         "ok": true,
+         "text": "5",
+         "chars": 1,
+         "truncated": false,
+         "ms": 1973
+        }
+       ]
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 912,
+     "completion_tokens": 565,
+     "total_tokens": 1477,
+     "prompt_tokens_details": {
+      "cached_tokens": 897
+     }
+    },
+    "timings": {
+     "cache_n": 897,
+     "prompt_n": 15,
+     "prompt_ms": 174.0,
+     "prompt_per_token_ms": 11.6,
+     "prompt_per_second": 86.2,
+     "predicted_n": 205,
+     "predicted_ms": 2112.1,
+     "predicted_per_token_ms": 10.303,
+     "predicted_per_second": 97.1,
+     "draft_n": 157,
+     "draft_n_accepted": 141
+    }
+   }
+  },
+  {
+   "name": "no-tool",
+   "request": {
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "Write a three-line haiku about rain. Don't use any tools."
+     }
+    ],
+    "temperature": 0,
+    "max_tokens": 3000,
+    "stream": false,
+    "strata_mcp": true
+   },
+   "expect": {
+    "tool": false
+   },
+   "http": 200,
+   "seconds": 7.2,
+   "finish": "stop",
+   "usage": {
+    "prompt_tokens": 422,
+    "completion_tokens": 467,
+    "total_tokens": 889,
+    "prompt_tokens_details": {
+     "cached_tokens": 0
+    }
+   },
+   "content": "Rain taps the window\nPuddles mirror the gray sky\nLeaves bow like whispers",
+   "reasoning_chars": 1189,
+   "tool_calls": [],
+   "problems": [],
+   "note": "haiku completed",
+   "raw": {
+    "id": "chatcmpl-4c711277932542438be4b03c",
+    "object": "chat.completion",
+    "created": 1793359873,
+    "model": "qwen3.8-flash-next-coder-iq1_m",
+    "choices": [
+     {
+      "index": 0,
+      "message": {
+       "role": "assistant",
+       "content": "Rain taps the window\nPuddles mirror the gray sky\nLeaves bow like whispers",
+       "reasoning_content": "We need answer user: \"Write a three-line haiku about rain. Don't use any tools.\" Need final only haiku. Ensure three lines. Maybe 5-7-5 syllables? Let's craft:\nRain taps the window\nPuddles hold gray sky\nLeaves bow like whispers\nSyllables? Rain(1) taps(2) the(3) window(4) =4 not 5. Need 5-7-5 maybe.\n\"Rain taps the glass\" 4? Rain 1 taps 2 the 3 glass 4. \"Soft rain taps glass\" 5? Soft(1) rain(2) taps(3) glass(4). Hmm.\nLine1 5: \"Rain taps the pane\" Rain1 taps2 the3 pane4. \"Rain drops on glass\" Rain1 drops2 on3 glass4. \"Rain hits the roof\" Rain1 hits2 the3 roof4. \"Rain falls softly\" Rain1 falls2 softly3? softly 2 syllables? soft-ly =2, total 3. Need 5.\n\"Rain taps the window\" Rain1 taps2 the3 win-dow4? window 2 syllables, total 4? Rain(1) taps(2) the(3) window(4? window two syllables so 4? Actually count syllables: Rain=1, taps=1, the=1, window=2 =>5. Good.\nLine2 7: \"Puddles mirror the gray sky\" Puddles2? Puddles =2? pud-dles 2, mirror 2, the 1, gray 1, sky 1 total 7? 2+2+1+1+1=7. Good.\nLine3 5: \"Leaves bow in wind\" Leaves1 bow1 in1 wind1 =4. \"Leaves bow to wind\" 5? Leaves1 bow1 to1 wind1 =4. \"Leaves bow like whispers\" Leaves1 bow1 like1 whispers2 =5. Good.\nFinal three lines.\n"
+      },
+      "finish_reason": "stop"
+     }
+    ],
+    "usage": {
+     "prompt_tokens": 422,
+     "completion_tokens": 467,
+     "total_tokens": 889,
+     "prompt_tokens_details": {
+      "cached_tokens": 0
+     }
+    },
+    "timings": {
+     "cache_n": 0,
+     "prompt_n": 422,
+     "prompt_ms": 1172.5,
+     "prompt_per_token_ms": 2.778,
+     "prompt_per_second": 359.9,
+     "predicted_n": 467,
+     "predicted_ms": 6050.3,
+     "predicted_per_token_ms": 12.956,
+     "predicted_per_second": 77.2,
+     "draft_n": 414,
+     "draft_n_accepted": 287
+    }
+   }
+  }
+ ]
+}

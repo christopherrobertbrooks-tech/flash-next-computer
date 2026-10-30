@@ -72,3 +72,58 @@ end-to-end latency on more prompts, vision + service memory, and a frozen inputs
 - **Live run with the new checker** (`stage4-runs/computer-3`, computer backend): `INTEGRATION CHECK PASSED`, exit 0;
   4 tool calls, all exact, each with its JSON-RPC id; final replies and token counts identical to computer-2; every
   request's raw reply saved; V100 peak 32,417 MiB again.
+
+# Stage 4 robustness (2026-10-30, about 6:10-6:30 am)
+
+All runs use the computer backend and the enforcing checker (`computer/stage4_requests.py`). The same four prompts
+were sent each time, and the outputs were compared with `computer-3`. Raw files are in `stage4-runs/r-*`.
+
+| Run | What changed | Checks | Outputs vs computer-3 | V100 peak |
+|---|---|---|---|---|
+| r-two-passes | the prompt set twice in one server session | 8/8 met | **identical** in both passes (text, token counts, reasoning length) | 32,419 MiB |
+| r-no-mtp | `--mtp` removed (suffix drafts only) | 4/4 met | **identical** | 31,253 MiB |
+| r-no-reuse | `--prompt-cache 0` (every round re-reads the whole prompt) | 4/4 met | different (see below) | 32,427 MiB |
+| r-vision | normal vision config + the computer | **2/4: engine out of memory** | n/a | 32,447 MiB |
+| r-vision-reserve | vision config, `--vram-reserve-mib 1200` (was 700) | 4/4 met | different (fewer resident experts) | 32,129 MiB |
+
+- **Two conversations in a row:** the second pass resumed from the first pass's checkpoints. For example, the
+  multiplication took 4.5 s instead of 10.8 s, and every output was identical. Resuming from saved state
+  didn't change any answer.
+- **MTP on/off:** identical outputs, as Strata's design says (speculative verification is bit-identical to greedy).
+- **`--prompt-cache 0` is not a clean pause/resume test.** It also changes how Strata reads a *fresh* prompt: with it
+  off, Strata keeps no turn-boundary checkpoint ("0 checkpoints" vs "1"). The haiku and the first round of the
+  `(2**64-1)//7` prompt then come out differently, although nothing was reused in either run (both "0 reused").
+  The difference therefore comes from how the prompt is read, not from resuming after a tool round. A direct state
+  comparison (GDN/KV after a pause vs a cold read) still needs engine access and stays **open**.
+- **Vision + computer: doesn't fit as configured.** With vision, Strata leaves 486 MiB free; the computer takes
+  ~430 MiB, then Strata builds its verify graphs on the first answer (48, then 28 MiB free) and fails ("verify: instantiate: out
+  of memory"). The engine exits, restarts sized around the computer (11,438 slots), and the next two prompts pass.
+  **Fix:** reserve room up front. With `--vram-reserve-mib 1200`, the run had 11,387 slots (normal vision: 11,642;
+  -255, ~2%), 984 MiB free after load, no errors, and all checks met. Fewer resident experts send some expert work to
+  the CPU, so outputs differ from the all-resident runs. The haiku also completes in both runs that changed the read
+  path; neither difference is a tool effect.
+- **Cancellation:** not supported or claimed (the MCP server handles one request at a time and ignores cancel
+  notifications).
+- **Frozen inputs:** `inputs-manifest.txt` (`scripts/inputs_manifest.sh`) holds sha256 of the firmware, calc source,
+  bridge/executor code, Qwenputer config/tokenizer files, the Strata engine binaries, server/MCP code, both configs, the
+  expert profile and our service/driver code. The 13 multi-GB weight files get size, mtime and a sha256 of their first
+  and last 64 MiB ("partial"). Also recorded: upstream qwenputer `ca13310` (one local change: the low-RAM patch in
+  `chat.py`), Strata `fb58e0d`, torch 2.14.1 / triton 3.8.0 / transformers 5.22.0, driver 580.173.02.
+
+## One contract for both backends (before stage 5)
+`computer/contract.py` now holds the accepted-input rules, and **both** MCP backends use them: protocol markers,
+special tokens and calls over the 80-token capture are refused alike. The Python backend also reads input the way the
+firmware does (newlines dropped, surrounding spaces skipped). `computer/contract_test.py` runs the same inputs through
+both backends exactly as the MCP server calls them: 70 random calls (seed 2, not the gate's) plus 56 tricky ones.
+
+- First comparison (`contract/contract-1.log`): 118/126 the same. 3 whitespace differences were Python's helper
+  choking on leading spaces and newlines; those were fixed in the Python backend.
+- Second (`contract-2.log`): **121/126 the same; the 5 differences are all declared, as the computer's real limits**
+  (firmware `calc.c`), exit 0:
+  - two long random expressions: "error (too complex: split it)": the firmware runs out of registers;
+  - `10**61`: the firmware's `**` multiplies through intermediate products that must fit 62 digits (Python checks only
+    the final value);
+  - `1\t+2` (a tab) and `1_000` (digit separators): Python-only syntax.
+
+  Stage 5 must count these: on such inputs, the computer answers "error" where Python gives a value.
+- The gate after moving the rules into `contract.py`: 118/0, exit 0 (`stage3-gate3.log`).
