@@ -72,13 +72,24 @@ questions where the two runs took different paths (below), not computer errors.
   with the reasoning text diverging within its first 8-1,440 characters. The prompt and its reading were identical in
   both (same token count, same single prefill chunk, nothing reused), and startup memory was identical (660 MiB free).
   Six of these questions are in the repeat subset, where B matched itself exactly. So **the computer's presence on the
-  card changes Flash-Next's output somewhere in Strata's generation**, even though no tool result has been
-  delivered. This isn't a tool-correctness problem: C's answers were still right on 156/160. But it means "the
-  computer leaves no trace" doesn't hold on long generations. Not yet explained; a likely area is memory pressure
-  during decoding (the one out-of-memory event shows how little room is left). Twenty of the 21 are chain questions
-  (long prompts, long thinking); the pilot and stage 4 (short) showed it once or never.
-- A diagnostic repeat of C on the same 40 questions (~25 min, not part of the registered protocol) would show whether
-  C is repeatable with itself. Not run; it needs Chris's go.
+  card seemed to change Flash-Next's output somewhere in Strata's generation**, even though no tool result had been
+  delivered. This isn't a tool-correctness problem: C's answers were still right on 156/160. Twenty of the 21 are chain
+  questions (long prompts, long thinking); the pilot and stage 4 (short) showed it once or never. The diagnostic
+  repeat below narrows it down.
+- **Diagnostic repeat of C** (Chris's go; not part of the registered protocol; `stage5-final/diag-Crep/`, 5:18-5:36 pm,
+  the same 40 questions as B's repeat): the computer arm on its own matched **Python on 40/40** replies, and differed
+  from the first C run on 9, exactly the 9 where that first run had split from Python. So **the computer's presence
+  doesn't change Flash-Next's output**; something in the long first C run did.
+- **Where it happened:** in the first C run, the first 121 requests (groups 1-3) match Python, apart from the one where
+  the computer legitimately said "too complex". From request 122 (the first chain, 2:35 pm) to the end, nearly every
+  reply differs, including the last 20 coding questions, where no tool was called at all. So Strata switched into a
+  different state at about that point and stayed there. Python's long run (and both short repeats) never did.
+- **Not found in the logs:** no warnings, restarts or errors in either server log; the same expert-slot lending and
+  refilling; the same resident-RAM lines; V100 memory (sampled every 500 ms) in the same ranges in the long and the
+  short computer runs. The cause is still open. Something accumulates over a long session when the computer shares the
+  card; the out-of-memory moment at the end of that run suggests memory headroom, but that isn't shown. The accuracy
+  result stands either way (the divergence added 5 discordant pairs, split 3-2, inside the interval). A practical
+  safeguard is to reserve room for the computer (`--vram-reserve-mib 1200`).
 
 ## Chains
 Both tool arms got almost every chain right (B 37/40, C 38/40), but Flash-Next often batches several steps into
