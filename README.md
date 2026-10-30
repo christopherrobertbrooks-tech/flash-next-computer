@@ -11,12 +11,16 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 `qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
 
 ## Status
+- 2026-10-30: Stage 4 first proof: Flash-Next called the computer by itself through Strata's MCP tools, 4/4 exact;
+  with the computer and with Python it wrote the same words (Python twice: identical, so the comparison holds).
+  Cost: 1.4-3.2 s per call (Python ~0.1 ms) and ~430 MiB of VRAM (peak 32,417 of 32,768 MiB). `results/stage4-bridge.md`.
 - 2026-10-30: Stage 1 done: Codex verified the last 40 paired records locally, no findings (`qwenputer-v100`, `REVIEW-40-FINDINGS.md`): all 200 pairs identical across both computer paths.
 - 2026-10-30: Codex reviewed stages 2-3 (`REVIEW-FINDINGS.md`): fail-open paths in the first service and runner,
-  memory measured on a stand-in, some overstated wording. All fixed: the service fails closed and the enforced gate
-  passes, 103 cases, 0 unexpected (and fails when a wrong expectation is injected); the real service uses ~450 MiB GPU
-  and ~1.7 GB host RAM. `results/stage3-gate.md`. Open for the stage 4 proof: real Flash-Next routing, vision +
-  service, pause/resume isolation.
+  memory measured on a stand-in, some overstated wording. The recorded service failures and the runner were improved;
+  the 103-case corpus passed and a deliberately wrong expectation failed; the real service uses ~450 MiB GPU and
+  ~1.7 GB host RAM. Codex's re-check of `a7ac5b3` (352b583) found two redlines left (exceptions and failed resets left
+  the session valid; the time limit skipped the reference run) and two nits (benchmark scripts exited 0 on failures;
+  wording). Those are fixed and the gate now has positive controls for each: `results/stage3-gate.md`.
 - 2026-10-30: Stage 3 first interface proof (superseded by the gate above): 88/88 clean calls, ~1.6 s per call
   (Python: microseconds). `results/stage3-interface.md`.
 - 2026-10-30: Stage 3 Strata side by side: vision off + the computer process (434 MiB) = 12,152 expert slots and

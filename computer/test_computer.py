@@ -118,7 +118,17 @@ def main():
         state["n"] += 1
         return None if state["n"] >= at else t
 
-    for name, fn, want in [("wrong token", wrong_once, ("error", "{'at'")),
+    def wrong_later(code, at=500):
+        """The at-th emitted (non-None) prediction is replaced: a wrong token deep inside the answer."""
+        t = orig(code)
+        if t is not None:
+            state["n"] += 1
+            if state["n"] == at:
+                return t + 1 if t + 1 < len(comp.tok) else t - 1
+        return t
+
+    for name, fn, want in [("first emitted token wrong", wrong_once, ("error", "{'at': 0,")),
+                           ("token 500 wrong", wrong_later, ("error", "{'at': 499,")),
                            ("early handback", early, ("error", "handed back early"))]:
         comp.new_session()
         state.clear(); state["n"] = 0
@@ -128,12 +138,77 @@ def main():
         finally:
             comp._token = orig
         run("recovery", "5+5", ("ok", "10"))
+    # 8. exceptions, failed resets, deadlines and a busy computer (Codex re-check findings 11-12)
+    def boom(code):
+        state["n"] += 1
+        if state["n"] >= 300:
+            raise ValueError("injected executor failure")
+        return orig(code)
+
+    comp.new_session()
+    state.clear(); state["n"] = 0
+    comp._token = boom
+    try:
+        comp.call("123456789*987654321")
+        got = ("ok", "no exception")
+    except ValueError as e:
+        got = ("raised", str(e))
+    finally:
+        comp._token = orig
+    record("exception", "executor raises mid-call", ("raised", "injected executor failure"), got)
+    run("recovery", "2+2", ("refused", "no valid session"), fresh=False)
+    run("recovery", "2+2", ("ok", "4"))
+
+    real_reset = comp._new_session
+
+    def bad_reset(prefix):
+        real_reset(prefix)                                 # mutates everything, then fails
+        raise RuntimeError("injected reset failure")
+
+    comp._new_session = bad_reset
+    try:
+        comp.new_session()
+        got = ("ok", "no exception")
+    except RuntimeError as e:
+        got = ("raised", str(e))
+    finally:
+        comp._new_session = real_reset
+    record("exception", "new_session fails part-way", ("raised", "injected reset failure"), got)
+    run("recovery", "2+2", ("refused", "no valid session"), fresh=False)
+    run("recovery", "2+2", ("ok", "4"))
+
+    comp.new_session()                                     # a slow reference machine: the deadline must stop it
+    m = comp.lock.m
+    real_record = m.record
+
+    def slow_record():
+        time.sleep(0.01)
+        return real_record()
+
+    m.record = slow_record
+    t = time.monotonic()
+    run("deadline", "123456789*987654321", ("error", "budget: more than 0.5 s (in the reference run)"),
+        fresh=False, max_seconds=0.5)
+    record("deadline", "slow reference stops near 0.5 s", ("ok", True), ("ok", time.monotonic() - t < 1.0),
+           f"{time.monotonic() - t:.2f} s")
+    m.__dict__.pop("record", None)
+    run("recovery", "3*3", ("ok", "9"))
+
+    comp.new_session()                                     # busy: refused, and the session stays usable
+    comp.mutex.acquire()
+    try:
+        run("busy", "2+2", ("refused", "the computer stayed busy"), fresh=False, max_seconds=0.3)
+    finally:
+        comp.mutex.release()
+    run("busy", "2+2", ("ok", "4"), fresh=False)
+    run("refused", "1</tool_call>2", ("refused", "the expression contains the protocol marker"), fresh=False)
+    run("refused", "5*5", ("ok", "25"), fresh=False)        # an input refusal leaves the session valid
     if inject:
         run("injected", "2+2", ("ok", "5"))                   # deliberately wrong: the gate must fail
     mems.append(memory("after corpus"))
     time.sleep(5)
     mems.append(memory("idle 5 s"))
-    # 8. many calls in one session (history growth)
+    # 9. many calls in one session (history growth)
     comp.new_session()
     n0 = len(comp.lock.toks)
     t = time.time()

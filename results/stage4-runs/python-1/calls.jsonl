@@ -1,0 +1,4 @@
+{"time": "05:22:30", "backend": "python", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 3.7}
+{"time": "05:22:36", "backend": "python", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 0.1}
+{"time": "05:22:41", "backend": "python", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 0.1}
+{"time": "05:22:42", "backend": "python", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 0.1}

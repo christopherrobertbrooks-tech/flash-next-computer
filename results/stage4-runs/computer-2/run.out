@@ -1,0 +1,36 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 30 s
+== /mcp status
+{"servers": [{"name": "computer", "transport": "stdio", "status": "starting", "error": null, "info": {}, "tools": []}], "tools": 0, "settings": {"timeout_s": 180.0, "max_result_chars": 20000, "max_rounds": 8}}
+2986568, 31814 MiB, /mnt/steam/Strata-0141/engine-cuda12/strata
+mul           HTTP 200   10.3s finish stop usage {'prompt_tokens': 557, 'completion_tokens': 184, 'total_tokens': 741, 'prompt_tokens_details': {'cached_tokens': 526}}
+   content: 'The exact answer is:\n\n**121932631112635269**\n\n(That is, 121,932,631,112,635,269 — an 18-digit number.)'
+pow-floordiv  HTTP 200    8.5s finish stop usage {'prompt_tokens': 865, 'completion_tokens': 431, 'total_tokens': 1296, 'prompt_tokens_details': {'cached_tokens': 832}}
+   content: '2635249153387078802'
+two-step      HTTP 200   16.6s finish stop usage {'prompt_tokens': 937, 'completion_tokens': 1029, 'total_tokens': 1966, 'prompt_tokens_details': {'cached_tokens': 900}}
+   content: 'Using the calc tool:\n\n1. Product:  \n   \\(98765432123 \\times 12345678987 = 1219326320002895899401\\)\n\n2. Divide by 7:  \n   \\(\\frac{1219326320002895899401}{7}\\)\n\nExact final value as a reduced fraction:\n\n\\[\n\\boxed{\\frac{121'
+no-tool       HTTP 200   23.8s finish length usage {'prompt_tokens': 422, 'completion_tokens': 2560, 'total_tokens': 2982, 'prompt_tokens_details': {'cached_tokens': 0}}
+   content: ''
+== tool calls (calls.jsonl)
+{"time": "05:21:04", "backend": "computer", "expression": "123456789 * 987654321", "result": "121932631112635269", "error": null, "ms": 2230.5, "chip_tokens": 2430, "computer_seconds": 1.601}
+{"time": "05:21:13", "backend": "computer", "expression": "(2**64 - 1) // 7", "result": "2635249153387078802", "error": null, "ms": 3142.2, "chip_tokens": 5188, "computer_seconds": 3.106}
+{"time": "05:21:20", "backend": "computer", "expression": "98765432123*12345678987", "result": "1219326320002895899401", "error": null, "ms": 1440.3, "chip_tokens": 2330, "computer_seconds": 1.404}
+{"time": "05:21:24", "backend": "computer", "expression": "1219326320002895899401/7", "result": "1219326320002895899401/7", "error": null, "ms": 3184.9, "chip_tokens": 5303, "computer_seconds": 3.149}
+== strata: tool lines, reuse
+/mnt/nvme/flashnext-test/stage4/computer-2/server.log:[strata] tool computer__calc: ok, 18 characters in 2.2 s
+/mnt/nvme/flashnext-test/stage4/computer-2/server.log:[strata] tool computer__calc: ok, 19 characters in 3.1 s
+/mnt/nvme/flashnext-test/stage4/computer-2/server.log:[strata] tool computer__calc: ok, 22 characters in 1.4 s
+/mnt/nvme/flashnext-test/stage4/computer-2/server.log:[strata] tool computer__calc: ok, 24 characters in 3.2 s
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 442 tokens = 0 reused + 442 read in 1201 ms (368.1 tok/s), 82 generated in 756 ms (108.4 tok/s), drafts accepted 62 of 69, 1 
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 557 tokens = 526 reused + 31 read in 288 ms (107.8 tok/s), 102 generated in 1025 ms (99.5 tok/s), drafts accepted 68 of 87, 2
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 427 tokens = 0 reused + 427 read in 975 ms (438.0 tok/s), 404 generated in 3895 ms (103.7 tok/s), drafts accepted 278 of 352,
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 865 tokens = 832 reused + 33 read in 282 ms (116.8 tok/s), 27 generated in 236 ms (114.2 tok/s), drafts accepted 21 of 21, 2 
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 460 tokens = 0 reused + 460 read in 1000 ms (459.8 tok/s), 331 generated in 3498 ms (94.6 tok/s), drafts accepted 202 of 249,
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 828 tokens = 792 reused + 36 read in 309 ms (116.7 tok/s), 70 generated in 674 ms (103.8 tok/s), drafts accepted 50 of 57, 2 
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 937 tokens = 900 reused + 37 read in 313 ms (118.1 tok/s), 628 generated in 6121 ms (102.6 tok/s), drafts accepted 413 of 483
+/mnt/nvme/flashnext-test/stage4/computer-2/strata.log:strata serve: prompt 422 tokens = 0 reused + 422 read in 983 ms (429.5 tok/s), 2563 generated in 22783 ms (112.5 tok/s), drafts accepted 1840 of 2
+expert cache 12288 slots
+660 MiB of VRAM free with everything loaded
+== peak V100 MiB:  32417
+v100: clock restored; released

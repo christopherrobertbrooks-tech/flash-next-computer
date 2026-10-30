@@ -18,7 +18,9 @@ cleanup() {                         # only the processes this script started (th
   [ -n "$HOLD" ] && { kill -TERM -- -$HOLD 2>/dev/null; sleep 1; kill -KILL -- -$HOLD 2>/dev/null; }
   [ -n "${MON:-}" ] && kill $MON 2>/dev/null
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT                   # INT/TERM exit (running cleanup), they don't carry on
+trap 'exit 130' INT; trap 'exit 143' TERM
+FAIL=0
 nvidia-smi --id=1 --query-gpu=timestamp,memory.used --format=csv,noheader,nounits -lms 500 > $T/mem.csv &
 MON=$!
 snap() { echo "== $1 $(date +%T)"; nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader | grep -v sunshine; nvidia-smi --id=1 --query-gpu=memory.used,memory.total --format=csv,noheader; free -m | sed -n 2p; }
@@ -26,6 +28,7 @@ snap start
 if [ -n "$WITH" ]; then
   IDLE=""; [ "$WITH" = computer-idle ] && IDLE=idle
   cd /mnt/nvme/qwenputer/qwenputer/experimental/riscv
+  : > $T/computer.log                # the holder appends: an old "ready" line must not count
   CUDA_VISIBLE_DEVICES=$V100 PYTHONPATH=. PYTHONWARNINGS=ignore \
      setsid /mnt/nvme/qwenputer/.venv/bin/python /mnt/nvme/qwenputer/computer_holder.py /mnt/nvme/qwenputer/model $T/computer.log $IDLE \
      > $T/computer.out 2>&1 &
@@ -47,6 +50,7 @@ for i in $(seq 1 900); do
   sleep 1
 done
 echo "strata ready: $ok after $(( $(date +%s) - t0 )) s"
+[ $ok = 1 ] || { echo "FAIL: strata did not become ready"; tail -20 $T/server.log; FAIL=1; }
 snap "strata loaded"
 if [ $ok = 1 ]; then
   PROMPT=$(python3 - <<'PY'
@@ -60,6 +64,7 @@ PY
   t1=$(date +%s.%N)
   code=$(curl -s -o $T/reply.json -w '%{http_code}' localhost:8091/v1/chat/completions -H 'Content-Type: application/json' -d "$PROMPT")
   echo "request took $(python3 -c "print(round($(date +%s.%N)-$t1,1))") s, HTTP $code"
+  [ "$code" = 200 ] || { echo "FAIL: HTTP $code"; FAIL=1; }
   python3 - "$T/reply.json" <<'PY'
 import json, sys
 try:
@@ -70,7 +75,9 @@ try:
           len(c["message"].get("reasoning_content") or ""))
 except Exception as e:  # noqa: BLE001
     print("BAD REPLY:", type(e).__name__, open(sys.argv[1]).read()[:300])
+    sys.exit(1)
 PY
+  [ $? = 0 ] || { echo "FAIL: bad reply"; FAIL=1; }
   snap "after request"
 fi
 [ -n "$WITH" ] && { echo "== computer speed log"; cat $T/computer.log; }
@@ -80,3 +87,5 @@ snap end
 echo "== peak V100 MiB during the run: $(cut -d, -f2 $T/mem.csv | sort -n | tail -1)"
 echo "== strata log: memory and slots"
 grep -E -i "slots|free|reserved|trace|draft head|VRAM|pinned" $T/strata.log | head -40
+[ $FAIL = 0 ] && echo "RUN OK" || echo "RUN FAILED"
+exit $FAIL

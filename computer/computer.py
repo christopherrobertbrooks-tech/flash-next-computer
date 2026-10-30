@@ -3,15 +3,19 @@ arithmetic), driven without any language model. A call feeds the tool-call text 
 the circuit runs the calc firmware and writes the response; every circuit token is checked against upstream's
 reference machine (bridge.Session), and the call stops at the first token that differs.
 
-Fail-closed rules (after Codex's stage 2-3 review):
+Fail-closed rules (after Codex's stage 2-3 review and its re-check of a7ac5b3):
 - the expression may not contain protocol markers or special tokens, and the whole call must fit the circuit's
   capture buffer (spec.CAP_MAX tokens between <tool_call> and </tool_call>);
 - while the call is being fed, neither the reference machine nor the circuit may produce anything; the run starts
   only at the final </tool_call>, and the whole reference stream from there is checked token by token;
 - success needs exactly one complete <tool_response>...</tool_response> and a handback exactly where the reference
   hands back; a result is returned only on success (never partial text);
-- the budget bounds the reference machine's records, the circuit's tokens and the wall time;
-- any failure invalidates the session: call() refuses until new_session();
+- the budget caps the reference machine's records and the circuit's tokens; max_seconds is one deadline from the
+  moment call() is entered, checked while waiting for the computer, before each input token, before each reference
+  record and before each circuit step (cooperative: one record or one step can run past it, not more);
+- input refusals change nothing; past them the session is marked invalid before any state changes and is valid
+  again only after a fully successful call or reset, so a returned error, a raised exception or a failed reset all
+  leave call() refusing until new_session() succeeds;
 - one instance is one machine: calls are serialized with a lock (never share an instance between conversations).
 
 Built only from the Qwenputer checkpoint's config.json, chipformer.json and tokenizer files (no weights loaded).
@@ -31,6 +35,10 @@ from chipformer.rv.tritonexec import Executor2
 CALL = "<tool_call>\n<function=calc>\n<parameter=expression>\n{expr}\n</parameter>\n</function>\n</tool_call>"
 MARKERS = ("<tool_call>", "</tool_call>", "<tool_response>", "</tool_response>", "<function", "</function",
            "<parameter", "</parameter", "<think>", "</think>", "<|im_start|>", "<|im_end|>", "<|endoftext|>")
+
+
+class _Late(Exception):
+    """The deadline passed inside the reference run."""
 
 
 class CallRefused(Exception):
@@ -123,6 +131,7 @@ class Computer:
     def new_session(self, prefix="<|im_start|>assistant\n"):
         """A fresh machine (the firmware parked) and a reference machine beside it."""
         with self.mutex:
+            self.valid = False                    # a reset that fails part-way leaves no usable session
             self._new_session(prefix)
             self.valid = True
 
@@ -165,32 +174,63 @@ class Computer:
     def call(self, expr, max_chip=200_000, max_seconds=120.0):
         """Run one calc call. Returns {result, response, chip_tokens, seconds, error}: result is set only when error
         is None, i.e. every circuit token matched the reference, there was exactly one complete response, and the
-        circuit handed control back exactly where the reference does. Raises CallRefused (nothing run) on an invalid
-        session or input. Any error invalidates the session."""
-        with self.mutex:
+        circuit handed control back exactly where the reference does. Raises CallRefused (nothing run, session
+        unchanged) on a busy computer, an invalid session or invalid input. Anything else, a returned error or a raised
+        exception, invalidates the session. max_seconds is one deadline from the moment call() is entered: it covers
+        the wait for the computer, the input, the reference run and the circuit's output (checked between steps)."""
+        deadline = time.monotonic() + max_seconds
+        if not self.mutex.acquire(timeout=max(0.0, deadline - time.monotonic())):
+            raise CallRefused(f"the computer stayed busy for more than {max_seconds} s")
+        try:
             if not self.valid:
                 raise CallRefused("no valid session: call new_session() first (after any failed call too)")
             if len(self.lock.toks) > self.MAX_SESSION_TOKENS:
                 self.valid = False
                 raise CallRefused("the session's history is full: call new_session()")
-            out = self._call(expr, max_chip, max_seconds)
-            if out["error"] is not None:
-                self.valid = False
+            ids = self.tok.encode(CALL.format(expr=expr) if isinstance(expr, str) else "", add_special_tokens=False)
+            self._check_input(expr, ids)          # refusals change nothing
+            self.valid = False                    # from here on the state changes: valid again only on success
+            out = self._call(expr, ids, max_chip, max_seconds, deadline)
+            if out["error"] is None:
+                self.valid = True
             return out
+        finally:
+            self.mutex.release()
 
-    def _call(self, expr, max_chip, max_seconds):
-        t0 = time.time()
-        ids = self.tok.encode(CALL.format(expr=expr), add_special_tokens=False)
-        self._check_input(expr, ids)
+    def _call(self, expr, ids, max_chip, max_seconds, deadline):
+        t0 = time.monotonic()
         out = {"expr": expr, "result": None, "response": None, "chip_tokens": 0, "error": None}
+        late = f"budget: more than {max_seconds} s"
 
         def fail(why):
             out["error"] = why
-            out["seconds"] = round(time.time() - t0, 3)
+            out["seconds"] = round(time.monotonic() - t0, 3)
             return out
+
+        m = self.lock.m                                   # the reference checks the deadline before every record
+        record = m.record
+
+        def timed_record():
+            if time.monotonic() > deadline:
+                raise _Late()
+            return record()
+
+        m.record = timed_record
+        try:
+            out = self._run(ids, max_chip, deadline, out, fail, late)
+            out["seconds"] = round(time.monotonic() - t0, 3)
+            return out
+        except _Late:
+            return fail(late + " (in the reference run)")
+        finally:
+            del m.record
+
+    def _run(self, ids, max_chip, deadline, out, fail, late):
 
         expect = []
         for j, q in enumerate(ids):                       # the model's tokens: the circuit captures them
+            if time.monotonic() > deadline:
+                return fail(late + f" (input token {j})")
             last = j == len(ids) - 1
             k = len(self.lock.toks)
             try:
@@ -221,8 +261,8 @@ class Computer:
                 out["chip_tokens"] += 1
                 if out["chip_tokens"] > max_chip:
                     return fail(f"budget: more than {max_chip} computer tokens")
-            if time.time() - t0 > max_seconds:
-                return fail(f"budget: more than {max_seconds} s")
+            if time.monotonic() > deadline:
+                return fail(late)
             keep = self._step(nxt)
             nxt = self._token(keep[:self.ncode])
         if expect:
@@ -233,5 +273,4 @@ class Computer:
             return fail(f"expected exactly one complete response, found {len(frames)}")
         out["response"] = text
         out["result"] = frames[0]
-        out["seconds"] = round(time.time() - t0, 3)
         return out
