@@ -112,42 +112,80 @@ def plain_expected(x):
     return x
 
 
-def run_tests(src, tests):
-    """(all passed, details). Dev-Console bwrap wall: every namespace unshared (no network at the kernel level),
-    read-only /usr, nothing else of the host, 10 s, 1 GB address space per process; sockets also replaced in
-    Python. Exit status must be 0 and the result must be one list of {ok, value|error}, one per test."""
+def strict_equal(got, want):
+    """Equal values of exactly the same JSON types, recursively (True is not 1, 3.0 is not 3). Tuples in an expected
+    value count as lists (JSON has no tuples): the one equivalence allowed."""
+    if type(got) is not type(want):
+        return False
+    if isinstance(want, list):
+        return len(got) == len(want) and all(strict_equal(g, w) for g, w in zip(got, want))
+    if isinstance(want, dict):
+        return got.keys() == want.keys() and all(strict_equal(got[k], want[k]) for k in want)
+    return got == want
+
+
+def _run_wall(src, calls):
+    """(exit status, stdout up to MAX_OUT bytes, whether it overflowed). Output is read as it comes and the process
+    killed past MAX_OUT, so a candidate can't fill the scorer's memory. stderr is discarded: it's the candidate's."""
     with tempfile.TemporaryDirectory() as w:
         Path(w, "code.py").write_text(src)
-        Path(w, "calls.json").write_text(json.dumps([t["call"] for t in tests]))
+        Path(w, "calls.json").write_text(json.dumps(calls))
         Path(w, "child.py").write_text(CHILD)
         cmd = ["timeout", "10", "prlimit", "--as=1073741824", "--",
                "bwrap", "--ro-bind", "/usr", "/usr", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64",
                "--symlink", "usr/bin", "/bin", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
                "--ro-bind", w, "/w", "--unshare-all", "--die-with-parent", "--new-session", "--clearenv",
                "--chdir", "/tmp", "/usr/bin/python3", "/w/child.py"]
-        r = subprocess.run(cmd, capture_output=True)
-    if r.returncode != 0 and b"bwrap:" in r.stderr[:2000]:
-        raise WallError(r.stderr[:300].decode(errors="replace"))
-    if r.returncode != 0:
-        return False, f"exit {r.returncode}"
-    if len(r.stdout) > MAX_OUT:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        buf, over = b"", False
+        while True:
+            chunk = p.stdout.read(65536)
+            if not chunk:
+                break
+            buf += chunk
+            if len(buf) > MAX_OUT:
+                over = True
+                p.kill()
+                break
+        p.stdout.close()
+        return p.wait(), buf[:MAX_OUT], over
+
+
+def run_tests(src, tests):
+    """(all passed, details). Dev-Console bwrap wall: every namespace unshared (no network at the kernel level),
+    read-only /usr, nothing else of the host, 10 s, 1 GB address space per process, output capped while it's read;
+    sockets also replaced in Python. Exit status must be 0, the result one list of {ok, value|error} per test, and
+    every value strictly equal (same types) to the expected one. A nonzero exit is the candidate's failure unless the
+    trusted canary, run right after, also fails: only then is it a wall (harness) failure. Nothing the candidate
+    prints can decide which."""
+    code, out, over = _run_wall(src, [t["call"] for t in tests])
+    if over:
         return False, "output too large"
+    if code != 0:
+        wall_canary()                                    # raises WallError if the wall itself is broken
+        return False, f"exit {code}"
     try:
-        res = json.loads(r.stdout.decode(errors="replace").strip().splitlines()[-1])
+        res = json.loads(out.decode(errors="replace").strip().splitlines()[-1])
     except (ValueError, IndexError):
         return False, "no result line"
     if not (isinstance(res, list) and len(res) == len(tests) and
             all(isinstance(x, dict) and isinstance(x.get("ok"), bool) for x in res)):
         return False, "malformed result"
-    passed = [x["ok"] and "value" in x and x["value"] == plain_expected(eval(t["expect"]))  # noqa: S307 (our tests)
+    passed = [x["ok"] and "value" in x and
+              strict_equal(x["value"], plain_expected(eval(t["expect"])))  # noqa: S307 (our own tests)
               for x, t in zip(res, tests)]
     return all(passed), passed
 
 
 def wall_canary():
-    ok, detail = run_tests("def f(x):\n    return x * 2\n", [{"call": "f(21)", "expect": "42"}])
+    """A trusted program that must pass: if it doesn't, the wall itself is broken (WallError, a harness failure)."""
+    code, out, _ = _run_wall("def f(x):\n    return x * 2\n", ["f(21)"])
+    try:
+        ok = code == 0 and json.loads(out.decode().strip().splitlines()[-1]) == [{"ok": True, "value": 42}]
+    except (ValueError, IndexError):
+        ok = False
     if not ok:
-        raise WallError(f"the test wall's canary failed: {detail}")
+        raise WallError(f"the test wall's canary failed (exit {code})")
 
 
 # ---- one question x arm ----------------------------------------------------------------------------------------
@@ -244,7 +282,11 @@ def sha256(path):
 def load_arm(path, arm, qids, qhash, expected_ids):
     """The arm's rows by id, after checking: one row per id, the right arm, known ids, the same question file."""
     shaf = os.path.join(path, "questions.sha256")
-    if os.path.exists(shaf) and open(shaf).read().split()[0] != qhash:
+    try:
+        recorded = open(shaf).read().split()[0]
+    except (OSError, IndexError):
+        raise DataError(f"{path}: no readable questions.sha256 (no proof of which question file was used)")
+    if recorded != qhash:
         raise DataError(f"{path}: run on a different question file")
     rows = {}
     for l in open(os.path.join(path, "replies.jsonl")):
@@ -410,12 +452,27 @@ def selftest():
                                 "def count_vowels(s):\n    return X(99)\n", False),
         ("endless loop fails", "def count_vowels(s):\n    while True:\n        pass\n", False),
         ("missing function fails", "x = 1\n", False),
+        ("fake 'bwrap:' on stderr is the candidate's failure, not a wall error",
+         "import sys\nsys.stderr.write('bwrap: injected by candidate\\n')\nraise SystemExit(1)\n", False),
+        ("float where an int is expected fails", "def count_vowels(s):\n    return float(sum(c in 'aeiou' "
+                                                  "for c in s.lower()))\n", False),
+        ("100 MB of output fails without filling memory",
+         "import sys\nsys.stdout.write('x' * 100_000_000)\ndef count_vowels(s):\n    return 0\n", False),
     ]:
         try:
             ok, _ = run_tests(src, tests)
             check(f"code wall: {label}", ok == want)
         except WallError as e:
             check(f"code wall: {label} (wall error {e})", False)
+
+    # exact types: True == 1 and False == 0 in Python, but not here (Codex's case: expectations 1 and 0)
+    t10 = [{"call": "count_vowels('a')", "expect": "1"}, {"call": "count_vowels('')", "expect": "0"}]
+    ok, detail = run_tests("def count_vowels(s):\n    return bool(s)\n", t10)
+    check(f"code wall: bool where 1 and 0 are expected fails ({detail})", not ok)
+    ok, detail = run_tests("def count_vowels(s):\n    return sum(c in 'aeiou' for c in s)\n", t10)
+    check("code wall: the same tests pass with real ints", ok)
+    ok, detail = run_tests("import sys\nsys.stdout.write('x' * 100_000_000)\ndef count_vowels(s):\n    return 0\n", t10)
+    check(f"code wall: 100 MB of output stopped by the cap ({detail})", detail == "output too large")
 
     # classifier on made-up rows
     q = {"id": "t", "group": "1", "answer": "121932631112635269"}
@@ -491,19 +548,22 @@ def selftest():
             with open(os.path.join(p, "replies.jsonl"), "w") as f:
                 for r in rows:
                     f.write(json.dumps(r) + "\n")
-            if sha:
-                open(os.path.join(p, "questions.sha256"), "w").write(sha + "  q.jsonl\n")
+            if sha is not None:
+                open(os.path.join(p, "questions.sha256"), "w").write((sha + "  q.jsonl\n") if sha else "")
             return p
-        for label, rows, sha in [("duplicate id", [{"id": "x", "arm": "B"}, {"id": "x", "arm": "B"}], None),
-                                 ("wrong arm", [{"id": "x", "arm": "C"}], None),
-                                 ("unknown id", [{"id": "zzz", "arm": "B"}], None),
-                                 ("other question file", [{"id": "x", "arm": "B"}], "0" * 64)]:
+        F = "f" * 64
+        for label, rows, sha in [("duplicate id", [{"id": "x", "arm": "B"}, {"id": "x", "arm": "B"}], F),
+                                 ("wrong arm", [{"id": "x", "arm": "C"}], F),
+                                 ("unknown id", [{"id": "zzz", "arm": "B"}], F),
+                                 ("other question file", [{"id": "x", "arm": "B"}], "0" * 64),
+                                 ("no question fingerprint", [{"id": "x", "arm": "B"}], None),
+                                 ("empty question fingerprint", [{"id": "x", "arm": "B"}], "")]:
             try:
                 load_arm(arm_dir(rows, sha), "B", {"x"}, "f" * 64, ["x"])
                 check(f"integrity: {label} rejected", False)
             except DataError:
                 check(f"integrity: {label} rejected", True)
-        _, missing, _ = load_arm(arm_dir([{"id": "x", "arm": "B"}]), "B", {"x", "y"}, "f" * 64, ["x", "y"])
+        _, missing, _ = load_arm(arm_dir([{"id": "x", "arm": "B"}], F), "B", {"x", "y"}, F, ["x", "y"])
         check("integrity: a missing question is reported", missing == ["y"])
     print("SELFTEST", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)

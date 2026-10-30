@@ -37,8 +37,8 @@ def python_reference(calc, expr):
     does) without asking anything at scoring time."""
     try:
         return calc.expected(str(expr).replace("\n", "").strip(" ")).strip()
-    except Exception as e:  # noqa: BLE001
-        return f"(python raised {type(e).__name__})"
+    except Exception:  # noqa: BLE001  (no reference: the scorer then classifies the failure as "unknown")
+        return None
 
 
 class ComputerBackend:
@@ -112,8 +112,11 @@ def main():
     logf = open(a.log, "a", buffering=1)
     out = sys.stdout
 
+    instance = f"{os.getpid()}-{time.time_ns()}"     # Strata restarts a server with RPC ids from 0 again: calls are
+                                                     # matched on (instance, rpc_id), never rpc_id alone
+
     def log(rec):
-        logf.write(json.dumps(rec) + "\n")
+        logf.write(json.dumps({"instance": instance, **rec}) + "\n")
 
     def resources():
         return {"pid": os.getpid(), "rss_peak_mib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}
