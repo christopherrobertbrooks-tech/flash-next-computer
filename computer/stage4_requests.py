@@ -137,7 +137,8 @@ def check(expect, code, d, calls, legacy=False):
 
 def read_lines(path):
     try:
-        return [json.loads(l) for l in open(path) if l.strip()]
+        rows = [json.loads(l) for l in open(path) if l.strip()]
+        return [r for r in rows if r.get("phase") != "begin"]        # one line per answered call
     except FileNotFoundError:
         return []
 

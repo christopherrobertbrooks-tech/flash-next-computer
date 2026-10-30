@@ -6,12 +6,14 @@ Strata's built-in MCP client (serve/mcp.py). Two interchangeable backends with t
   --backend python    upstream's exact Python calculator (calc.expected): the matched host-Python baseline and the
                       isolation control
 
-Every call is appended to --log as one JSON line (expression, backend, result, error, timings). Results go back as
-plain text; a refused or failed call comes back with isError and text starting "error:".
+Every call is logged twice to --log: a "begin" line when it arrives (with the question id the runner wrote into
+--question-file) and an "end" line when it is answered (expression, result, error and its kind, timings, the process
+id and its peak host RSS), including when the backend raises. Results go back as plain text; a refused or failed
+call comes back with isError and text starting "error:".
 
 usage (riscv dir + this dir on PYTHONPATH): python mcp_server.py --backend computer|python --model DIR --log FILE
 """
-import argparse, json, sys, time, traceback
+import argparse, json, os, resource, sys, time, traceback
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -29,6 +31,16 @@ def log_err(*a):
     print(*a, file=sys.stderr, flush=True)
 
 
+def python_reference(calc, expr):
+    """Upstream's exact Python value for an expression, read as the firmware reads input: recorded beside any result
+    that says "error", so a bad expression (both say error) can be told from a computer limit (only the computer
+    does) without asking anything at scoring time."""
+    try:
+        return calc.expected(str(expr).replace("\n", "").strip(" ")).strip()
+    except Exception as e:  # noqa: BLE001
+        return f"(python raised {type(e).__name__})"
+
+
 class ComputerBackend:
     name = "computer"
 
@@ -36,18 +48,23 @@ class ComputerBackend:
         from chipformer.rv import calc
         from computer import Computer
         firmware = Path(calc.__file__).parents[2] / "tests" / "data" / "rv" / "calc-bridge.elf"
+        self.calc = calc
         self.comp = Computer(model, firmware)
 
     def run(self, expr):
+        """(result, error, info). info["error_kind"]: refused | budget | trace_mismatch | reference_error (from the
+        service), or None. Only trace_mismatch means the computer and its reference machine disagreed."""
         from computer import CallRefused
         try:
             self.comp.new_session()
             r = self.comp.call(expr)
         except CallRefused as e:
-            return None, f"refused: {e}", {}
-        info = {"chip_tokens": r["chip_tokens"], "computer_seconds": r.get("seconds")}
+            return None, f"refused: {e}", {"error_kind": "refused"}
+        info = {"chip_tokens": r["chip_tokens"], "computer_seconds": r.get("seconds"), "error_kind": r["error_kind"]}
         if r["error"] is not None:
-            return None, f"computer check failed: {r['error']}", info
+            return None, f"computer {r['error_kind']}: {r['error']}", info
+        if r["result"].startswith("error"):
+            info["python_reference"] = python_reference(self.calc, expr)
         return r["result"], None, info
 
 
@@ -69,12 +86,16 @@ class PythonBackend:
         try:
             check_input(expr, self.tok, self.T, self.first_special)
         except CallRefused as e:
-            return None, f"refused: {e}", {}
+            return None, f"refused: {e}", {"error_kind": "refused"}
         expr = expr.replace("\n", "").strip(" ")   # read the input as the firmware does: newlines dropped, spaces skipped
         try:
-            return self.calc.expected(expr).strip(), None, {}
+            result = self.calc.expected(expr).strip()
         except Exception as e:  # noqa: BLE001
-            return None, f"python: {type(e).__name__}: {e}", {}
+            return None, f"python: {type(e).__name__}: {e}", {"error_kind": "execution_error"}
+        info = {"error_kind": None}
+        if result.startswith("error"):
+            info["python_reference"] = result
+        return result, None, info
 
 
 def main():
@@ -82,12 +103,20 @@ def main():
     ap.add_argument("--backend", choices=["computer", "python"], required=True)
     ap.add_argument("--model", required=True)
     ap.add_argument("--log", required=True)
+    ap.add_argument("--question-file", help="a file the runner writes the current question id into; each call is "
+                    "logged with the id it held when the call arrived")
     a = ap.parse_args()
     t = time.time()
     backend = (ComputerBackend if a.backend == "computer" else PythonBackend)(a.model)
     log_err(f"[calc-mcp] {a.backend} backend ready in {time.time() - t:.1f} s")
     logf = open(a.log, "a", buffering=1)
     out = sys.stdout
+
+    def log(rec):
+        logf.write(json.dumps(rec) + "\n")
+
+    def resources():
+        return {"pid": os.getpid(), "rss_peak_mib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}
 
     def send(msg):
         out.write(json.dumps(msg) + "\n")
@@ -117,14 +146,29 @@ def main():
             elif method == "tools/call":
                 p = msg.get("params") or {}
                 expr = (p.get("arguments") or {}).get("expression")
+                question = None
+                if a.question_file:
+                    try:
+                        question = Path(a.question_file).read_text().strip()
+                    except OSError:
+                        question = "(unreadable)"
                 t0 = time.time()
-                if p.get("name") != "calc":
-                    result, err, info = None, f"unknown tool {p.get('name')!r}", {}
-                else:
-                    result, err, info = backend.run(expr)
-                ms = round((time.time() - t0) * 1000, 1)
-                logf.write(json.dumps({"time": time.strftime("%X"), "backend": a.backend, "expression": expr,
-                                       "result": result, "error": err, "ms": ms, "rpc_id": mid, **info}) + "\n")
+                log({"phase": "begin", "time": time.strftime("%X"), "rpc_id": mid, "question": question,
+                     "expression": expr})
+                try:
+                    if p.get("name") != "calc":
+                        result, err, info = None, f"unknown tool {p.get('name')!r}", {"error_kind": "unknown_tool"}
+                    else:
+                        result, err, info = backend.run(expr)
+                except Exception as e:  # noqa: BLE001  (logged, then answered as an RPC error below)
+                    log({"phase": "end", "time": time.strftime("%X"), "rpc_id": mid, "question": question,
+                         "backend": a.backend, "expression": expr, "result": None,
+                         "error": f"{type(e).__name__}: {e}", "error_kind": "execution_error",
+                         "ms": round((time.time() - t0) * 1000, 1), **resources()})
+                    raise
+                log({"phase": "end", "time": time.strftime("%X"), "rpc_id": mid, "question": question,
+                     "backend": a.backend, "expression": expr, "result": result, "error": err,
+                     "ms": round((time.time() - t0) * 1000, 1), **info, **resources()})
                 text = result if err is None else f"error: {err}"
                 send({"jsonrpc": "2.0", "id": mid, "result": {"content": [{"type": "text", "text": text}],
                                                               "isError": err is not None}})

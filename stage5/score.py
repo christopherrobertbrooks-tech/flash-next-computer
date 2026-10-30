@@ -1,24 +1,31 @@
-"""Stage 5 scorer (STAGE5-PLAN.md). Runs on Dev-Console (bwrap for the code tests works there; no model runs), with
-the arms' run folders copied over; asks the gateway's upstream calc (ssh) to tell a bad expression from a computer
-limit. Reads the questions and each arm's replies.jsonl; writes
-OUT.json (every question x arm, verdicts, failure layers) and prints the summary and the pre-registered verdict.
+"""Stage 5 scorer (STAGE5-PLAN.md). Runs on Dev-Console (bwrap works there; no model runs) on the arms' run folders
+copied over. Reads the questions and each arm's replies.jsonl; writes OUT.json (every question x arm: verdicts,
+failure layer, measurements) and prints the summary with the pre-registered verdict.
 
 usage: python score.py QUESTIONS.jsonl OUT.json A=DIR B=DIR C=DIR [Brep=DIR]
-       python score.py --selftest        (no runs needed: the CI, the verdict rule and the classifier on made-up rows)
+       python score.py --selftest     (interval fixtures, coverage, code-test wall and classifier controls)
+
+It refuses to give a verdict on incomplete or inconsistent data: duplicate or unknown question ids, rows from the
+wrong arm, a run made on a different question file (sha256), missing primary pairs, or a determinism repeat whose ids
+aren't exactly the registered 40.
 """
-import json, math, os, re, statistics, subprocess, sys, tempfile
+import hashlib, json, math, os, re, statistics, subprocess, sys, tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "computer"))
 from stage4_requests import final_answer, value  # noqa: E402  (the exact ANSWER-line parser, stage 4 self-tested)
 
 PRIMARY = ["1", "2", "3", "4"]
+SENSITIVITY = ["1", "3", "4"]       # descriptive only: the primary set without the limit-seeking group 2
 MARGIN = 0.05                       # equivalence margin, 5 points
-LAYERS = ["transport", "budget", "call format", "backend", "final answer", "reasoning", "harness"]
+
+
+class DataError(Exception):
+    """The run data can't support a verdict (incomplete or inconsistent)."""
 
 
 # ---- statistics ----------------------------------------------------------------------------------------------
-def wilson(x, n, z=1.959964):
+def wilson(x, n, z=1.959963984540054):
     if n == 0:
         return 0.0, 1.0
     p = x / n
@@ -28,14 +35,18 @@ def wilson(x, n, z=1.959964):
 
 
 def newcombe_paired(a, b, c, d):
-    """95% CI for p1 - p2 from paired counts (Newcombe 1998, method 10). a: both right; b: first right only;
-    c: second right only; d: both wrong. Returns (difference, lower, upper)."""
+    """95% CI for p1 - p2 from paired counts: Newcombe (1998) method 10, with its correction of a positive covariance
+    numerator (ad - bc reduced by n/2, floored at 0), as in statsmodels' confint_proportions_paired.
+    a: both right; b: first right only; c: second right only; d: both wrong. Returns (difference, lower, upper)."""
     n = a + b + c + d
     p1, p2 = (a + b) / n, (a + c) / n
     l1, u1 = wilson(a + b, n)
     l2, u2 = wilson(a + c, n)
+    num = a * d - b * c
+    if num > 0:
+        num = max(num - n / 2, 0.0)
     den = (a + b) * (c + d) * (a + c) * (b + d)
-    phi = (a * d - b * c) / math.sqrt(den) if den else 0.0
+    phi = num / math.sqrt(den) if den else 0.0
     delta = p1 - p2
     lo = delta - math.sqrt(max(0.0, (p1 - l1) ** 2 - 2 * phi * (p1 - l1) * (u2 - p2) + (u2 - p2) ** 2))
     hi = delta + math.sqrt(max(0.0, (u1 - p1) ** 2 - 2 * phi * (u1 - p1) * (p2 - l2) + (p2 - l2) ** 2))
@@ -44,7 +55,7 @@ def newcombe_paired(a, b, c, d):
 
 def verdict(lo, hi):
     if -MARGIN < lo and hi < MARGIN:
-        return "equivalent"
+        return "practically equivalent (within 5 points)"
     if lo > 0:
         return "computer better"
     if hi < 0:
@@ -53,67 +64,100 @@ def verdict(lo, hi):
 
 
 # ---- code tests in a bwrap wall --------------------------------------------------------------------------------
-RUNNER = """import json, sys, socket, _socket
+# The child gets only the code and the test calls (never the expected values) and returns plain values; the parent
+# checks the exit status and the result schema and compares with the expected values itself. Exact types only (a
+# subclass of int with a rigged __eq__ is rejected), so the candidate can't fake a pass without computing the values.
+CHILD = r"""import json, math, sys, socket, _socket
 def _no_network(*a, **k):
     raise OSError('network disabled in the test wall')
 socket.socket = socket.create_connection = _socket.socket = _no_network
-src = open('/w/code.py').read()
+def plain(x, depth=0):
+    if depth > 30:
+        raise TypeError('nested too deep')
+    t = type(x)
+    if x is None or t in (bool, int, str):
+        return x
+    if t is float:
+        return x if math.isfinite(x) else repr(x)
+    if t in (list, tuple):
+        return [plain(v, depth + 1) for v in x]
+    if t is dict and all(type(k) is str for k in x):
+        return {k: plain(v, depth + 1) for k, v in x.items()}
+    raise TypeError('not a plain value: ' + t.__name__)
+calls = json.load(open('/w/calls.json'))
 env = {}
-exec(compile(src, 'answer', 'exec'), env)
+exec(compile(open('/w/code.py').read(), 'answer', 'exec'), env)
 out = []
-for t in json.load(open('/w/tests.json')):
+for c in calls:
     try:
-        got = eval(t['call'], env)
-        out.append(got == eval(t['expect']))
-    except Exception as e:
-        out.append(False)
-print(json.dumps(out))
+        out.append({'ok': True, 'value': plain(eval(c, env))})
+    except BaseException as e:
+        out.append({'ok': False, 'error': type(e).__name__})
+sys.stdout.write('\n' + json.dumps(out) + '\n')
 """
+MAX_OUT = 1 << 20
 
 
-def code_block(content):
-    blocks = re.findall(r"```(?:python|py)?\s*\n(.*?)```", content or "", re.S)
-    return blocks[-1] if blocks else None
+class WallError(Exception):
+    """The test wall itself didn't work (a harness failure, not a wrong answer)."""
+
+
+def plain_expected(x):
+    if isinstance(x, tuple):
+        x = list(x)
+    if isinstance(x, list):
+        return [plain_expected(v) for v in x]
+    if isinstance(x, dict):
+        return {k: plain_expected(v) for k, v in x.items()}
+    return x
 
 
 def run_tests(src, tests):
-    """(all passed, per-test list or an error). Runs on Dev-Console (the gateway's AppArmor refuses bwrap's
-    namespaces). bwrap wall: every namespace unshared (no network at the kernel level), read-only /usr, no home or
-    other files, 10 s, 1 GB address space; sockets are also replaced inside Python."""
+    """(all passed, details). Dev-Console bwrap wall: every namespace unshared (no network at the kernel level),
+    read-only /usr, nothing else of the host, 10 s, 1 GB address space per process; sockets also replaced in
+    Python. Exit status must be 0 and the result must be one list of {ok, value|error}, one per test."""
     with tempfile.TemporaryDirectory() as w:
         Path(w, "code.py").write_text(src)
-        Path(w, "tests.json").write_text(json.dumps(tests))
-        Path(w, "run.py").write_text(RUNNER)
+        Path(w, "calls.json").write_text(json.dumps([t["call"] for t in tests]))
+        Path(w, "child.py").write_text(CHILD)
         cmd = ["timeout", "10", "prlimit", "--as=1073741824", "--",
                "bwrap", "--ro-bind", "/usr", "/usr", "--symlink", "usr/lib", "/lib", "--symlink", "usr/lib64", "/lib64",
                "--symlink", "usr/bin", "/bin", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
                "--ro-bind", w, "/w", "--unshare-all", "--die-with-parent", "--new-session", "--clearenv",
-               "--chdir", "/tmp", "/usr/bin/python3", "/w/run.py"]
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        try:
-            res = json.loads(r.stdout.strip().splitlines()[-1])
-            return all(res) and len(res) == len(tests), res
-        except (ValueError, IndexError):
-            return False, f"exit {r.returncode}: {r.stderr[-300:]}"
+               "--chdir", "/tmp", "/usr/bin/python3", "/w/child.py"]
+        r = subprocess.run(cmd, capture_output=True)
+    if r.returncode != 0 and b"bwrap:" in r.stderr[:2000]:
+        raise WallError(r.stderr[:300].decode(errors="replace"))
+    if r.returncode != 0:
+        return False, f"exit {r.returncode}"
+    if len(r.stdout) > MAX_OUT:
+        return False, "output too large"
+    try:
+        res = json.loads(r.stdout.decode(errors="replace").strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return False, "no result line"
+    if not (isinstance(res, list) and len(res) == len(tests) and
+            all(isinstance(x, dict) and isinstance(x.get("ok"), bool) for x in res)):
+        return False, "malformed result"
+    passed = [x["ok"] and "value" in x and x["value"] == plain_expected(eval(t["expect"]))  # noqa: S307 (our tests)
+              for x, t in zip(res, tests)]
+    return all(passed), passed
+
+
+def wall_canary():
+    ok, detail = run_tests("def f(x):\n    return x * 2\n", [{"call": "f(21)", "expect": "42"}])
+    if not ok:
+        raise WallError(f"the test wall's canary failed: {detail}")
 
 
 # ---- one question x arm ----------------------------------------------------------------------------------------
-def calc_says_error(expr):
-    """Does upstream's Python calculator also call this expression an error (a bad expression, not a computer
-    limit)? Asked on the gateway (upstream's package lives there); None if that can't be answered."""
-    cmd = ("cd /mnt/nvme/qwenputer/qwenputer/experimental/riscv && PYTHONPATH=. /mnt/nvme/qwenputer/.venv/bin/python "
-           "-c 'import json,sys; from chipformer.rv import calc; e=json.load(sys.stdin); "
-           "print(calc.expected(e.replace(chr(10), \"\").strip(\" \")).strip())'")
-    try:
-        r = subprocess.run(["ssh", "ember-gateway", cmd], input=json.dumps(expr), capture_output=True, text=True,
-                           timeout=60)
-        return r.stdout.strip().startswith("error") if r.returncode == 0 else None
-    except (OSError, subprocess.SubprocessError):
-        return None
+GEN_LINE = re.compile(r"prompt (\d+) tokens = (\d+) reused .*?, (\d+) generated")
 
 
 def score_one(q, row):
-    """Returns a dict: correct, layer (None if correct), answer/tool verdicts and the measurements."""
+    """One question in one arm. Hard failures (harness, transport, budget, trace mismatch) decide the outcome whatever
+    the final text says; otherwise the final answer (or the unit tests) decides. A tool fault the model recovered from
+    (a refusal, a computer limit or error, then a right answer) counts as right and is listed under "recovered"."""
     d = row.get("raw") or {}
     c = (d.get("choices") or [{}])[0] if isinstance(d, dict) else {}
     m = c.get("message") or {}
@@ -121,67 +165,112 @@ def score_one(q, row):
     events = m.get("strata_mcp") or []
     calls = row.get("tool_calls") or []
     exprs = [str(x.get("expression")) for x in calls]
-    results = [str(x.get("result")) for x in calls if x.get("error") is None]
+    gens = GEN_LINE.findall(row.get("engine_log") or "")
     out = {"id": q["id"], "group": q["group"], "arm": row["arm"], "seconds": row.get("seconds"), "finish": finish,
-           "calls": len(calls), "tool_ms": round(sum(x.get("ms") or 0 for x in calls), 1),
+           "http": row.get("http"), "calls": len(calls), "tool_ms": round(sum(x.get("ms") or 0 for x in calls), 1),
            "chip_tokens": sum(x.get("chip_tokens") or 0 for x in calls),
            "computer_seconds": round(sum(x.get("computer_seconds") or 0 for x in calls), 3),
-           "completion_tokens": (d.get("usage") or {}).get("completion_tokens") if isinstance(d, dict) else None,
-           "mismatch": any(str(x.get("error") or "").startswith("computer check failed") for x in calls)}
-    # correctness
+           "rounds": len(gens), "generated_tokens": sum(int(g[2]) for g in gens),
+           "tool_rss_peak_mib": max([x.get("rss_peak_mib") or 0 for x in calls], default=None),
+           "fault_kinds": sorted({x.get("error_kind") for x in calls if x.get("error_kind")}),
+           "computer_error_results": [x["expression"] for x in calls
+                                      if x.get("error") is None and str(x.get("result")).startswith("error")],
+           "loop": any(exprs.count(e) >= 3 for e in set(exprs)),
+           "mismatch": any(x.get("error_kind") == "trace_mismatch" for x in calls)}
+    err_text = json.dumps(d.get("error")) if isinstance(d, dict) and d.get("error") else ""
+    # 1. hard failures: they decide, whatever the final text
+    hard = None
+    if row.get("harness_error"):
+        hard = "harness"
+    elif row.get("http") not in (200, "timeout") and "out of memory" in err_text:
+        hard = "backend"                             # the explicit error text names the cause
+    elif row.get("http") not in (200, "timeout"):
+        hard = "transport"
+    elif row.get("http") == "timeout" or finish == "length" or row.get("tool_calls_open") or \
+            any(e.get("event") == "limit" for e in events):
+        hard = "budget"
+    elif out["mismatch"]:
+        hard = "backend"
+    # 2. the answer
     if q["group"] == "5a":
-        src = code_block(content)
-        ok, detail = run_tests(src, q["tests"]) if src and finish == "stop" else (False, "no code block")
+        src = re.findall(r"```(?:python|py)?\s*\n(.*?)```", content or "", re.S)
+        ok, detail = run_tests(src[-1], q["tests"]) if src and finish == "stop" else (False, "no code block")
         out["answer"], out["tests"] = ("met" if ok else "failed"), detail
     else:
         got, raw = final_answer(content)
         ok = finish == "stop" and raw is not None and got == value(q["answer"])
         out["answer"], out["answer_raw"] = ("met" if ok else "failed"), raw
-    if q["group"] == "4":                    # how far the chain got: the last intermediate the evidence reached
-        evidence = results if row["arm"] in ("B", "C") else re.findall(r"\d+", re.sub(r"[,\s]", "", (content or "") +
-                                                                               (m.get("reasoning_content") or "")))
-        reached = [i + 1 for i, v in enumerate(q["intermediates"]) if v in evidence]
-        out["chain_reached"] = max(reached) if reached else 0
-        out["chain_steps"] = q["steps"]
-        out["chain_evidence"] = "tool log" if row["arm"] in ("B", "C") else "reply text (weak)"
-    out["correct"] = bool(ok)
-    # failure layer: first match wins
-    layer = None
-    err_text = json.dumps(d.get("error")) if isinstance(d, dict) and d.get("error") else ""
-    if not ok:
-        tool_err = [x for x in calls if x.get("error") is not None]
-        bad_result = [x for x in calls if x.get("error") is None and str(x.get("result")).startswith("error")]
-        loop = any(exprs.count(e) >= 3 for e in set(exprs))
-        if row.get("harness_error"):
-            layer = "harness"
-        elif row.get("http") not in (200, "timeout") and "out of memory" in err_text:
-            layer = "backend"                        # the engine ran out of VRAM next to the tool process
-        elif row.get("http") not in (200, "timeout"):
-            layer = "transport"
-        elif row.get("http") == "timeout" or finish == "length" or loop or \
-                any(e.get("event") == "limit" for e in events):
-            layer = "budget"
-        elif any(str(x["error"]).startswith("refused:") for x in tool_err) or \
-                any(calc_says_error(str(x.get("expression"))) is not False for x in bad_result):
-            layer = "call format"
-        elif tool_err or bad_result:
-            layer = "backend"
+    out["correct"] = bool(ok) and hard is None
+    # 3. the layer of a failure (first match wins)
+    layer = hard
+    if layer is None and not out["correct"]:
+        refs = [x.get("python_reference") for x in calls
+                if x.get("error") is None and str(x.get("result")).startswith("error")]
+        kinds = out["fault_kinds"]
+        if "refused" in kinds or "unknown_tool" in kinds or any(r and r.startswith("error") for r in refs):
+            layer = "call format"                    # refused input, or an expression Python also calls an error
+        elif any(k in kinds for k in ("budget", "execution_error", "reference_error")) or \
+                any(r and not r.startswith("error") for r in refs):
+            layer = "backend"                        # the tool failed, or the computer said error where Python didn't
+        elif any(r is None for r in refs):
+            layer = "unknown"                        # an error result with no recorded Python reference
         elif calls:
             layer = "final answer"
         else:
             layer = "reasoning"
     out["layer"] = layer
-    out["tool"] = "used" if calls else "none"
+    out["recovered"] = (out["fault_kinds"] or out["computer_error_results"]) if out["correct"] else []
+    # 4. chains (B and C only): how many steps were seen in order in the tool results
+    if q["group"] == "4" and row["arm"] in ("B", "C"):
+        results = [str(x.get("result")) for x in calls if x.get("error") is None]
+        k = 0
+        for r in results:
+            if k < len(q["intermediates"]) and r == q["intermediates"][k]:
+                k += 1
+        pool, seen = list(results), 0
+        for v in q["intermediates"]:
+            if v in pool:
+                pool.remove(v)
+                seen += 1
+        out["chain_steps"], out["chain_in_order"], out["chain_seen_any_order"] = q["steps"], k, seen
     return out
 
 
-# ---- the whole comparison --------------------------------------------------------------------------------------
-def load_rows(path):
+# ---- data integrity ------------------------------------------------------------------------------------------
+def sha256(path):
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
+def load_arm(path, arm, qids, qhash, expected_ids):
+    """The arm's rows by id, after checking: one row per id, the right arm, known ids, the same question file."""
+    shaf = os.path.join(path, "questions.sha256")
+    if os.path.exists(shaf) and open(shaf).read().split()[0] != qhash:
+        raise DataError(f"{path}: run on a different question file")
     rows = {}
     for l in open(os.path.join(path, "replies.jsonl")):
         r = json.loads(l)
+        if r["id"] in rows:
+            raise DataError(f"{path}: duplicate row for {r['id']}")
+        if r.get("arm") != arm[0]:
+            raise DataError(f"{path}: row {r['id']} is from arm {r.get('arm')}, expected {arm[0]}")
+        if r["id"] not in qids and not r["id"].startswith("warmup-"):
+            raise DataError(f"{path}: unknown question id {r['id']}")
         rows[r["id"]] = r
-    return rows
+    got = {i for i in rows if not i.startswith("warmup-")}
+    return rows, sorted(set(expected_ids) - got), sorted(got - set(expected_ids))
+
+
+def every4(qs):
+    prim = [q for q in qs if q["group"] in PRIMARY]
+    return [q["id"] for i, q in enumerate(prim) if i % 4 == 0]
+
+
+# ---- the whole comparison --------------------------------------------------------------------------------------
+def paired(by, ids, first, second):
+    a = sum(by[i, first]["correct"] and by[i, second]["correct"] for i in ids)
+    b = sum(by[i, first]["correct"] and not by[i, second]["correct"] for i in ids)
+    c = sum(not by[i, first]["correct"] and by[i, second]["correct"] for i in ids)
+    return a, b, c, len(ids) - a - b - c
 
 
 def summarise(qs, scored, arms, runs):
@@ -189,47 +278,49 @@ def summarise(qs, scored, arms, runs):
     by = {(r["id"], r["arm"]): r for r in scored}
     for arm in arms:
         rs = [r for r in scored if r["arm"] == arm]
-        S[arm] = {"by_group": {}, "layers": {}, "primary_right": 0, "primary_n": 0}
-        for g in PRIMARY + ["5a", "5b"]:
-            gr = [r for r in rs if r["group"] == g]
-            S[arm]["by_group"][g] = f"{sum(r['correct'] for r in gr)}/{len(gr)}"
         prim = [r for r in rs if r["group"] in PRIMARY]
-        S[arm]["primary_right"], S[arm]["primary_n"] = sum(r["correct"] for r in prim), len(prim)
-        for r in rs:
-            if r["layer"]:
-                S[arm]["layers"][r["layer"]] = S[arm]["layers"].get(r["layer"], 0) + 1
         secs = [r["seconds"] for r in prim if r["seconds"] is not None]
-        S[arm]["median_seconds_primary"] = statistics.median(secs) if secs else None
-        S[arm]["group5_tool_calls"] = sum(r["calls"] for r in rs if r["group"] in ("5a", "5b"))
-        S[arm]["mismatches"] = sum(r["mismatch"] for r in rs)
-        ch = [r for r in rs if r["group"] == "4"]
-        S[arm]["chains_full"] = sum(r.get("chain_reached") == r.get("chain_steps") for r in ch)
-        cold = runs[arm].get("warmup-1", {}).get("seconds")
-        S[arm]["cold_start_seconds"] = cold
-        chip = sum(r["chip_tokens"] for r in rs)
-        cs = sum(r["computer_seconds"] for r in rs)
-        S[arm]["computer_tokens_per_s"] = round(chip / cs, 1) if cs else None
-        S[arm]["tool_ms_total"] = round(sum(r["tool_ms"] for r in rs), 1)
+        chip, cs = sum(r["chip_tokens"] for r in rs), sum(r["computer_seconds"] for r in rs)
+        S[arm] = {
+            "by_group": {g: f"{sum(r['correct'] for r in rs if r['group'] == g)}/"
+                            f"{sum(1 for r in rs if r['group'] == g)}" for g in PRIMARY + ["5a", "5b"]},
+            "primary": f"{sum(r['correct'] for r in prim)}/{len(prim)}",
+            "layers": {k: sum(r["layer"] == k for r in rs) for k in sorted({r["layer"] for r in rs if r["layer"]})},
+            "recovered": sum(bool(r["recovered"]) for r in rs),
+            "loops_flagged": sum(r["loop"] for r in rs),
+            "median_seconds_primary": statistics.median(secs) if secs else None,
+            "cold_start_seconds": (runs[arm].get("warmup-1") or {}).get("seconds"),
+            "group5_tool_calls": sum(r["calls"] for r in rs if r["group"] in ("5a", "5b")),
+            "mismatches": sum(r["mismatch"] for r in rs),
+            "tool_ms_total": round(sum(r["tool_ms"] for r in rs), 1),
+            "computer_tokens_per_s": round(chip / cs, 1) if cs else None,
+            "tool_rss_peak_mib": max([r["tool_rss_peak_mib"] or 0 for r in rs], default=None),
+            "generated_tokens_total": sum(r["generated_tokens"] for r in rs),
+        }
+        ch = [r for r in rs if "chain_in_order" in r]
+        if ch:
+            S[arm]["chains_all_steps_seen_in_order"] = \
+                f"{sum(r['chain_in_order'] == r['chain_steps'] for r in ch)}/{len(ch)}"
     out = {"arms": S}
     if "B" in arms and "C" in arms:
         ids = [q["id"] for q in qs if q["group"] in PRIMARY]
-        a = sum(by[i, "C"]["correct"] and by[i, "B"]["correct"] for i in ids)
-        b = sum(by[i, "C"]["correct"] and not by[i, "B"]["correct"] for i in ids)
-        c = sum(not by[i, "C"]["correct"] and by[i, "B"]["correct"] for i in ids)
-        dd = len(ids) - a - b - c
+        a, b, c, dd = paired(by, ids, "C", "B")
         delta, lo, hi = newcombe_paired(a, b, c, dd)
         mb, mc = S["B"]["median_seconds_primary"], S["C"]["median_seconds_primary"]
-        out["primary"] = {"pairs": {"both right": a, "C only": b, "B only": c, "both wrong": dd},
+        out["primary"] = {"questions": len(ids), "pairs": {"both right": a, "C only": b, "B only": c, "both wrong": dd},
                           "C_minus_B": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
                           "verdict": verdict(lo, hi),
                           "practical": bool(mb and mc and mc <= 2 * mb and mc <= 60),
                           "median_seconds": {"B": mb, "C": mc}}
+        sids = [q["id"] for q in qs if q["group"] in SENSITIVITY]
+        a2, b2, c2, d2 = paired(by, sids, "C", "B")
+        out["sensitivity_groups_1_3_4"] = {"descriptive only": True, "questions": len(sids),
+                                           "pairs": {"both right": a2, "C only": b2, "B only": c2, "both wrong": d2}}
     if "A" in arms:
-        a_right = sum(by[q["id"], "A"]["correct"] for q in qs if q["group"] in ("5a", "5b"))
-        out["group5_tripwire"] = {arm: {"right": sum(by[q["id"], arm]["correct"] for q in qs if q["group"] in
-                                                     ("5a", "5b")), "A": a_right,
-                                        "flag": sum(by[q["id"], arm]["correct"] for q in qs if q["group"] in
-                                                    ("5a", "5b")) < a_right - 2}
+        g5 = [q["id"] for q in qs if q["group"] in ("5a", "5b")]
+        a_right = sum(by[i, "A"]["correct"] for i in g5)
+        out["group5_tripwire"] = {arm: {"right": sum(by[i, arm]["correct"] for i in g5), "A": a_right,
+                                        "flag": sum(by[i, arm]["correct"] for i in g5) < a_right - 2}
                                   for arm in arms if arm != "A"}
     return out
 
@@ -238,26 +329,34 @@ def main():
     qpath, outpath = sys.argv[1:3]
     dirs = dict(x.split("=", 1) for x in sys.argv[3:])
     qs = [json.loads(l) for l in open(qpath) if l.strip()]
-    runs = {arm: load_rows(p) for arm, p in dirs.items()}
-    scored, missing = [], []
-    for arm in ("A", "B", "C"):
-        if arm not in runs:
-            continue
-        for q in qs:
-            if q["id"] in runs[arm]:
-                scored.append(score_one(q, runs[arm][q["id"]]))
-            else:
-                missing.append((arm, q["id"]))
-    summary = summarise(qs, scored, [a for a in ("A", "B", "C") if a in runs], runs)
-    summary["missing"] = missing
-    if "Brep" in runs:                     # determinism: the repeat must match B exactly on its subset
-        same = [i for i, r in runs["Brep"].items() if not i.startswith("warmup") and i in runs["B"] and
-                json.dumps((r["raw"].get("choices") or [{}])[0].get("message", {}).get("content")) ==
-                json.dumps((runs["B"][i]["raw"].get("choices") or [{}])[0].get("message", {}).get("content"))]
-        n = sum(1 for i in runs["Brep"] if not i.startswith("warmup"))
-        summary["determinism_B"] = f"{len(same)}/{n} identical replies"
+    qids, qhash = {q["id"] for q in qs}, sha256(qpath)
+    if len(qids) != len(qs):
+        raise DataError("duplicate ids in the question file")
+    problems, runs = [], {}
+    for arm, path in dirs.items():
+        expected = every4(qs) if arm == "Brep" else [q["id"] for q in qs]
+        rows, missing, extra = load_arm(path, arm, qids, qhash, expected)
+        runs[arm] = rows
+        if missing:
+            problems.append(f"{arm}: {len(missing)} missing questions (first: {missing[:3]})")
+        if extra:
+            problems.append(f"{arm}: {len(extra)} unexpected questions (first: {extra[:3]})")
+    if any(q["group"] == "5a" for q in qs):
+        wall_canary()
+    arms = [a for a in ("A", "B", "C") if a in runs]
+    scored = [score_one(q, runs[arm][q["id"]]) for arm in arms for q in qs if q["id"] in runs[arm]]
+    if problems:
+        summary = {"incomplete": problems, "verdict": "withheld: the data is incomplete or inconsistent"}
+    else:
+        summary = summarise(qs, scored, arms, runs)
+        if "Brep" in runs:
+            def content(r):
+                return json.dumps(((r.get("raw") or {}).get("choices") or [{}])[0].get("message", {}).get("content"))
+            same = sum(content(runs["Brep"][i]) == content(runs["B"][i]) for i in every4(qs))
+            summary["determinism_B"] = f"{same}/{len(every4(qs))} identical replies"
     json.dump({"summary": summary, "rows": scored}, open(outpath, "w"), indent=1)
     print(json.dumps(summary, indent=1))
+    sys.exit(2 if problems else 0)
 
 
 def selftest():
@@ -266,58 +365,146 @@ def selftest():
     def check(label, cond):
         nonlocal bad
         bad += not cond
-        print(f"{'ok ' if cond else 'BAD'} {label}")
+        print(f"{'ok ' if cond else 'BAD'} {label}", flush=True)
 
-    # Newcombe: symmetric, contains the estimate, narrows with n, and ~95% coverage by simulation
-    d, lo, hi = newcombe_paired(140, 5, 5, 10)
-    check(f"no difference -> CI around 0 ({lo:.3f}, {hi:.3f})", lo < 0 < hi and abs(lo + hi) < 1e-9)
-    d, lo, hi = newcombe_paired(100, 30, 2, 28)
-    check(f"clear difference -> CI above 0 ({lo:.3f}, {hi:.3f})", lo > 0 and lo < d < hi)
-    d, lo, hi = newcombe_paired(158, 1, 1, 0)
-    check(f"almost no disagreement -> equivalent ({lo:.3f}, {hi:.3f})", verdict(lo, hi) == "equivalent")
-    d, lo, hi = newcombe_paired(120, 10, 10, 20)
+    # Newcombe method 10 against independent values (statsmodels' corrected implementation; Codex's local check)
+    for cells, want in [((10, 5, 2, 20), (-0.06439261, 0.22111602)), ((80, 0, 0, 80), (-0.01210532, 0.01210532)),
+                        ((160, 0, 0, 0), (-0.02344620, 0.02344620))]:
+        _, lo, hi = newcombe_paired(*cells)
+        check(f"Newcombe {cells}: ({lo:.6f}, {hi:.6f}) vs {want}",
+              abs(lo - want[0]) < 2e-6 and abs(hi - want[1]) < 2e-6)
+    _, lo, hi = newcombe_paired(158, 1, 1, 0)
+    check(f"almost no disagreement -> equivalent ({lo:.3f}, {hi:.3f})", verdict(lo, hi).startswith("practically"))
+    _, lo, hi = newcombe_paired(120, 10, 10, 20)
     check(f"12.5% disagreement -> inconclusive ({lo:.3f}, {hi:.3f})", verdict(lo, hi) == "inconclusive")
-    check("verdict rule: worse", verdict(-0.2, -0.01) == "computer worse")
+    _, lo, hi = newcombe_paired(100, 30, 2, 28)
+    check(f"clear difference -> computer better ({lo:.3f}, {hi:.3f})", verdict(lo, hi) == "computer better")
     import random
-    rng, cover, trials = random.Random(7), 0, 2000
-    for _ in range(trials):              # true: B right 80%, C right 85%, 10% disagreement structure
-        cnt = [0, 0, 0, 0]
-        for _ in range(160):
-            u = rng.random()
-            cnt[0 if u < 0.775 else 1 if u < 0.85 else 2 if u < 0.875 else 3] += 1
-        _, lo, hi = newcombe_paired(*cnt)
-        cover += lo <= 0.05 <= hi
-    check(f"coverage {cover / trials:.3f} close to 0.95", 0.93 <= cover / trials <= 0.97)
+    for name, probs, true in [("10% disagreement", (0.775, 0.075, 0.025, 0.125), 0.05),
+                              ("2% disagreement", (0.88, 0.01, 0.01, 0.10), 0.0),
+                              ("30% disagreement", (0.45, 0.20, 0.10, 0.25), 0.10)]:
+        rng, cover, trials = random.Random(11), 0, 2000
+        cum = [sum(probs[:i + 1]) for i in range(4)]
+        for _ in range(trials):
+            cnt = [0, 0, 0, 0]
+            for _ in range(160):
+                u = rng.random()
+                cnt[next((i for i, x in enumerate(cum) if u < x), 3)] += 1
+            _, lo, hi = newcombe_paired(*cnt)
+            cover += lo <= true <= hi
+        # at least nominal (within simulation noise); above it is conservative, which can only make equivalence
+        # harder to claim (the corrected method 10 is known to over-cover when there are few disagreements)
+        check(f"coverage, {name}: {cover / trials:.3f} (at least 0.93)", cover / trials >= 0.93)
+
+    # the code-test wall: right, wrong, forged and rigged answers
+    tests = [{"call": "count_vowels('Hello World')", "expect": "3"}, {"call": "count_vowels('')", "expect": "0"}]
+    for label, src, want in [
+        ("right code passes", "def count_vowels(s):\n    return sum(c in 'aeiouAEIOU' for c in s)\n", True),
+        ("wrong code fails", "def count_vowels(s):\n    return 3\n", False),
+        ("forged pass list + exit 1 fails",
+         "import json, os\nprint(json.dumps([True, True]), flush=True)\nos._exit(1)\n", False),
+        ("forged result line + exit 0 fails",
+         "import json, os, sys\nsys.stdout.write(json.dumps([{'ok': True, 'value': 0}] * 2) + '\\n')\n"
+         "sys.stdout.flush()\nos._exit(0)\n", False),
+        ("rigged __eq__ fails", "class X(int):\n    def __eq__(self, o):\n        return True\n"
+                                "def count_vowels(s):\n    return X(99)\n", False),
+        ("endless loop fails", "def count_vowels(s):\n    while True:\n        pass\n", False),
+        ("missing function fails", "x = 1\n", False),
+    ]:
+        try:
+            ok, _ = run_tests(src, tests)
+            check(f"code wall: {label}", ok == want)
+        except WallError as e:
+            check(f"code wall: {label} (wall error {e})", False)
 
     # classifier on made-up rows
     q = {"id": "t", "group": "1", "answer": "121932631112635269"}
 
-    def row(content, finish="stop", calls=(), http=200, events=(), arm="C", err=None):
+    def row(content, finish="stop", calls=(), http=200, events=(), arm="C", err=None, open_=()):
         return {"arm": arm, "http": http, "seconds": 1.0, "harness_error": err, "tool_calls": list(calls),
+                "tool_calls_open": list(open_),
                 "raw": {"choices": [{"finish_reason": finish, "message": {"content": content,
                                                                          "strata_mcp": list(events)}}]}}
     good = {"expression": "123456789*987654321", "result": "121932631112635269", "error": None}
+    right = "ANSWER: 121932631112635269"
+    oom = row(None, finish=None, http=400)
+    oom["raw"] = {"error": "verify: instantiate: out of memory"}
     cases = [
-        ("right", row("ANSWER: 121932631112635269", calls=[good]), True, None),
-        ("right, no tool", row("ANSWER: 121932631112635269", arm="A"), True, None),
+        ("right", row(right, calls=[good]), True, None),
+        ("right, no tool", row(right, arm="A"), True, None),
         ("wrong, no tool", row("ANSWER: 5", arm="A"), False, "reasoning"),
         ("wrong after a good tool result", row("ANSWER: 5", calls=[good]), False, "final answer"),
-        ("cut off", row("ANSWER: 121932631112635269", finish="length", calls=[good]), False, "budget"),
-        ("round limit", row("ANSWER: 1", calls=[good], events=[{"event": "limit"}]), False, "budget"),
-        ("loop", row("ANSWER: 1", calls=[good] * 3), False, "budget"),
-        ("refused call", row("ANSWER: 1", calls=[{"expression": "x" * 300, "result": None,
-                                                  "error": "refused: the call is 300 tokens"}]), False, "call format"),
-        ("computer error", row("ANSWER: 1", calls=[{"expression": "1+1", "result": None,
-                                                    "error": "computer check failed: {}"}]), False, "backend"),
-        ("http 503", row(None, finish=None, http=503), False, "transport"),
+        ("cut off", row(right, finish="length", calls=[good]), False, "budget"),
+        ("right text but round limit hit", row(right, calls=[good], events=[{"event": "limit"}]), False, "budget"),
+        ("right text but a call never ended", row(right, calls=[good], open_=[{"rpc_id": 9}]), False, "budget"),
+        ("right text but a trace mismatch", row(right, calls=[good, {"expression": "1+1", "error": "x",
+                                                                     "error_kind": "trace_mismatch"}]),
+         False, "backend"),
+        ("loop with right answer: right, flagged", row(right, calls=[good] * 3), True, None),
+        ("refused call then wrong", row("ANSWER: 1", calls=[{"expression": "x" * 300, "result": None,
+                                                             "error": "refused: too long", "error_kind": "refused"}]),
+         False, "call format"),
+        ("refused call then right: recovered", row(right, calls=[{"expression": "x", "error": "refused: x",
+                                                                  "error_kind": "refused"}, good]), True, None),
+        ("computer budget error then wrong", row("ANSWER: 1", calls=[{"expression": "2**999", "error": "x",
+                                                                      "error_kind": "budget"}]), False, "backend"),
+        ("computer says error, Python a value", row("ANSWER: 1", calls=[{"expression": "42-848/80/(3/6)-5",
+                                                                         "result": "error (too complex: split it)",
+                                                                         "error": None, "python_reference": "79/5"}]),
+         False, "backend"),
+        ("both say error: a bad expression", row("ANSWER: 1", calls=[{"expression": "1+*2", "result": "error",
+                                                                      "error": None, "python_reference": "error"}]),
+         False, "call format"),
+        ("error result with no reference: unknown", row("ANSWER: 1", calls=[{"expression": "1+*2", "result": "error",
+                                                                             "error": None}]), False, "unknown"),
+        ("HTTP 400 out of memory: backend", oom, False, "backend"),
+        ("http 503: transport", row(None, finish=None, http=503), False, "transport"),
+        ("timeout: budget", row(None, finish=None, http="timeout"), False, "budget"),
         ("harness", row(None, finish=None, http=None, err="KeyError"), False, "harness"),
     ]
     for label, r, want_ok, want_layer in cases:
         try:
             s = score_one(q, r)
-            check(f"classifier: {label} -> {s['layer'] or 'correct'}", s["correct"] == want_ok and s["layer"] == want_layer)
+            check(f"classifier: {label} -> {s['layer'] or 'correct'}",
+                  s["correct"] == want_ok and s["layer"] == want_layer)
         except Exception as e:  # noqa: BLE001
             check(f"classifier: {label} raised {e!r}", False)
+    s = score_one(q, row(right, calls=[{"expression": "x", "error": "refused: x", "error_kind": "refused"}, good]))
+    check("recovered faults are listed", s["recovered"] == ["refused"])
+    s = score_one(q, row(right, calls=[good] * 3))
+    check("a loop is flagged", s["loop"])
+
+    # chains: steps seen in order, not the furthest value
+    qc = {"id": "c", "group": "4", "answer": "30", "steps": 3, "intermediates": ["10", "20", "30"]}
+    for label, results, want in [("all in order", ["10", "20", "30"], (3, 3)), ("only the last", ["30"], (0, 1)),
+                                 ("batched middle", ["10", "30"], (1, 2))]:
+        s = score_one(qc, row("ANSWER: 30", calls=[{"expression": "e", "result": v, "error": None} for v in results]))
+        check(f"chain: {label} -> in order {s['chain_in_order']}, seen {s['chain_seen_any_order']}",
+              (s["chain_in_order"], s["chain_seen_any_order"]) == want)
+    s = score_one(qc, row("ANSWER: 30", arm="A"))
+    check("chain: no chain measure for arm A", "chain_in_order" not in s)
+
+    # data integrity: duplicates, wrong arm, unknown ids, another question file, missing questions
+    with tempfile.TemporaryDirectory() as t:
+        def arm_dir(rows, sha=None):
+            p = tempfile.mkdtemp(dir=t)
+            with open(os.path.join(p, "replies.jsonl"), "w") as f:
+                for r in rows:
+                    f.write(json.dumps(r) + "\n")
+            if sha:
+                open(os.path.join(p, "questions.sha256"), "w").write(sha + "  q.jsonl\n")
+            return p
+        for label, rows, sha in [("duplicate id", [{"id": "x", "arm": "B"}, {"id": "x", "arm": "B"}], None),
+                                 ("wrong arm", [{"id": "x", "arm": "C"}], None),
+                                 ("unknown id", [{"id": "zzz", "arm": "B"}], None),
+                                 ("other question file", [{"id": "x", "arm": "B"}], "0" * 64)]:
+            try:
+                load_arm(arm_dir(rows, sha), "B", {"x"}, "f" * 64, ["x"])
+                check(f"integrity: {label} rejected", False)
+            except DataError:
+                check(f"integrity: {label} rejected", True)
+        _, missing, _ = load_arm(arm_dir([{"id": "x", "arm": "B"}]), "B", {"x", "y"}, "f" * 64, ["x", "y"])
+        check("integrity: a missing question is reported", missing == ["y"])
     print("SELFTEST", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)
 

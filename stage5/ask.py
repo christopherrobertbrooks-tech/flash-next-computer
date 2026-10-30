@@ -6,14 +6,19 @@ usage: python ask.py BASE_URL ARM QUESTIONS.jsonl OUT_DIR [--subset every4]
   --subset every4: only primary questions (groups 1-4) whose position among them is a multiple of 4 (the fixed
   40-question determinism repeat of arm B).
 
-Per question it saves: the request body, the full raw reply, wall seconds, the MCP server's call-log lines written
-during the request (OUT/calls.jsonl), the engine-log lines written during it (OUT/strata.log), and harness errors.
+Per question it saves: the request body, the full raw reply, wall seconds, its tool calls (by tag, from
+OUT/calls.jsonl), the engine-log lines written during it (OUT/strata.log, untruncated, with byte offsets), and any
+harness error.
 Budgets (STAGE5-PLAN.md): max_tokens 8,192 per round, 20 tool rounds (server config), 600 s per question (on timeout
 the connection is closed; Strata cancels a request whose client hung up).
-Stop rules: any computer-vs-reference mismatch -> exit 3 (STOP file written); harness errors over 5% -> exit 4.
+Stop rules: a computer-vs-reference trace mismatch (error_kind trace_mismatch) -> exit 3; harness errors over
+5% -> exit 4; the arm not provably quiet -> exit 5. Each writes OUT/STOP.
 Two unscored warm-up questions run first; the first one's time is the arm's cold start.
-Before each question, and after any failed one, it waits until GET /status reports nothing running or queued, so a
-timed-out request's late tool calls are logged with that question and never leak into the next.
+Fencing: the runner writes the current question id into OUT/current_question; the tool server tags each call with it
+when the call arrives and logs a begin and an end line. Calls are attributed by that tag, never by log position.
+Before each question the arm must be quiet (GET /status idle, no call begun-but-unended); after a failed request it
+must also stay quiet for 10 s. If that can't be shown within 300 s, the attempt is saved and the arm stops (exit 5):
+fail closed. Every attempt is saved, including local failures, and counts toward the 5% harness rule.
 """
 import json, os, socket, sys, time, urllib.error, urllib.request
 
@@ -80,6 +85,46 @@ def wait_idle(base, limit=300):
     return None
 
 
+def read_calls(path):
+    """(begin lines, end lines) of the MCP call log; a line that isn't JSON is kept as a harness problem."""
+    begins, ends, bad = [], [], []
+    for l in tail_from(path, 0).splitlines():
+        if not l.strip():
+            continue
+        try:
+            r = json.loads(l)
+        except ValueError:
+            bad.append(l[:200])
+            continue
+        (begins if r.get("phase") == "begin" else ends).append(r)
+    return begins, ends, bad
+
+
+def open_calls(path):
+    """Calls that began and have not ended (matched by the tool server's RPC id)."""
+    begins, ends, _ = read_calls(path)
+    done = {r.get("rpc_id") for r in ends}
+    return [b for b in begins if b.get("rpc_id") not in done]
+
+
+def fence(base, calls_log, quiet=10, limit=300):
+    """Proves the arm is quiet before the next question: Strata reports nothing running or queued (GET /status), every
+    tool call that began has ended, and nothing new was logged for `quiet` seconds. Returns seconds waited, or None
+    if that couldn't be shown within `limit` (the caller then stops the arm: fail closed)."""
+    t = time.monotonic()
+    last_change, last_size = time.monotonic(), size(calls_log)
+    while time.monotonic() - t < limit:
+        idle = wait_idle(base, limit=max(1, limit - (time.monotonic() - t)))
+        if idle is None:
+            return None
+        if size(calls_log) != last_size:
+            last_size, last_change = size(calls_log), time.monotonic()
+        if not open_calls(calls_log) and time.monotonic() - last_change >= quiet:
+            return round(time.monotonic() - t, 1)
+        time.sleep(1)
+    return None
+
+
 def main():
     base, arm, qpath, out = sys.argv[1:5]
     subset = "--subset" in sys.argv and sys.argv[sys.argv.index("--subset") + 1]
@@ -89,39 +134,61 @@ def main():
         prim = [q for q in qs if q["group"] in PRIMARY]
         qs = [q for i, q in enumerate(prim) if i % 4 == 0]
     calls_log, engine_log = os.path.join(out, "calls.jsonl"), os.path.join(out, "strata.log")
+    marker = os.path.join(out, "current_question")
     rows_path = os.path.join(out, "replies.jsonl")
     items = [{"id": f"warmup-{i + 1}", "group": "warmup", "prompt": p} for i, p in enumerate(WARMUP)] + qs
     harness_errors = 0
     for n, q in enumerate(items):
-        idle_before = wait_idle(base)                 # never start while an earlier request is still running
-        c0, e0 = size(calls_log), size(engine_log)
-        b = body(q["prompt"], arm)
-        err = None
+        row = {"id": q["id"], "group": q["group"], "arm": arm, "time": time.strftime("%X"), "harness_error": None}
         try:
+            row["fence_before"] = fence(base, calls_log, quiet=0)   # nothing may still run from earlier questions
+            if row["fence_before"] is None:
+                raise RuntimeError("the arm was not quiet before this question")
+            open(marker, "w").write(q["id"])           # tool calls arriving from now on carry this question's id
+            c0, e0 = size(calls_log), size(engine_log)
+            b = body(q["prompt"], arm)
+            row["request"] = b
             code, d, secs = ask(base, b)
-        except Exception as e:  # noqa: BLE001  (a bug in this script, not a server answer)
-            code, d, secs, err = None, {}, None, f"{type(e).__name__}: {e}"
+            row.update({"http": code, "seconds": secs, "raw": d})
+            open(marker, "w").write("after:" + q["id"])  # stragglers are still this question's, by their tag
+            if code != 200:                               # timeout or error: wait for cancellation to settle
+                row["fence_after"] = fence(base, calls_log)
+                if row["fence_after"] is None:
+                    raise RuntimeError("could not prove the arm quiet after a failed request")
+            row["engine_log_offsets"] = [e0, size(engine_log)]
+            row["engine_log"] = tail_from(engine_log, e0)
+            begins, ends, bad = read_calls(calls_log)
+            mine = {q["id"], "after:" + q["id"]}
+            row["tool_calls"] = [r for r in ends if r.get("question") in mine]
+            row["tool_calls_open"] = [r for r in begins if r.get("question") in mine and
+                                      r.get("rpc_id") not in {e.get("rpc_id") for e in ends}]
+            row["calls_log_offsets"] = [c0, size(calls_log)]
+            stray = [r for r in ends if r.get("question") not in {x["id"] for x in items[:n + 1]} |
+                     {"after:" + x["id"] for x in items[:n + 1]}]
+            if bad or stray:
+                raise RuntimeError(f"call log problems: {len(bad)} unreadable lines, {len(stray)} calls with an "
+                                   f"unknown question tag")
+        except Exception as e:  # noqa: BLE001  (this script or the fence failed: keep the attempt, stop if needed)
+            row["harness_error"] = f"{type(e).__name__}: {e}"
             harness_errors += 1
-        idle_after = None
-        if code != 200:                               # a timeout or an error: let the server finish or cancel first,
-            idle_after = wait_idle(base)              # so late tool calls stay with this question, not the next
-        calls = [json.loads(l) for l in tail_from(calls_log, c0).splitlines() if l.strip()]
-        row = {"id": q["id"], "group": q["group"], "arm": arm, "request": b, "http": code, "seconds": secs,
-               "raw": d, "tool_calls": calls, "engine_log": tail_from(engine_log, e0)[-20000:],
-               "harness_error": err, "time": time.strftime("%X"),
-               "idle_wait_before": idle_before, "idle_wait_after": idle_after}
-        with open(rows_path, "a") as f:
+        with open(rows_path, "a") as f:                   # every attempt is saved, whatever happened
             f.write(json.dumps(row) + "\n")
+        d = row.get("raw") or {}
         c = (d.get("choices") or [{}])[0] if isinstance(d, dict) else {}
-        print(f"{n + 1:3}/{len(items)} {q['id']:16} HTTP {code} {secs}s finish {c.get('finish_reason')} "
-              f"calls {len(calls)}", flush=True)
-        mism = [x for x in calls if str(x.get("error") or "").startswith("computer check failed")]
+        print(f"{n + 1:3}/{len(items)} {q['id']:16} HTTP {row.get('http')} {row.get('seconds')}s finish "
+              f"{c.get('finish_reason')} calls {len(row.get('tool_calls') or [])}"
+              f"{' HARNESS: ' + row['harness_error'] if row['harness_error'] else ''}", flush=True)
+        mism = [x for x in row.get("tool_calls") or [] if x.get("error_kind") == "trace_mismatch"]
         if mism:
             open(os.path.join(out, "STOP"), "w").write(json.dumps({"id": q["id"], "calls": mism}) + "\n")
             print("STOP: the computer disagreed with its reference machine", flush=True)
             sys.exit(3)
-        done = n + 1 - len(WARMUP)
-        if done >= 10 and harness_errors / max(done, 1) > 0.05:
+        if row["harness_error"] and ("quiet" in row["harness_error"]):
+            open(os.path.join(out, "STOP"), "w").write(json.dumps({"id": q["id"], "why": row["harness_error"]}) + "\n")
+            print("STOP: the arm could not be proven quiet (fail closed)", flush=True)
+            sys.exit(5)
+        done = n + 1
+        if done >= 10 and harness_errors / done > 0.05:
             print(f"STOP: harness errors {harness_errors} of {done}", flush=True)
             sys.exit(4)
     print(f"done: {len(items)} requests ({len(WARMUP)} warm-up), harness errors {harness_errors}")

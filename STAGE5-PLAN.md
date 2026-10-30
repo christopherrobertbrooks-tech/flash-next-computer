@@ -1,8 +1,10 @@
-# Stage 5 protocol: is the computer useful? (v2, 2026-10-30)
+# Stage 5 protocol: is the computer useful? (v3, 2026-10-30)
 
-v1 (1c5e0b4) was reviewed by Muse and Codex. v2 fixes the numbers before anything runs: sample size and decision rule,
-"new capability", chain design, budgets, failure layers, warm-up, a scored normal-request group, latency limits,
-and a separate pilot set. Changes after the pilot are allowed; after the freeze (step 4 below), none.
+v1 (1c5e0b4) was reviewed by Muse and Codex. v2 (4cdd05c) fixed the numbers before anything runs: sample size and
+decision rule, "new capability", chain design, budgets, failure layers, warm-up, a scored normal-request group,
+latency limits and a separate pilot set. v3 (after Codex's review of the tooling, 97e0f86) makes the failure rule,
+the chain measure, group 1's input limits and the attribution of tool calls exact; see "v3 changes" at the end.
+Changes after the pilot are allowed; after the freeze (step 4 below), none.
 
 ## The question
 On the same questions, does Flash-Next Coder get more right with the exact computer than with an ordinary Python
@@ -34,19 +36,20 @@ generator, scorer and settings are frozen, then hashed before any final run.
 
 | Group | Final | What it is | Scoring |
 |---|---|---|---|
-| 1. Exact arithmetic | 70 | multiplications, floor division, remainders, powers, gcd, fractions, decimals; 10-40 digits | exact `ANSWER:` value |
-| 2. Near the computer's limits | 10 | long expressions, big powers | same (reported separately) |
+| 1. Exact arithmetic | 70 | multiplications, floor division, remainders, powers, gcd, fractions, decimals; 10-40 digits; every direct call fits both tools' input rules (checked at generation with the real tokenizer) | exact `ANSWER:` value |
+| 2. Near the computer's limits | 10 | long expressions, big powers; each labelled with whether its direct call is over the 80-token capture (refused by both tools) | same |
 | 3. Word problems, 2-5 steps | 40 | everyday-style problems needing exact big numbers | same |
 | 4. Dependent chains | 40 | 8-15 steps, each needing the previous exact result ("start with 48,213; multiply by 1,237; subtract 99,991; ...") | same, plus **the first step that went wrong** (below) |
-| 5a. Code with tests | 10 | small Python functions | hidden unit tests, run on Dev-Console in a `bwrap` wall (no network, read-only system, no home folder, 10 s; the gateway's AppArmor refuses bwrap) |
+| 5a. Code with tests | 10 | small Python functions | hidden unit tests, run on Dev-Console in a `bwrap` wall (no network, read-only system, no home folder, 10 s; the gateway's AppArmor refuses bwrap). The code never sees the expected values; the scorer compares plain returned values itself |
 | 5b. Code reading | 10 | "what does this function return for input X?" | exact `ANSWER:` value (a checkable explanation question) |
 
 Groups 1-4 (160 questions) are the **primary set**. Group 5 checks that offering a tool doesn't hurt normal work;
 tool restraint (calls made on group 5) is reported separately from correctness.
 
-**Chains:** every chain has its list of exact intermediate values. "First wrong step" = the first expected
-intermediate that's missing from the tool results (B, C) or from the visible reply (A; weaker: A has no tool log).
-This shows where chains break, not only whether the end was right.
+**Chains:** every chain has its list of exact intermediate values. For B and C: "steps seen in order" = how many of
+them appear in the tool results in order (one result per step), and "seen in any order". A step that's missing may be
+batched into a bigger expression, so this is "intermediate values observed", not proof of a wrong step; final-answer
+accuracy stays the comparable endpoint. No chain measure for A (its reply text can't show which steps were done).
 
 **Note on the plan's predicted advantage** (exact state kept across many steps): this computer can't test it. The calc
 firmware keeps no memory between calls (each call starts fresh, like the Python calculator). Group 4 therefore tests
@@ -64,6 +67,9 @@ dependent chains of separate calls, not stored state. A computer with memory nee
   disagreements, but that's too few to rely on. If d turns out higher, the result is "inconclusive", and it's reported
   as such.
 - Group breakdowns, A-vs-B and A-vs-C: **descriptive only** (counts and paired tables, no extra significance tests).
+- Group 2 stays in the primary set (a declared boundary-inclusive workload: real limits count). Groups 1, 3 and 4
+  (150) are also shown as a **descriptive** breakdown, not a second verdict.
+- "Practically equivalent" means the interval lies inside +/-5 points; it doesn't mean "no difference at all".
 
 **"Practical", decided now:** C's median wall time per primary question at most **2x** B's, and at most **60 s**.
 Outside that, C is "impractical" whatever its accuracy.
@@ -73,14 +79,25 @@ both A and B get <= 20%. **This design contains no such class**: the computer's 
 can't (stage 4: its five known differences are all limits). So this experiment can't produce a new-capability claim.
 "Every answer is reference-checked" is a property, reported as such, not a success criterion.
 
-## Failure layers (every failure gets exactly one, first match wins)
-1. **Transport:** no reply, or HTTP error.
-2. **Budget:** token, round or time limit hit (including loops: the same call repeated 3 times).
-3. **Call format:** a malformed tool call, or one refused by the input rules.
-4. **Backend:** the tool failed: a computer error, a reference mismatch (**must be zero**: any one stops the run),
-   the computer's declared limit ("too complex"), or an out-of-memory.
-5. **Final answer:** the tool results were right, but the ANSWER line is missing or wrong.
-6. **Reasoning** (A, or a tool never used): the ANSWER is wrong without a tool fault.
+## Right or wrong, and the failure layer
+**Hard failures decide whatever the final text says** (first match wins):
+1. **Harness:** our scripts failed on that question.
+2. **Backend (out of memory):** an HTTP error whose text says "out of memory" (the cause is named).
+3. **Transport:** any other HTTP error, or no reply.
+4. **Budget:** the 600 s limit, a reply cut off by the token limit, the 20-round limit, or a tool call that began and
+   never ended.
+5. **Backend (mismatch):** the computer and its reference machine disagreed (also stops the run).
+
+Otherwise the final `ANSWER:` line (or the unit tests) decides. A wrong answer gets one layer, first match wins:
+**call format** (a call refused by the input rules, or an expression Python's calculator also calls an error),
+**backend** (the tool failed: a budget, an execution or reference error; or the computer said "error" where Python
+gives a value, e.g. "too complex"), **unknown** (an error result with no recorded Python reference),
+**final answer** (tools used without fault, answer wrong), **reasoning** (no tool used, answer wrong).
+
+**Recovered tool faults count as right:** if a call was refused or the computer hit a limit, and the model then got
+the right answer within the budgets, the question is right, and it's counted in a separate "recovered" column.
+**Loops** (the same call 3 times) are flagged and counted, not failed on their own (the runner can't stop them;
+the round and token budgets do).
 
 ## Timing and memory definitions
 - **Warm-up:** each arm first runs 2 unscored warm-up questions. The first warm-up's time is reported as the **cold
@@ -89,9 +106,11 @@ can't (stage 4: its five known differences are all limits). So this experiment c
   measured: tool rounds run inside one non-streamed request, so it isn't a user-visible number here.
 - **Tool time:** per call, from the MCP server's log (receipt to response).
 - **Computer throughput:** circuit tokens / seconds inside `Computer.call`, including the reference check.
-- **Memory:** V100 peak (nvidia-smi every 500 ms), host RSS of the tool process, expert residency = the engine's
-  reported slot count (12,288 = all resident, so no expert cache misses are expected; any engine-reported miss
-  counter is recorded if present).
+- **Memory:** V100 peak (nvidia-smi samples every 500 ms: a sampled peak, not a continuous bound), the tool
+  process's peak host RSS (its own `ru_maxrss`, logged with every call, plus a snapshot at the end), expert
+  residency = the engine's reported slot count (12,288 = all resident).
+- **Rounds and tokens:** each question's engine-log lines (kept in full, with byte offsets) give its rounds and
+  generated tokens.
 
 ## Normal-behaviour check (group 5)
 B and C must each stay within **2 questions** of A on group 5 (out of 20); a bigger drop is flagged as a regression.
@@ -129,3 +148,19 @@ A results page with:
 - a plain answer on whether the computer is worth it.
 
 All raw replies are saved.
+
+## v3 changes (Codex review of the tooling, 97e0f86), all before the pilot
+- Code tests: the tested code gets only the calls, never the expected values; it returns plain values (exact types);
+  the scorer checks the exit status, the result's shape and compares. Forged results fail (self-tested).
+- Interval: Newcombe method 10 with its covariance correction (it was missing); checked against published values.
+- Tool calls are tagged with their question when they arrive (begin and end logged); the runner waits until Strata is
+  idle and every begun call has ended, and stops the arm if it can't show that (fail closed).
+- Computer errors carry a type; only a trace mismatch stops the run. A budget is a budget.
+- Hard failures (above) can't be hidden by a right final text; recovered faults are counted separately.
+- Chains: steps seen in order (B, C); no chain measure for A.
+- Group 1 checked against the real input rules at generation; group 2 labelled.
+- The scorer rejects duplicate, unknown or wrong-arm rows and another question file, and withholds the verdict if
+  anything is missing; failure diagnosis uses the Python reference recorded by the tool server at call time (no live
+  lookups while scoring).
+- Questions are generated on the gateway's CPU (they need the tokenizer); the `int(b, 2)` ban was dropped from a code
+  task (nothing enforced it).
