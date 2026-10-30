@@ -11,8 +11,8 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 `qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
 
 ## Status
-- 2026-10-30: Stage 1 remainder: Codex verifying the last 40 paired records (`qwenputer-v100`, `REVIEW-40.md`).
-- 2026-10-30: Stage 2 started: read-only map of the **deployed** Strata (v0.1.41, `fb58e0d`, not the public 0.2.x the
+- 2026-10-30: Stage 1 done: Codex verified the last 40 paired records locally, no findings (`qwenputer-v100`, `REVIEW-40-FINDINGS.md`): all 200 pairs identical across both computer paths.
+- 2026-10-30: Stage 2 read-only map done of the **deployed** Strata (v0.1.41, `fb58e0d`, not the public 0.2.x the
   plan's source notes describe) -> `mapping/`.
 
 ## Rules
