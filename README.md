@@ -12,6 +12,8 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 
 ## Status
 - 2026-10-30: Stage 1 done: Codex verified the last 40 paired records locally, no findings (`qwenputer-v100`, `REVIEW-40-FINDINGS.md`): all 200 pairs identical across both computer paths.
+- 2026-10-30: Stage 3 first measurement: the executor alone is ~21 MiB (68 MiB peak), exact on 4,166 steps, ~2,000
+  steps/s; as its own process ~440 MiB (368 MiB CUDA context); CPU ~50 steps/s (too slow). `results/stage3-executor.md`.
 - 2026-10-30: Stage 2 read-only map done of the **deployed** Strata (v0.1.41, `fb58e0d`, not the public 0.2.x the
   plan's source notes describe) -> `mapping/`.
 
