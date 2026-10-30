@@ -50,3 +50,76 @@ Warm-up handling, no-vision config, 20 tool rounds, own pilot seed, separate fin
 **Not ready for the pilot yet.** Fix the unit-test verdict channel, interval calculation, request/call fencing and failure semantics first; repair the chain diagnostic and group-1 capture audit; make artifact validation fail explicitly. Then rerun expanded CPU controls before GPU time. The data/gold arithmetic itself is encouraging: all audited numerical answers agree and the intended arm comparison is clearly specified.
 
 No implementation or protocol edits were made. This file is the blind-pass deliverable; the guided brief remains unopened until this commit is pushed.
+
+# Pass 2 (guided)
+
+Blind findings were committed and successfully pushed as `fa30ce4` before I opened `REVIEW-STAGE5-PASS2.md` or the stage5 commit messages. I then read the two messages since v1 (protocol v2, tooling/brief); they supply no contrary execution evidence. This pass answers the seven guided questions in order and retains the blind findings.
+
+## 1. Where the guided account differs
+
+The brief accurately identifies the wall's intended containment, the old timeout-attribution bug, and several known diagnostic ambiguities. Those disclosures are useful, but they do not establish the fixes:
+
+- Its bwrap escape controls concern filesystem/network/timeout containment. Finding 1 is a **judging-integrity** failure inside that wall. My forged-output fixture reads an intentionally mounted file and prints an accepted JSON verdict; no namespace escape is needed.
+- Its `/status` fix addresses engine busy/queued state, but the endpoint does not represent the external MCP backend's complete lifetime. The remaining window is established by source and delayed-call fixtures, not contradicted by the earlier fake-server test.
+- “Uncorrected phi” describes the draft code correctly, but is not the method-10 implementation required by the protocol. The missing correction is substantive; a single 0.950 coverage result does not identify the method.
+- Counting an unavailable SSH diagnosis as call format is explicitly documented in the guided question. That makes it an intentional fallback, not a scientifically sound attribution. Unknown should remain unknown.
+
+There is no disagreement with the project's numerical golds in these generated files: all independently audited values agree. The concerns are enforcement, evidence attribution and interpretation.
+
+## 2. Is the code wall sufficient?
+
+For basic containment, the declared read-only mounts, absent home, network namespace, process namespace and timeout are a reasonable starting point. The local wall actually ran a correct and an incorrect function with the expected outcomes once outside the outer tool sandbox. I did not repeat the brief's historical network/home escape tests or infer that the gateway's AppArmor configuration was newly measured by this review.
+
+For **scoring**, it is not sufficient: the same actual wall accepted the forged pass list from a candidate that exited 1 without defining the tested function. The hidden tests and expected values are readable by the candidate, and the result channel is candidate-controlled stdout. Even without forging stdout, a candidate-defined object with an always-true `__eq__` could manipulate comparisons conducted in its process. Compare serialized, type-checked primitive results in the parent and keep expected outputs there; check exit status and bound captured output. A missing/broken bwrap installation should become a harness failure, not ten silently wrong model answers. The 1 GB address-space limit is per process, not an aggregate host-memory/process-count limit; use appropriate process/output/resource controls for the code-execution harness, without installing or changing system policy as part of this review.
+
+Fixing the verdict boundary is required before using group 5a or the normal-behavior tripwire. This conclusion does not require or authorize running any model-generated code outside the wall.
+
+## 3. Is `/status` the right attribution fence?
+
+It is useful telemetry, but **not a sufficient request/backend completion fence** in this version. Guided references near 2624 initialize `busy/queued` to false/zero; the cited code near 2716 concerns resetting busy around session save/restore. The relevant generation cleanup sets `busy=False` around line 3735. `run_with_mcp` invokes the tool worker after the model generation round returns, and uses a separate loop at 3885 onward. Thus the tool can still be executing when the generation status is idle.
+
+`serve/mcp.py:189–207` removes the pending client wait on timeout/cancellation and sends `notifications/cancelled`; the project MCP service ignores such notifications and is synchronous. The backend can still finish and append its call log later. A next question can therefore take a new byte offset before that completion and inherit the old call. RPC IDs alone identify calls, not their originating question, unless request-to-call membership is recorded.
+
+Additionally, `ask.py` proceeds after an idle query returns None or its 300 s limit expires. My actual-main fixture confirmed this fail-open path. Require a validated idle response **and** backend completion/acknowledged cancellation, or stop issuing requests and preserve the partial arm. A full logical-request counter spanning all MCP rounds plus pending backend calls would be a suitable signal; current engine telemetry is not. Tag begin/completion/error records with logical question IDs and persist every attempt, including timeout/parse failures, before generating the next request. These changes should be proved with a delayed-completion fixture, not only ordinary successful calls.
+
+## 4. Is the failure classifier fair?
+
+Shared-contract refusal is reasonably a call-format outcome when the expression violates the declared accepted-input rules. A firmware `error` versus a successful Python calculation can indicate a computer limit. But the SSH helper is not a complete syntax oracle: helper semantics differ, network/import errors are possible, and the reason the helper says `error` can itself be a numeric/resource restriction. Treating `None` as proof of bad syntax misstates the evidence. Freeze the helper/contract and cache its diagnostic output, preserve an explicit unknown category, and classify from structured backend error kinds and MCP events as well as call-log lines.
+
+An explicit OOM should be a backend availability failure. A later 503 should also be linked to that backend incident **if** a recorded engine generation/incident ID and error metadata prove it is the same restart. A generic 503 with no such evidence stays transport/unknown; do not infer cause from order alone. Preserve raw HTTP and root-cause fields separately, and pre-register whether aggregate layers count direct transport symptoms or the evidenced root cause. Current protocol says transport first, while code overrides that for explicit OOM, so align the written hierarchy with the desired policy before freeze.
+
+Also fix findings 4–5: a budget is not a trace mismatch, recovered errors cannot disappear simply because a final value matches, and all RPC/backend exceptions must reach the per-question record. The primary final-answer verdict and tool-integrity verdict can both be reported even when a registered whole-question failure takes precedence.
+
+## 5. Method 10, n=160 and the margin
+
+A fixed **160-question paired primary benchmark**, ±5-point equivalence margin, and explicit inconclusive outcome are defensible choices if 5 points is the tolerance Chris actually wants. The threshold is a substantive choice, not certified by four prior examples. One deterministic decode per question does not invalidate paired comparison: the interval concerns variation across questions drawn from the declared generator/task mixture, not repeated random token sampling. It should not be presented as uncertainty over all real-world tasks or hardware states. Shared templates and the deliberately weighted groups limit generalization.
+
+The method implementation must be fixed. The [official statsmodels method-10 implementation](https://www.statsmodels.org/dev/_modules/statsmodels/stats/proportion.html#confint_proportions_paired) corrects a positive covariance numerator by subtracting `n/2` and flooring at zero. A separate local calculation using that correction gives:
+
+| Table `(both right, C only, B only, both wrong)` | Current limits | Corrected limits |
+| --- | --- | --- |
+| `(10,5,2,20)` | `[-0.05484039, 0.21225124]` | `[-0.06439261, 0.22111602]` |
+| `(80,0,0,80)` | `[0,0]` | `[-0.01210532, 0.01210532]` |
+| `(160,0,0,0)` | `[-0.02344620, 0.02344620]` | unchanged |
+
+The corrected 37-pair values match that reference's published example to rounding (our z is rounded). These fixtures are a more direct implementation check than simulated coverage at one favorable distribution. Add zero/few-discordance and marginal-boundary regimes. No new statistical package was installed.
+
+The pre-registered verdict ordering currently gives equivalence priority when a small positive/negative CI lies entirely inside the ±5-point margin; this matches the current code but should be explicitly described as “practically equivalent” rather than “no measured direction.” Secondary arm/group tables remain descriptive as intended. Fixing the calculation before pilot/freeze is correcting the planned method, not selecting a method on final outcomes.
+
+## 6. Keep or drop arm-A chain evidence?
+
+Drop it from any headline **first wrong step** comparison unless the prompt requests explicit step-labelled values. Unlabelled reply/reasoning digit matches are not proof that a step was executed; restated inputs and unrelated numbers can satisfy them, whitespace removal can merge values, and order/occurrence information is discarded. Calling that metric weak does not repair the code's `max(reached)` error. B/C tool logs also need ordered-prefix/occurrence matching rather than maximum membership.
+
+For this pilot, retain final-answer correctness as the comparable endpoint. If keeping the diagnostic, label it “intermediate values observed,” report the evidence source and unobserved/batched steps, and avoid presenting missing logs as proven arithmetic mistakes. An ordered step-labelled trace would enable a stronger first-error measure, but changes the task by requiring more output/calls; freeze that design before the final set is generated. Do not require tools from A or equate a correct single composed call with a failed chain.
+
+## 7. Keep group 2 in the primary set?
+
+Keeping it in the registered **160-question** primary set is fair for a clearly declared **boundary-inclusive synthetic workload**. Real calculator limitations are a legitimate practical difference, and the plan already says to report them instead of hiding them. It is not evidence of representative everyday task frequencies: this group is an explicit 10/160 weight chosen by design. Shared capture restrictions can also hurt both backends, so it does not automatically yield ten Python wins.
+
+I recommend retaining the registered primary definition, reporting all groups separately, and optionally showing groups 1/3/4 (150 questions) as a **predeclared descriptive sensitivity breakdown**, without turning it into a second primary/significance claim. Alternatively Chris can choose the 150-question target **now**, before pilot/freeze, but then update the protocol, subset, generator/checker counts and interval/power rationale consistently. Never choose the primary set after seeing the direction of the result. Correct finding 7 first so group 1 genuinely excludes the direct-call limits that are supposed to characterize group 2.
+
+## Guided verdict and next step
+
+The guided account does not close the blind blockers/redlines. The required CPU checks pass, but deliberate controls establish that the scorer can accept untested code, the interval is not the registered corrected method, late calls can cross questions, normal budgets can masquerade as reference mismatches, and correct final text can erase registered failures. These directly threaten the final comparison and should be fixed **before the pilot**. Then rerun the expanded CPU controls and review the corrected diff; pilot timing/quality remains a separate user check-in before any final run.
+
+No pilot or overnight work was scheduled or launched, and no merges were made. Final generated review data remain temporary and unfrozen; only this findings document is committed.
