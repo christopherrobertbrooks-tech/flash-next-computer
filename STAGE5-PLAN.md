@@ -164,3 +164,12 @@ All raw replies are saved.
   lookups while scoring).
 - Questions are generated on the gateway's CPU (they need the tokenizer); the `int(b, 2)` ban was dropped from a code
   task (nothing enforced it).
+
+## After Codex's re-check (993affb), still before the pilot
+- A failing code test is the candidate's failure unless a trusted canary run right after it also fails; nothing the
+  candidate prints (stderr included) can mark the wall broken. Output is capped while it's read. Returned values
+  must match the expected types exactly (True isn't 1); tuples may come back as lists.
+- Tool calls are matched on (tool-server instance, RPC id), one-to-one: Strata restarts a tool server with RPC ids from
+  0 again. The runner also waits whenever one of the question's own calls is still running, even after an OK reply.
+- A run folder without a readable question fingerprint is rejected.
+- A Python reference that couldn't be computed is recorded as missing (the failure is then "unknown").

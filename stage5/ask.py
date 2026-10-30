@@ -86,31 +86,49 @@ def wait_idle(base, limit=300):
 
 
 def read_calls(path):
-    """(begin lines, end lines) of the MCP call log; a line that isn't JSON is kept as a harness problem."""
-    begins, ends, bad = [], [], []
+    """(begin lines, end lines, problems) of the MCP call log. Calls are matched one-to-one on (instance, rpc_id):
+    the tool server's instance id changes when Strata restarts it, and RPC ids start again. A line that isn't JSON,
+    a duplicate key, or an end with no begin is a problem (a harness error for the question)."""
+    begins, ends, problems = [], [], []
     for l in tail_from(path, 0).splitlines():
         if not l.strip():
             continue
         try:
             r = json.loads(l)
         except ValueError:
-            bad.append(l[:200])
+            problems.append(f"unreadable line {l[:80]!r}")
             continue
         (begins if r.get("phase") == "begin" else ends).append(r)
-    return begins, ends, bad
+    key = lambda r: (r.get("instance"), r.get("rpc_id"))  # noqa: E731
+    for name, rows in (("begin", begins), ("end", ends)):
+        keys = [key(r) for r in rows]
+        dup = {k for k in keys if keys.count(k) > 1}
+        if dup:
+            problems.append(f"duplicate {name} keys {sorted(dup, key=str)[:3]}")
+        if any(k[0] is None for k in keys):
+            problems.append(f"{name} lines without an instance id")
+    begun = {key(r) for r in begins}
+    orphans = [key(r) for r in ends if key(r) not in begun]
+    if orphans:
+        problems.append(f"ends with no begin {orphans[:3]}")
+    return begins, ends, problems
 
 
 def open_calls(path):
-    """Calls that began and have not ended (matched by the tool server's RPC id)."""
+    """Calls that began and have not ended, matched on (instance, rpc_id)."""
     begins, ends, _ = read_calls(path)
-    done = {r.get("rpc_id") for r in ends}
-    return [b for b in begins if b.get("rpc_id") not in done]
+    done = {(r.get("instance"), r.get("rpc_id")) for r in ends}
+    return [b for b in begins if (b.get("instance"), b.get("rpc_id")) not in done]
 
 
-def fence(base, calls_log, quiet=10, limit=300):
+FENCE_LIMIT = 300
+
+
+def fence(base, calls_log, quiet=10, limit=None):
     """Proves the arm is quiet before the next question: Strata reports nothing running or queued (GET /status), every
     tool call that began has ended, and nothing new was logged for `quiet` seconds. Returns seconds waited, or None
     if that couldn't be shown within `limit` (the caller then stops the arm: fail closed)."""
+    limit = FENCE_LIMIT if limit is None else limit
     t = time.monotonic()
     last_change, last_size = time.monotonic(), size(calls_log)
     while time.monotonic() - t < limit:
@@ -151,26 +169,36 @@ def main():
             code, d, secs = ask(base, b)
             row.update({"http": code, "seconds": secs, "raw": d})
             open(marker, "w").write("after:" + q["id"])  # stragglers are still this question's, by their tag
-            if code != 200:                               # timeout or error: wait for cancellation to settle
-                row["fence_after"] = fence(base, calls_log)
-                if row["fence_after"] is None:
-                    raise RuntimeError("could not prove the arm quiet after a failed request")
+            mine = {q["id"], "after:" + q["id"]}
+            if code != 200 or any(b.get("question") in mine for b in open_calls(calls_log)):
+                row["fence_after"] = fence(base, calls_log)   # a failed request, or one of its calls still running:
+                if row["fence_after"] is None:                # wait until everything has ended (fail closed)
+                    raise RuntimeError("could not prove the arm quiet after the request")
             row["engine_log_offsets"] = [e0, size(engine_log)]
             row["engine_log"] = tail_from(engine_log, e0)
             begins, ends, bad = read_calls(calls_log)
             mine = {q["id"], "after:" + q["id"]}
+            done = {(e.get("instance"), e.get("rpc_id")) for e in ends}
             row["tool_calls"] = [r for r in ends if r.get("question") in mine]
             row["tool_calls_open"] = [r for r in begins if r.get("question") in mine and
-                                      r.get("rpc_id") not in {e.get("rpc_id") for e in ends}]
+                                      (r.get("instance"), r.get("rpc_id")) not in done]
             row["calls_log_offsets"] = [c0, size(calls_log)]
             stray = [r for r in ends if r.get("question") not in {x["id"] for x in items[:n + 1]} |
                      {"after:" + x["id"] for x in items[:n + 1]}]
             if bad or stray:
-                raise RuntimeError(f"call log problems: {len(bad)} unreadable lines, {len(stray)} calls with an "
-                                   f"unknown question tag")
+                raise RuntimeError(f"call log problems: {bad[:3]}; {len(stray)} calls with an unknown question tag")
         except Exception as e:  # noqa: BLE001  (this script or the fence failed: keep the attempt, stop if needed)
             row["harness_error"] = f"{type(e).__name__}: {e}"
             harness_errors += 1
+            try:                                          # keep what the call log shows, as evidence
+                begins, ends, _ = read_calls(calls_log)
+                mine = {q["id"], "after:" + q["id"]}
+                done = {(x.get("instance"), x.get("rpc_id")) for x in ends}
+                row.setdefault("tool_calls", [r for r in ends if r.get("question") in mine])
+                row.setdefault("tool_calls_open", [r for r in begins if r.get("question") in mine and
+                                                   (r.get("instance"), r.get("rpc_id")) not in done])
+            except Exception:  # noqa: BLE001
+                pass
         with open(rows_path, "a") as f:                   # every attempt is saved, whatever happened
             f.write(json.dumps(row) + "\n")
         d = row.get("raw") or {}

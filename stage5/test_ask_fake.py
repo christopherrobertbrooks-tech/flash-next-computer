@@ -11,7 +11,10 @@ Controls:
      with the timed-out question, and the next question must not start until it ended;
   4. a trace mismatch: the arm stops (exit 3) on the right question;
   5. a server without /status: the runner refuses to go on (exit 5, fail closed);
-  6. a budget error from the computer (not a mismatch): recorded, the arm goes on.
+  6. a budget error from the computer (not a mismatch): recorded, the arm goes on;
+  7. a tool-server restart (RPC ids start again, so an old id is reused) whose call ends after /status says idle:
+     the call stays with its question and the next question waits for it;
+  8. a call that never ends: the arm stops (exit 5) before the next question.
 """
 import json, os, sys, tempfile, threading, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -24,21 +27,23 @@ import ask  # noqa: E402
 def fake_server(out, port, with_status=True):
     fifo, state = threading.Lock(), {"busy": 0}
     calls = os.path.join(out, "calls.jsonl")
-    rpc = {"n": 0}
+    rpc = {"n": 0, "instance": "100-1"}
 
     def log(rec):
         with open(calls, "a") as f:
             f.write(json.dumps(rec) + "\n")
 
-    def tool_call(expr, result=None, err=None, kind=None, delay=0.0):
+    def tool_call(expr, result=None, err=None, kind=None, delay=0.0, never_end=False):
         rpc["n"] += 1
-        mid = rpc["n"]
+        mid, inst = rpc["n"], rpc["instance"]
         tag = Path(out, "current_question").read_text().strip()
-        log({"phase": "begin", "rpc_id": mid, "question": tag, "expression": expr})
+        log({"instance": inst, "phase": "begin", "rpc_id": mid, "question": tag, "expression": expr})
+        if never_end:
+            return
         if delay:
             time.sleep(delay)
-        log({"phase": "end", "rpc_id": mid, "question": tag, "expression": expr, "result": result, "error": err,
-             "error_kind": kind, "ms": 1.0})
+        log({"instance": inst, "phase": "end", "rpc_id": mid, "question": tag, "expression": expr, "result": result,
+             "error": err, "error_kind": kind, "ms": 1.0})
 
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -69,6 +74,12 @@ def fake_server(out, port, with_status=True):
                         state["busy"] -= 1
                         time.sleep(3)
                         state["busy"] += 1
+                    elif "RESTART" in prompt:     # the tool server restarts: RPC ids start again from 1, and
+                        rpc["instance"], rpc["n"] = "200-2", 0          # the new call ends after /status says idle
+                        threading.Thread(target=tool_call, args=("7*7", "49"), kwargs={"delay": 4.0}).start()
+                        time.sleep(0.2)
+                    elif "HANG" in prompt:        # a call that never ends
+                        tool_call("3*3", never_end=True)
                     elif "MISMATCH" in prompt:
                         tool_call("1+1", None, "computer trace_mismatch: {'at': 3}", "trace_mismatch")
                     elif "BUDGET" in prompt:
@@ -130,6 +141,22 @@ def main():
               rows["q5"]["tool_calls"][0]["error_kind"] == "budget" and "q6" in rows)
         check("a trace mismatch stops the arm on the right question (exit 3)",
               code == 3 and json.load(open(os.path.join(out, "STOP")))["id"] == "q6" and "q7" not in rows)
+    with tempfile.TemporaryDirectory() as out:     # a restart reuses RPC ids: the fence must still wait for the call
+        srv = fake_server(out, 18103)
+        code, rows = run(out, 18103, ["normal", "RESTART", "normal"])
+        srv.shutdown()
+        exprs = {k: [c["expression"] for c in r.get("tool_calls") or []] for k, r in rows.items()}
+        check("after a restart, the reused-id call stays with its question", exprs["q2"] == ["7*7"])
+        check("after a restart, the question waited for its reused-id call before the next one (none left open)",
+              exprs["q3"] == ["2+2"] and not rows["q2"]["tool_calls_open"] and rows["q2"]["fence_after"] >= 2)
+    ask.FENCE_LIMIT = 8
+    with tempfile.TemporaryDirectory() as out:     # a call that never ends: the arm stops (fail closed)
+        srv = fake_server(out, 18104)
+        code, rows = run(out, 18104, ["normal", "HANG", "never sent"])
+        srv.shutdown()
+        check("a call that never ends stops the arm before the next question (exit 5), open call recorded",
+              code == 5 and "q3" not in rows and [c["expression"] for c in rows["q2"]["tool_calls_open"]] == ["3*3"])
+    ask.FENCE_LIMIT = 300
     with tempfile.TemporaryDirectory() as out:
         srv = fake_server(out, 18102, with_status=False)
         code, rows = run(out, 18102, ["normal", "normal"])

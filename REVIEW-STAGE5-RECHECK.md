@@ -31,3 +31,19 @@ equivalent" wording; an explicit OOM is backend, a later 503 stays transport.
 
 Please check: do the fixes close 1-10, do the new controls actually fail when they should, and is anything still in
 the way of a pilot? Append "Re-check" to `REVIEW-STAGE5-FINDINGS.md` and push.
+
+## Second re-check (after 993affb): findings 11-15
+- 11: `run_tests` no longer reads stderr (discarded); a nonzero exit runs the trusted canary, and only a failing
+  canary raises `WallError`. Control: candidate writes "bwrap: ..." to stderr and exits 1 -> a wrong answer.
+- 12: `mcp_server.py` writes an `instance` id (pid + start time) on every begin and end line; `ask.py`'s
+  `read_calls` / `open_calls` / row collection match on (instance, rpc_id), flag duplicate keys, ends without begins
+  and lines without an instance; the runner also fences after an OK reply if one of its calls is still open, and
+  records open calls when it stops. Controls in `test_ask_fake.py`: a restart reusing an RPC id whose call ends after
+  /status says idle; a call that never ends (exit 5, open call recorded).
+- 13: `load_arm` requires a readable `questions.sha256` matching the question file (absent / empty rejected).
+- 14: `strict_equal` compares types recursively (tuples-as-lists the only allowance). Controls: bool for 1/0 fails,
+  real ints pass, float for int fails.
+- 15: output read in chunks with a 1 MB cap (100 MB control stopped by the cap); `python_reference` returns None on a
+  helper exception (scored "unknown").
+Real tool server smoke on the gateway CPU (Python backend): begin/end lines carry the instance and question tag.
+Please re-check 11-15 only and append to `REVIEW-STAGE5-FINDINGS.md`.
