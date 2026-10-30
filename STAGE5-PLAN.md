@@ -38,7 +38,7 @@ generator, scorer and settings are frozen, then hashed before any final run.
 | 2. Near the computer's limits | 10 | long expressions, big powers | same (reported separately) |
 | 3. Word problems, 2-5 steps | 40 | everyday-style problems needing exact big numbers | same |
 | 4. Dependent chains | 40 | 8-15 steps, each needing the previous exact result ("start with 48,213; multiply by 1,237; subtract 99,991; ...") | same, plus **the first step that went wrong** (below) |
-| 5a. Code with tests | 10 | small Python functions | hidden unit tests, run on the gateway inside the `sandbox-run` wall |
+| 5a. Code with tests | 10 | small Python functions | hidden unit tests, run on Dev-Console in a `bwrap` wall (no network, read-only system, no home folder, 10 s; the gateway's AppArmor refuses bwrap) |
 | 5b. Code reading | 10 | "what does this function return for input X?" | exact `ANSWER:` value (a checkable explanation question) |
 
 Groups 1-4 (160 questions) are the **primary set**. Group 5 checks that offering a tool doesn't hurt normal work;
