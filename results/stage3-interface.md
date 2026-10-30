@@ -20,10 +20,11 @@ The two non-matching answers aren't computer errors (the computer matched its re
 spaces differently); a 62-by-62-digit product is "error (too long: split it)" from the firmware and "error" from Python
 (both refuse: the result exceeds the firmware's 62-digit limit).
 
-**Speed:** 319,722 computer tokens over the clean calls at **1,707 tokens/s**; median call **1.56 s**, longest 8.9 s
-(a 14,068-token rational expression). For comparison, Python computes these in microseconds: the computer's value has
+**Speed:** the 88 clean calls produced 319,671 computer tokens in 187.222 s (**~1,707 tokens/s**), median **1.552 s**,
+longest 8.935 s (`4/(-203)*962-40*31-(-37)*(-4)`, 15,325 tokens); with the budget-stop call, 319,722 tokens. For comparison, Python computes these in microseconds: the computer's value has
 to come from somewhere else than speed (stage 5 measures whether it does).
 
-**Stage 3 gate (plan):** zero trace mismatches on the declared tests: yes; correct call/result routing including
-malformed input, sequences and a budget stop: yes; memory and idle behaviour: measured (434 MiB as its own process;
-idle it costs Strata ~11% on the test request; with vision off that equals today's vision-on speed).
+**Not yet the stage 3 gate** (Codex's review): this first corpus proof had fail-open paths in the service (reference
+output during input feeding could be dropped, the budget wasn't end-to-end, failed sessions stayed usable) and in the
+runner (it didn't fail on failures), and its memory figures came from the stand-in holder, not this service. See
+`stage3-gate.md` for the fixed service and the enforced gate.

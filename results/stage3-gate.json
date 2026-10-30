@@ -1,0 +1,2259 @@
+{
+ "summary": {
+  "cases": 103,
+  "unexpected": 0,
+  "reference_history_tokens_100_calls": 176780,
+  "clean_calls": 91,
+  "clean_chip_tokens": 322879,
+  "clean_call_seconds": 190.21,
+  "seconds": 307.3,
+  "memory": [
+   {
+    "at": "built",
+    "gpu_process_mib": 398,
+    "torch_allocated_mib": 21.2,
+    "torch_reserved_mib": 32.0,
+    "torch_peak_allocated_mib": 21.2,
+    "host_rss_mib": 1546,
+    "host_peak_rss_mib": 1564
+   },
+   {
+    "at": "after corpus",
+    "gpu_process_mib": 448,
+    "torch_allocated_mib": 49.9,
+    "torch_reserved_mib": 62.0,
+    "torch_peak_allocated_mib": 50.0,
+    "host_rss_mib": 1686,
+    "host_peak_rss_mib": 1684
+   },
+   {
+    "at": "idle 5 s",
+    "gpu_process_mib": 448,
+    "torch_allocated_mib": 49.9,
+    "torch_reserved_mib": 62.0,
+    "torch_peak_allocated_mib": 50.0,
+    "host_rss_mib": 1686,
+    "host_peak_rss_mib": 1684
+   },
+   {
+    "at": "after 100 calls in one session",
+    "gpu_process_mib": 450,
+    "torch_allocated_mib": 50.0,
+    "torch_reserved_mib": 64.0,
+    "torch_peak_allocated_mib": 50.0,
+    "host_rss_mib": 1686,
+    "host_peak_rss_mib": 1684
+   }
+  ]
+ },
+ "cases": [
+  {
+   "group": "random-add",
+   "expr": "18271+2087608058291172412",
+   "expect": [
+    "ok",
+    "2087608058291190683"
+   ],
+   "got": [
+    "ok",
+    "2087608058291190683"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "214553447068759344662-1500311534722",
+   "expect": [
+    "ok",
+    "214553445568447809940"
+   ],
+   "got": [
+    "ok",
+    "214553445568447809940"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "55109431752074599000*10131383004",
+   "expect": [
+    "ok",
+    "558334760213066534048715396000"
+   ],
+   "got": [
+    "ok",
+    "558334760213066534048715396000"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "89675463696223508//6663",
+   "expect": [
+    "ok",
+    "13458721851451"
+   ],
+   "got": [
+    "ok",
+    "13458721851451"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "330140806145028788723738451%(-52348147901)",
+   "expect": [
+    "ok",
+    "-44427634522"
+   ],
+   "got": [
+    "ok",
+    "-44427634522"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(1819289100720,16606202730)",
+   "expect": [
+    "ok",
+    "390"
+   ],
+   "got": [
+    "ok",
+    "390"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "(-2)**33",
+   "expect": [
+    "ok",
+    "-8589934592"
+   ],
+   "got": [
+    "ok",
+    "-8589934592"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "(3857985)%614%1201%9841",
+   "expect": [
+    "ok",
+    "223"
+   ],
+   "got": [
+    "ok",
+    "223"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "373078184967585547504*631/(4417-631)",
+   "expect": [
+    "ok",
+    "186539092483792773752/3"
+   ],
+   "got": [
+    "ok",
+    "186539092483792773752/3"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "8*738/3+8+((-1)/0)",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "24695314+956081167",
+   "expect": [
+    "ok",
+    "980776481"
+   ],
+   "got": [
+    "ok",
+    "980776481"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "263--367613",
+   "expect": [
+    "ok",
+    "367876"
+   ],
+   "got": [
+    "ok",
+    "367876"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "864063871*4",
+   "expect": [
+    "ok",
+    "3456255484"
+   ],
+   "got": [
+    "ok",
+    "3456255484"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "8241978//1349269",
+   "expect": [
+    "ok",
+    "6"
+   ],
+   "got": [
+    "ok",
+    "6"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "-670052560619724%84846956355",
+   "expect": [
+    "ok",
+    "68700672066"
+   ],
+   "got": [
+    "ok",
+    "68700672066"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(3571578428835468,208424)",
+   "expect": [
+    "ok",
+    "104212"
+   ],
+   "got": [
+    "ok",
+    "104212"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "(-861)**5",
+   "expect": [
+    "ok",
+    "-473168426360301"
+   ],
+   "got": [
+    "ok",
+    "-473168426360301"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "33020634-6",
+   "expect": [
+    "ok",
+    "33020628"
+   ],
+   "got": [
+    "ok",
+    "33020628"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "(74464479973540117748075+4426900533325)/4426900533325",
+   "expect": [
+    "ok",
+    "12478808162514216/741863"
+   ],
+   "got": [
+    "ok",
+    "12478808162514216/741863"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "64*4*97/(1/2)",
+   "expect": [
+    "ok",
+    "49664"
+   ],
+   "got": [
+    "ok",
+    "49664"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "975201374141041826+6573952",
+   "expect": [
+    "ok",
+    "975201374147615778"
+   ],
+   "got": [
+    "ok",
+    "975201374147615778"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "226015565550-41315531224",
+   "expect": [
+    "ok",
+    "184700034326"
+   ],
+   "got": [
+    "ok",
+    "184700034326"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "93297747812233924446399*3593250213871",
+   "expect": [
+    "ok",
+    "335242152279992171367304862025800529"
+   ],
+   "got": [
+    "ok",
+    "335242152279992171367304862025800529"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "3063398124967087733//6440536624",
+   "expect": [
+    "ok",
+    "475643304"
+   ],
+   "got": [
+    "ok",
+    "475643304"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "-9643113768%(-1)",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(244818,2912238)",
+   "expect": [
+    "ok",
+    "3654"
+   ],
+   "got": [
+    "ok",
+    "3654"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "663**8",
+   "expect": [
+    "ok",
+    "37334318423101242989121"
+   ],
+   "got": [
+    "ok",
+    "37334318423101242989121"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "571696+6255980%2056373",
+   "expect": [
+    "ok",
+    "658557"
+   ],
+   "got": [
+    "ok",
+    "658557"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "29518643088972909326/31938188865373427",
+   "expect": [
+    "ok",
+    "298681261502/323163179"
+   ],
+   "got": [
+    "ok",
+    "298681261502/323163179"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "758+39+5*(-5)-(-3)*(4/1)-(-110)+(-29)",
+   "expect": [
+    "ok",
+    "865"
+   ],
+   "got": [
+    "ok",
+    "865"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "781+35878248149325913",
+   "expect": [
+    "ok",
+    "35878248149326694"
+   ],
+   "got": [
+    "ok",
+    "35878248149326694"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "95552986617--2260527780",
+   "expect": [
+    "ok",
+    "97813514397"
+   ],
+   "got": [
+    "ok",
+    "97813514397"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "768489845776461927362678*155984482769694505",
+   "expect": [
+    "ok",
+    "119872491107203712974829157795558398684390"
+   ],
+   "got": [
+    "ok",
+    "119872491107203712974829157795558398684390"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "6//2",
+   "expect": [
+    "ok",
+    "3"
+   ],
+   "got": [
+    "ok",
+    "3"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "0%9",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(45488390,2440230)",
+   "expect": [
+    "ok",
+    "62570"
+   ],
+   "got": [
+    "ok",
+    "62570"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "4698**3",
+   "expect": [
+    "ok",
+    "103690516392"
+   ],
+   "got": [
+    "ok",
+    "103690516392"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "94726%1789-75*267214",
+   "expect": [
+    "ok",
+    "-20039352"
+   ],
+   "got": [
+    "ok",
+    "-20039352"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "(41776182+22533)/-22533",
+   "expect": [
+    "ok",
+    "-1855"
+   ],
+   "got": [
+    "ok",
+    "-1855"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "expect": [
+    "ok",
+    "-285612/203"
+   ],
+   "got": [
+    "ok",
+    "-285612/203"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "8+8361390",
+   "expect": [
+    "ok",
+    "8361398"
+   ],
+   "got": [
+    "ok",
+    "8361398"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "33250217037079271261-33199836",
+   "expect": [
+    "ok",
+    "33250217037046071425"
+   ],
+   "got": [
+    "ok",
+    "33250217037046071425"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "728931477*671869",
+   "expect": [
+    "ok",
+    "489746462520513"
+   ],
+   "got": [
+    "ok",
+    "489746462520513"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "98096228531314435988307090//697057216407",
+   "expect": [
+    "ok",
+    "140729091131075"
+   ],
+   "got": [
+    "ok",
+    "140729091131075"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "5994614788112447469930%100885",
+   "expect": [
+    "ok",
+    "99450"
+   ],
+   "got": [
+    "ok",
+    "99450"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(2543257273808020,53472914365891590)",
+   "expect": [
+    "ok",
+    "816610"
+   ],
+   "got": [
+    "ok",
+    "816610"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "69**19",
+   "expect": [
+    "ok",
+    "86722686701197430033256152420370429"
+   ],
+   "got": [
+    "ok",
+    "86722686701197430033256152420370429"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "651750%6",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "558384/33205128",
+   "expect": [
+    "ok",
+    "23266/1383547"
+   ],
+   "got": [
+    "ok",
+    "23266/1383547"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "43*(31/8)/704/(-12)",
+   "expect": [
+    "ok",
+    "-1333/67584"
+   ],
+   "got": [
+    "ok",
+    "-1333/67584"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "55998893143820406000160+313",
+   "expect": [
+    "ok",
+    "55998893143820406000473"
+   ],
+   "got": [
+    "ok",
+    "55998893143820406000473"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "18884372542-850754945",
+   "expect": [
+    "ok",
+    "18033617597"
+   ],
+   "got": [
+    "ok",
+    "18033617597"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "-712082313072*94058400159809554996369",
+   "expect": [
+    "ok",
+    "-66977323149648962372821432081235568"
+   ],
+   "got": [
+    "ok",
+    "-66977323149648962372821432081235568"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "3337565112677905//56392563418915",
+   "expect": [
+    "ok",
+    "59"
+   ],
+   "got": [
+    "ok",
+    "59"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "-5392969422542464347610401586%4127800684",
+   "expect": [
+    "ok",
+    "2781196390"
+   ],
+   "got": [
+    "ok",
+    "2781196390"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(432436732,20035652)",
+   "expect": [
+    "ok",
+    "6916"
+   ],
+   "got": [
+    "ok",
+    "6916"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "(-2637)**2",
+   "expect": [
+    "ok",
+    "6953769"
+   ],
+   "got": [
+    "ok",
+    "6953769"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "(80938929)*55961943",
+   "expect": [
+    "ok",
+    "4529499731179047"
+   ],
+   "got": [
+    "ok",
+    "4529499731179047"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "16199495303/28112443955",
+   "expect": [
+    "ok",
+    "48069719/83419715"
+   ],
+   "got": [
+    "ok",
+    "48069719/83419715"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "0+50/(-6)",
+   "expect": [
+    "ok",
+    "-25/3"
+   ],
+   "got": [
+    "ok",
+    "-25/3"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-add",
+   "expr": "-11989+6",
+   "expect": [
+    "ok",
+    "-11983"
+   ],
+   "got": [
+    "ok",
+    "-11983"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-sub",
+   "expr": "-58-2198843390516605594",
+   "expect": [
+    "ok",
+    "-2198843390516605652"
+   ],
+   "got": [
+    "ok",
+    "-2198843390516605652"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mul",
+   "expr": "9742275533*938370833",
+   "expect": [
+    "ok",
+    "9141867207216728989"
+   ],
+   "got": [
+    "ok",
+    "9141867207216728989"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-div",
+   "expr": "837415150//(-8332)",
+   "expect": [
+    "ok",
+    "-100506"
+   ],
+   "got": [
+    "ok",
+    "-100506"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-mod",
+   "expr": "85%5",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-gcd",
+   "expr": "gcd(1441395893020,607603234319464451)",
+   "expect": [
+    "ok",
+    "662461"
+   ],
+   "got": [
+    "ok",
+    "662461"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-pow",
+   "expr": "0**40",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-expr",
+   "expr": "(7)//504",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-frac",
+   "expr": "862049895890625/758760902541552430",
+   "expect": [
+    "ok",
+    "436303125/384026208326"
+   ],
+   "got": [
+    "ok",
+    "436303125/384026208326"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "random-rat",
+   "expr": "592*2*964*(4/6)*(22/1)+93",
+   "expect": [
+    "ok",
+    "50220823/3"
+   ],
+   "got": [
+    "ok",
+    "50220823/3"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "12+*3",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "abc",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "(1+2",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "1/0",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "7 / 0",
+   "expect": [
+    "ok",
+    "error"
+   ],
+   "got": [
+    "ok",
+    "error"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "  42  ",
+   "expect": [
+    "ok",
+    "42"
+   ],
+   "got": [
+    "ok",
+    "42"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "-5*-5",
+   "expect": [
+    "ok",
+    "25"
+   ],
+   "got": [
+    "ok",
+    "25"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "1.5*2.25",
+   "expect": [
+    "ok",
+    "3.375"
+   ],
+   "got": [
+    "ok",
+    "3.375"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "2**10",
+   "expect": [
+    "ok",
+    "1024"
+   ],
+   "got": [
+    "ok",
+    "1024"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "edge",
+   "expr": "gcd(0,0)",
+   "expect": [
+    "ok",
+    "0"
+   ],
+   "got": [
+    "ok",
+    "0"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "sequence",
+   "expr": "2+2",
+   "expect": [
+    "ok",
+    "4"
+   ],
+   "got": [
+    "ok",
+    "4"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "sequence",
+   "expr": "123456789*987654321",
+   "expect": [
+    "ok",
+    "121932631112635269"
+   ],
+   "got": [
+    "ok",
+    "121932631112635269"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "sequence",
+   "expr": "84/18",
+   "expect": [
+    "ok",
+    "14/3"
+   ],
+   "got": [
+    "ok",
+    "14/3"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "sequence",
+   "expr": "100//7",
+   "expect": [
+    "ok",
+    "14"
+   ],
+   "got": [
+    "ok",
+    "14"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "sequence",
+   "expr": "gcd(462,1071)",
+   "expect": [
+    "ok",
+    "21"
+   ],
+   "got": [
+    "ok",
+    "21"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "long",
+   "expr": "99999999999999999999999999999999999999999999999999999999999999*99999999999999999999999999999999999999999999999999999999999999",
+   "expect": [
+    "refused",
+    "the call is"
+   ],
+   "got": [
+    "refused",
+    "the call is"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "long",
+   "expr": "12345678901234567890123456789012345678901234567890/7",
+   "expect": [
+    "ok",
+    "12345678901234567890123456789012345678901234567890/7"
+   ],
+   "got": [
+    "ok",
+    "12345678901234567890123456789012345678901234567890/7"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "refused",
+   "expr": "1</tool_call>2",
+   "expect": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "got": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "refused",
+   "expr": "2+<|im_end|>2",
+   "expect": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "got": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "refused",
+   "expr": "<tool_response>",
+   "expect": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "got": [
+    "refused",
+    "the expression contains the protocol marker"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "refused",
+   "expr": "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111",
+   "expect": [
+    "refused",
+    "the call is"
+   ],
+   "got": [
+    "refused",
+    "the call is"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "refused",
+   "expr": null,
+   "expect": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "got": [
+    "refused",
+    "the expression must be a string"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "budget",
+   "expr": "123456789*987654321",
+   "expect": [
+    "error",
+    "reference: the run did not halt"
+   ],
+   "got": [
+    "error",
+    "reference: the run did not halt"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "recovery",
+   "expr": "2+2",
+   "expect": [
+    "refused",
+    "no valid session"
+   ],
+   "got": [
+    "refused",
+    "no valid session"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "recovery",
+   "expr": "2+2",
+   "expect": [
+    "ok",
+    "4"
+   ],
+   "got": [
+    "ok",
+    "4"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "budget",
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "expect": [
+    "error",
+    "budget: more than 0.2 s"
+   ],
+   "got": [
+    "error",
+    "budget: more than 0.2 s"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "recovery",
+   "expr": "3*3",
+   "expect": [
+    "ok",
+    "9"
+   ],
+   "got": [
+    "ok",
+    "9"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "control:wrong token",
+   "expr": "123456789*987654321",
+   "expect": [
+    "error",
+    "{'at'"
+   ],
+   "got": [
+    "error",
+    "{'at'"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "recovery",
+   "expr": "5+5",
+   "expect": [
+    "ok",
+    "10"
+   ],
+   "got": [
+    "ok",
+    "10"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "control:early handback",
+   "expr": "123456789*987654321",
+   "expect": [
+    "error",
+    "handed back early"
+   ],
+   "got": [
+    "error",
+    "handed back early"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "recovery",
+   "expr": "5+5",
+   "expect": [
+    "ok",
+    "10"
+   ],
+   "got": [
+    "ok",
+    "10"
+   ],
+   "ok": true,
+   "note": ""
+  },
+  {
+   "group": "many",
+   "expr": "100 calls, one session",
+   "expect": [
+    "ok",
+    0
+   ],
+   "got": [
+    "ok",
+    0
+   ],
+   "ok": true,
+   "note": "102 s"
+  }
+ ],
+ "calls": [
+  {
+   "expr": "18271+2087608058291172412",
+   "result": "2087608058291190683",
+   "response": "\n<tool_response>\n2087608058291190683\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2039,
+   "error": null,
+   "seconds": 1.34
+  },
+  {
+   "expr": "214553447068759344662-1500311534722",
+   "result": "214553445568447809940",
+   "response": "\n<tool_response>\n214553445568447809940\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2336,
+   "error": null,
+   "seconds": 1.416
+  },
+  {
+   "expr": "55109431752074599000*10131383004",
+   "result": "558334760213066534048715396000",
+   "response": "\n<tool_response>\n558334760213066534048715396000\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2609,
+   "error": null,
+   "seconds": 1.583
+  },
+  {
+   "expr": "89675463696223508//6663",
+   "result": "13458721851451",
+   "response": "\n<tool_response>\n13458721851451\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2824,
+   "error": null,
+   "seconds": 1.704
+  },
+  {
+   "expr": "330140806145028788723738451%(-52348147901)",
+   "result": "-44427634522",
+   "response": "\n<tool_response>\n-44427634522\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4056,
+   "error": null,
+   "seconds": 2.437
+  },
+  {
+   "expr": "gcd(1819289100720,16606202730)",
+   "result": "390",
+   "response": "\n<tool_response>\n390\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 7220,
+   "error": null,
+   "seconds": 4.231
+  },
+  {
+   "expr": "(-2)**33",
+   "result": "-8589934592",
+   "response": "\n<tool_response>\n-8589934592\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3182,
+   "error": null,
+   "seconds": 1.87
+  },
+  {
+   "expr": "(3857985)%614%1201%9841",
+   "result": "223",
+   "response": "\n<tool_response>\n223\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3474,
+   "error": null,
+   "seconds": 2.044
+  },
+  {
+   "expr": "373078184967585547504*631/(4417-631)",
+   "result": "186539092483792773752/3",
+   "response": "\n<tool_response>\n186539092483792773752/3\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 7444,
+   "error": null,
+   "seconds": 4.394
+  },
+  {
+   "expr": "8*738/3+8+((-1)/0)",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4665,
+   "error": null,
+   "seconds": 2.734
+  },
+  {
+   "expr": "24695314+956081167",
+   "result": "980776481",
+   "response": "\n<tool_response>\n980776481\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1830,
+   "error": null,
+   "seconds": 1.092
+  },
+  {
+   "expr": "263--367613",
+   "result": "367876",
+   "response": "\n<tool_response>\n367876\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1913,
+   "error": null,
+   "seconds": 1.128
+  },
+  {
+   "expr": "864063871*4",
+   "result": "3456255484",
+   "response": "\n<tool_response>\n3456255484\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1723,
+   "error": null,
+   "seconds": 1.025
+  },
+  {
+   "expr": "8241978//1349269",
+   "result": "6",
+   "response": "\n<tool_response>\n6\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2035,
+   "error": null,
+   "seconds": 1.202
+  },
+  {
+   "expr": "-670052560619724%84846956355",
+   "result": "68700672066",
+   "response": "\n<tool_response>\n68700672066\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2956,
+   "error": null,
+   "seconds": 1.752
+  },
+  {
+   "expr": "gcd(3571578428835468,208424)",
+   "result": "104212",
+   "response": "\n<tool_response>\n104212\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3471,
+   "error": null,
+   "seconds": 2.038
+  },
+  {
+   "expr": "(-861)**5",
+   "result": "-473168426360301",
+   "response": "\n<tool_response>\n-473168426360301\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2773,
+   "error": null,
+   "seconds": 1.637
+  },
+  {
+   "expr": "33020634-6",
+   "result": "33020628",
+   "response": "\n<tool_response>\n33020628\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1636,
+   "error": null,
+   "seconds": 0.97
+  },
+  {
+   "expr": "(74464479973540117748075+4426900533325)/4426900533325",
+   "result": "12478808162514216/741863",
+   "response": "\n<tool_response>\n12478808162514216/741863\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 9539,
+   "error": null,
+   "seconds": 5.618
+  },
+  {
+   "expr": "64*4*97/(1/2)",
+   "result": "49664",
+   "response": "\n<tool_response>\n49664\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 5753,
+   "error": null,
+   "seconds": 3.362
+  },
+  {
+   "expr": "975201374141041826+6573952",
+   "result": "975201374147615778",
+   "response": "\n<tool_response>\n975201374147615778\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2065,
+   "error": null,
+   "seconds": 1.238
+  },
+  {
+   "expr": "226015565550-41315531224",
+   "result": "184700034326",
+   "response": "\n<tool_response>\n184700034326\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2021,
+   "error": null,
+   "seconds": 1.204
+  },
+  {
+   "expr": "93297747812233924446399*3593250213871",
+   "result": "335242152279992171367304862025800529",
+   "response": "\n<tool_response>\n335242152279992171367304862025800529\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2903,
+   "error": null,
+   "seconds": 1.737
+  },
+  {
+   "expr": "3063398124967087733//6440536624",
+   "result": "475643304",
+   "response": "\n<tool_response>\n475643304\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2864,
+   "error": null,
+   "seconds": 1.692
+  },
+  {
+   "expr": "-9643113768%(-1)",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2673,
+   "error": null,
+   "seconds": 1.568
+  },
+  {
+   "expr": "gcd(244818,2912238)",
+   "result": "3654",
+   "response": "\n<tool_response>\n3654\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4033,
+   "error": null,
+   "seconds": 2.352
+  },
+  {
+   "expr": "663**8",
+   "result": "37334318423101242989121",
+   "response": "\n<tool_response>\n37334318423101242989121\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2669,
+   "error": null,
+   "seconds": 1.578
+  },
+  {
+   "expr": "571696+6255980%2056373",
+   "result": "658557",
+   "response": "\n<tool_response>\n658557\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2794,
+   "error": null,
+   "seconds": 1.643
+  },
+  {
+   "expr": "29518643088972909326/31938188865373427",
+   "result": "298681261502/323163179",
+   "response": "\n<tool_response>\n298681261502/323163179\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 8682,
+   "error": null,
+   "seconds": 5.117
+  },
+  {
+   "expr": "758+39+5*(-5)-(-3)*(4/1)-(-110)+(-29)",
+   "result": "865",
+   "response": "\n<tool_response>\n865\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 6498,
+   "error": null,
+   "seconds": 3.796
+  },
+  {
+   "expr": "781+35878248149325913",
+   "result": "35878248149326694",
+   "response": "\n<tool_response>\n35878248149326694\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1927,
+   "error": null,
+   "seconds": 1.155
+  },
+  {
+   "expr": "95552986617--2260527780",
+   "result": "97813514397",
+   "response": "\n<tool_response>\n97813514397\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2256,
+   "error": null,
+   "seconds": 1.337
+  },
+  {
+   "expr": "768489845776461927362678*155984482769694505",
+   "result": "119872491107203712974829157795558398684390",
+   "response": "\n<tool_response>\n119872491107203712974829157795558398684390\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3283,
+   "error": null,
+   "seconds": 1.959
+  },
+  {
+   "expr": "6//2",
+   "result": "3",
+   "response": "\n<tool_response>\n3\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1666,
+   "error": null,
+   "seconds": 0.98
+  },
+  {
+   "expr": "0%9",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1537,
+   "error": null,
+   "seconds": 0.906
+  },
+  {
+   "expr": "gcd(45488390,2440230)",
+   "result": "62570",
+   "response": "\n<tool_response>\n62570\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4284,
+   "error": null,
+   "seconds": 2.5
+  },
+  {
+   "expr": "4698**3",
+   "result": "103690516392",
+   "response": "\n<tool_response>\n103690516392\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2183,
+   "error": null,
+   "seconds": 1.29
+  },
+  {
+   "expr": "94726%1789-75*267214",
+   "result": "-20039352",
+   "response": "\n<tool_response>\n-20039352\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3211,
+   "error": null,
+   "seconds": 1.888
+  },
+  {
+   "expr": "(41776182+22533)/-22533",
+   "result": "-1855",
+   "response": "\n<tool_response>\n-1855\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4134,
+   "error": null,
+   "seconds": 2.427
+  },
+  {
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "result": "-285612/203",
+   "response": "\n<tool_response>\n-285612/203\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 15325,
+   "error": null,
+   "seconds": 8.965
+  },
+  {
+   "expr": "8+8361390",
+   "result": "8361398",
+   "response": "\n<tool_response>\n8361398\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1582,
+   "error": null,
+   "seconds": 0.94
+  },
+  {
+   "expr": "33250217037079271261-33199836",
+   "result": "33250217037046071425",
+   "response": "\n<tool_response>\n33250217037046071425\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2172,
+   "error": null,
+   "seconds": 1.299
+  },
+  {
+   "expr": "728931477*671869",
+   "result": "489746462520513",
+   "response": "\n<tool_response>\n489746462520513\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1988,
+   "error": null,
+   "seconds": 1.184
+  },
+  {
+   "expr": "98096228531314435988307090//697057216407",
+   "result": "140729091131075",
+   "response": "\n<tool_response>\n140729091131075\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3365,
+   "error": null,
+   "seconds": 1.995
+  },
+  {
+   "expr": "5994614788112447469930%100885",
+   "result": "99450",
+   "response": "\n<tool_response>\n99450\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3216,
+   "error": null,
+   "seconds": 1.892
+  },
+  {
+   "expr": "gcd(2543257273808020,53472914365891590)",
+   "result": "816610",
+   "response": "\n<tool_response>\n816610\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 7091,
+   "error": null,
+   "seconds": 4.146
+  },
+  {
+   "expr": "69**19",
+   "result": "86722686701197430033256152420370429",
+   "response": "\n<tool_response>\n86722686701197430033256152420370429\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3662,
+   "error": null,
+   "seconds": 2.154
+  },
+  {
+   "expr": "651750%6",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1929,
+   "error": null,
+   "seconds": 1.134
+  },
+  {
+   "expr": "558384/33205128",
+   "result": "23266/1383547",
+   "response": "\n<tool_response>\n23266/1383547\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 6015,
+   "error": null,
+   "seconds": 3.516
+  },
+  {
+   "expr": "43*(31/8)/704/(-12)",
+   "result": "-1333/67584",
+   "response": "\n<tool_response>\n-1333/67584\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 14068,
+   "error": null,
+   "seconds": 8.215
+  },
+  {
+   "expr": "55998893143820406000160+313",
+   "result": "55998893143820406000473",
+   "response": "\n<tool_response>\n55998893143820406000473\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2102,
+   "error": null,
+   "seconds": 1.261
+  },
+  {
+   "expr": "18884372542-850754945",
+   "result": "18033617597",
+   "response": "\n<tool_response>\n18033617597\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1938,
+   "error": null,
+   "seconds": 1.149
+  },
+  {
+   "expr": "-712082313072*94058400159809554996369",
+   "result": "-66977323149648962372821432081235568",
+   "response": "\n<tool_response>\n-66977323149648962372821432081235568\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3101,
+   "error": null,
+   "seconds": 1.849
+  },
+  {
+   "expr": "3337565112677905//56392563418915",
+   "result": "59",
+   "response": "\n<tool_response>\n59\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2538,
+   "error": null,
+   "seconds": 1.499
+  },
+  {
+   "expr": "-5392969422542464347610401586%4127800684",
+   "result": "2781196390",
+   "response": "\n<tool_response>\n2781196390\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3993,
+   "error": null,
+   "seconds": 2.352
+  },
+  {
+   "expr": "gcd(432436732,20035652)",
+   "result": "6916",
+   "response": "\n<tool_response>\n6916\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 4145,
+   "error": null,
+   "seconds": 2.419
+  },
+  {
+   "expr": "(-2637)**2",
+   "result": "6953769",
+   "response": "\n<tool_response>\n6953769\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2335,
+   "error": null,
+   "seconds": 1.374
+  },
+  {
+   "expr": "(80938929)*55961943",
+   "result": "4529499731179047",
+   "response": "\n<tool_response>\n4529499731179047\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2369,
+   "error": null,
+   "seconds": 1.403
+  },
+  {
+   "expr": "16199495303/28112443955",
+   "result": "48069719/83419715",
+   "response": "\n<tool_response>\n48069719/83419715\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 10562,
+   "error": null,
+   "seconds": 6.161
+  },
+  {
+   "expr": "0+50/(-6)",
+   "result": "-25/3",
+   "response": "\n<tool_response>\n-25/3\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 5259,
+   "error": null,
+   "seconds": 3.059
+  },
+  {
+   "expr": "-11989+6",
+   "result": "-11983",
+   "response": "\n<tool_response>\n-11983\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1854,
+   "error": null,
+   "seconds": 1.094
+  },
+  {
+   "expr": "-58-2198843390516605594",
+   "result": "-2198843390516605652",
+   "response": "\n<tool_response>\n-2198843390516605652\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2278,
+   "error": null,
+   "seconds": 1.354
+  },
+  {
+   "expr": "9742275533*938370833",
+   "result": "9141867207216728989",
+   "response": "\n<tool_response>\n9141867207216728989\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2167,
+   "error": null,
+   "seconds": 1.289
+  },
+  {
+   "expr": "837415150//(-8332)",
+   "result": "-100506",
+   "response": "\n<tool_response>\n-100506\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2691,
+   "error": null,
+   "seconds": 1.583
+  },
+  {
+   "expr": "85%5",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1693,
+   "error": null,
+   "seconds": 0.994
+  },
+  {
+   "expr": "gcd(1441395893020,607603234319464451)",
+   "result": "662461",
+   "response": "\n<tool_response>\n662461\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 7899,
+   "error": null,
+   "seconds": 4.611
+  },
+  {
+   "expr": "0**40",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2650,
+   "error": null,
+   "seconds": 1.552
+  },
+  {
+   "expr": "(7)//504",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1902,
+   "error": null,
+   "seconds": 1.116
+  },
+  {
+   "expr": "862049895890625/758760902541552430",
+   "result": "436303125/384026208326",
+   "response": "\n<tool_response>\n436303125/384026208326\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 9932,
+   "error": null,
+   "seconds": 5.821
+  },
+  {
+   "expr": "592*2*964*(4/6)*(22/1)+93",
+   "result": "50220823/3",
+   "response": "\n<tool_response>\n50220823/3\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 12889,
+   "error": null,
+   "seconds": 7.529
+  },
+  {
+   "expr": "12+*3",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1479,
+   "error": null,
+   "seconds": 0.876
+  },
+  {
+   "expr": "abc",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1253,
+   "error": null,
+   "seconds": 0.744
+  },
+  {
+   "expr": "",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1188,
+   "error": null,
+   "seconds": 0.707
+  },
+  {
+   "expr": "(1+2",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1708,
+   "error": null,
+   "seconds": 1.007
+  },
+  {
+   "expr": "1/0",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1478,
+   "error": null,
+   "seconds": 0.874
+  },
+  {
+   "expr": "7 / 0",
+   "result": "error",
+   "response": "\n<tool_response>\nerror\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1765,
+   "error": null,
+   "seconds": 1.041
+  },
+  {
+   "expr": "  42  ",
+   "result": "42",
+   "response": "\n<tool_response>\n42\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1420,
+   "error": null,
+   "seconds": 0.839
+  },
+  {
+   "expr": "-5*-5",
+   "result": "25",
+   "response": "\n<tool_response>\n25\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1850,
+   "error": null,
+   "seconds": 1.087
+  },
+  {
+   "expr": "1.5*2.25",
+   "result": "3.375",
+   "response": "\n<tool_response>\n3.375\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2129,
+   "error": null,
+   "seconds": 1.261
+  },
+  {
+   "expr": "2**10",
+   "result": "1024",
+   "response": "\n<tool_response>\n1024\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2347,
+   "error": null,
+   "seconds": 1.374
+  },
+  {
+   "expr": "gcd(0,0)",
+   "result": "0",
+   "response": "\n<tool_response>\n0\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1837,
+   "error": null,
+   "seconds": 1.08
+  },
+  {
+   "expr": "2+2",
+   "result": "4",
+   "response": "\n<tool_response>\n4\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1403,
+   "error": null,
+   "seconds": 0.829
+  },
+  {
+   "expr": "123456789*987654321",
+   "result": "121932631112635269",
+   "response": "\n<tool_response>\n121932631112635269\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2146,
+   "error": null,
+   "seconds": 1.276
+  },
+  {
+   "expr": "84/18",
+   "result": "14/3",
+   "response": "\n<tool_response>\n14/3\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 3136,
+   "error": null,
+   "seconds": 1.831
+  },
+  {
+   "expr": "100//7",
+   "result": "14",
+   "response": "\n<tool_response>\n14\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1765,
+   "error": null,
+   "seconds": 1.039
+  },
+  {
+   "expr": "gcd(462,1071)",
+   "result": "21",
+   "response": "\n<tool_response>\n21\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 2893,
+   "error": null,
+   "seconds": 1.692
+  },
+  {
+   "expr": "12345678901234567890123456789012345678901234567890/7",
+   "result": "12345678901234567890123456789012345678901234567890/7",
+   "response": "\n<tool_response>\n12345678901234567890123456789012345678901234567890/7\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 7504,
+   "error": null,
+   "seconds": 4.43
+  },
+  {
+   "expr": "123456789*987654321",
+   "result": null,
+   "response": null,
+   "chip_tokens": 0,
+   "error": "reference: the run did not halt (budget 50 records)",
+   "seconds": 0.024
+  },
+  {
+   "expr": "2+2",
+   "result": "4",
+   "response": "\n<tool_response>\n4\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1403,
+   "error": null,
+   "seconds": 0.83
+  },
+  {
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "result": null,
+   "response": null,
+   "chip_tokens": 238,
+   "error": "budget: more than 0.2 s",
+   "seconds": 0.2
+  },
+  {
+   "expr": "3*3",
+   "result": "9",
+   "response": "\n<tool_response>\n9\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1494,
+   "error": null,
+   "seconds": 0.88
+  },
+  {
+   "expr": "123456789*987654321",
+   "result": null,
+   "response": null,
+   "chip_tokens": 0,
+   "error": {
+    "at": 0,
+    "got": "SC",
+    "want": "GO"
+   },
+   "seconds": 0.036
+  },
+  {
+   "expr": "5+5",
+   "result": "10",
+   "response": "\n<tool_response>\n10\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1405,
+   "error": null,
+   "seconds": 0.829
+  },
+  {
+   "expr": "123456789*987654321",
+   "result": null,
+   "response": null,
+   "chip_tokens": 0,
+   "error": "handed back early: 2176 reference tokens left",
+   "seconds": 0.028
+  },
+  {
+   "expr": "5+5",
+   "result": "10",
+   "response": "\n<tool_response>\n10\n</tool_response>\n<think>\n\n</think>\n\n",
+   "chip_tokens": 1405,
+   "error": null,
+   "seconds": 0.831
+  }
+ ]
+}

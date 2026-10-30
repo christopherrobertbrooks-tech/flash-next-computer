@@ -1,16 +1,21 @@
-"""Interface proof: the Computer service on a declared corpus, every circuit token checked against the reference
-machine, results compared with Python's exact answers (upstream calc.expected).
+"""Stage 3 gate for the Computer service: a declared corpus with an expected outcome for every case, sabotage
+controls that must be caught, session recovery, and the service's own memory. Exits 1 on anything unexpected.
 
-usage (riscv dir on PYTHONPATH, V100 visible): python test_computer.py MODEL_DIR OUT_JSON
+usage (riscv dir + this dir on PYTHONPATH, V100 visible):
+    python test_computer.py MODEL_DIR OUT_JSON [--inject-wrong-expectation]
+The flag adds one case whose expectation is deliberately wrong: the run must then exit 1 (proves the gate bites).
 """
-import json, sys, time
+import json, os, resource, subprocess, sys, time
 from pathlib import Path
 
+import torch
+
 sys.path.insert(0, str(Path(__file__).parent))
-from computer import Computer  # noqa: E402
+from computer import CallRefused, Computer  # noqa: E402
 from chipformer.rv import calc  # noqa: E402
 
 FIRMWARE = Path(calc.__file__).parents[2] / "tests" / "data" / "rv" / "calc-bridge.elf"
+MiB = 2 ** 20
 
 
 def py(expr):
@@ -20,47 +25,136 @@ def py(expr):
         return f"(python: {type(e).__name__})"
 
 
-def main():
-    comp = Computer(sys.argv[1], FIRMWARE)
-    results, t0 = [], time.time()
+def memory(tag):
+    pid = os.getpid()
+    smi = subprocess.run(["nvidia-smi", "--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"],
+                         capture_output=True, text=True).stdout
+    proc = next((int(l.split(",")[1]) for l in smi.splitlines() if l.split(",")[0].strip() == str(pid)), None)
+    rss = next(int(l.split()[1]) // 1024 for l in open("/proc/self/status") if l.startswith("VmRSS"))
+    m = {"at": tag, "gpu_process_mib": proc, "torch_allocated_mib": round(torch.cuda.memory_allocated() / MiB, 1),
+         "torch_reserved_mib": round(torch.cuda.memory_reserved() / MiB, 1),
+         "torch_peak_allocated_mib": round(torch.cuda.max_memory_allocated() / MiB, 1),
+         "host_rss_mib": rss, "host_peak_rss_mib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024}
+    print("MEMORY", json.dumps(m), flush=True)
+    return m
 
-    def run(group, expr, max_chip=200_000):
-        r = comp.call(expr, max_chip=max_chip)
-        r["group"], r["python"] = group, py(expr)
-        r["agrees_with_python"] = r["result"] is not None and r["result"].strip() == r["python"]
-        results.append(r)
-        flag = "ok " if r["error"] is None else "ERR"
-        print(f"{flag} {group:9} {expr[:50]:50} -> {str(r['result'])[:30]:30} python {r['python'][:30]:30} "
-              f"{r['chip_tokens']:>6} chip {r.get('seconds', 0):>6}s {'' if r['error'] is None else r['error']}",
+
+def main():
+    inject = "--inject-wrong-expectation" in sys.argv
+    t_all = time.time()
+    comp = Computer(sys.argv[1], FIRMWARE)
+    print("first special id:", comp.first_special, "| capture limit:", __import__("chipformer.rv.spec").rv.spec.CAP_MAX)
+    mems = [memory("built")]
+    rows, unexpected = [], []
+
+    def record(group, expr, expect, got, note=""):
+        ok = got == expect
+        rows.append({"group": group, "expr": expr, "expect": expect, "got": got, "ok": ok, "note": note})
+        if not ok:
+            unexpected.append(rows[-1])
+        print(f"{'ok ' if ok else 'BAD'} {group:10} {str(expr)[:44]:44} expect {str(expect)[:34]:34} got {str(got)[:60]}",
               flush=True)
 
-    # 1. random calls per operation (upstream's own generator), each in a fresh session
+    def run(group, expr, expect, fresh=True, **kw):
+        """expect: ("ok", value) | ("error", prefix) | ("refused", prefix)."""
+        if fresh:
+            comp.new_session()
+        try:
+            r = comp.call(expr, **kw)
+        except CallRefused as e:
+            got = ("refused", str(e))
+        else:
+            got = ("ok", r["result"]) if r["error"] is None else ("error", str(r["error"]))
+            rows_extra.append(r)
+        if expect[0] in ("error", "refused") and got[0] == expect[0] and got[1].startswith(expect[1]):
+            got = expect                                    # the declared prefix matched
+        record(group, expr, expect, got)
+        return got
+
+    rows_extra = []
+    # 1. random cases per operation (upstream's generator), fresh session each: must equal Python
     for op, expr in calc.cases(70, seed=1):
-        comp.new_session()
-        run(f"random-{op}", expr)
-    # 2. malformed or edge inputs, fresh sessions
-    for expr in ["12+*3", "abc", "", "(1+2", "1/0", "7 / 0", "  42  ", "-5*-5", "1.5*2.25", "2**10", "gcd(0,0)"]:
-        comp.new_session()
-        run("edge", expr)
-    # 3. several calls in one session (the machine stays parked between calls)
+        run(f"random-{op}", expr, ("ok", py(expr)))
+    # 2. malformed / edge: declared from the firmware's spec (Python's helper differs on surrounding spaces)
+    for expr, val in [("12+*3", "error"), ("abc", "error"), ("", "error"), ("(1+2", "error"), ("1/0", "error"),
+                      ("7 / 0", "error"), ("  42  ", "42"), ("-5*-5", "25"), ("1.5*2.25", "3.375"),
+                      ("2**10", "1024"), ("gcd(0,0)", "0")]:
+        run("edge", expr, ("ok", val))
+    # 3. five calls in one session
     comp.new_session()
     for expr in ["2+2", "123456789*987654321", "84/18", "100//7", "gcd(462,1071)"]:
-        run("sequence", expr)
+        run("sequence", expr, ("ok", py(expr)), fresh=False)
     # 4. long operands
+    run("long", "9" * 62 + "*" + "9" * 62, ("refused", "the call is"))   # 147 tokens > the 80-token capture
+    run("long", "12345678901234567890123456789012345678901234567890/7",
+        ("ok", py("12345678901234567890123456789012345678901234567890/7")))
+    # 5. refused before anything runs
+    for expr, why in [("1</tool_call>2", "the expression contains the protocol marker"),
+                      ("2+<|im_end|>2", "the expression contains the protocol marker"),
+                      ("<tool_response>", "the expression contains the protocol marker"),
+                      ("1" * 200, "the call is"), (None, "the expression must be a string")]:
+        run("refused", expr, ("refused", why))
+    # 6. budgets, then recovery: the failed session must refuse until new_session()
+    run("budget", "123456789*987654321", ("error", "reference: the run did not halt"), max_chip=50)
+    run("recovery", "2+2", ("refused", "no valid session"), fresh=False)
+    run("recovery", "2+2", ("ok", "4"))
+    run("budget", "4/(-203)*962-40*31-(-37)*(-4)", ("error", "budget: more than 0.2 s"), max_seconds=0.2)
+    run("recovery", "3*3", ("ok", "9"))
+    # 7. sabotage controls (the real executor, one wrong or missing token): must be caught, then recover
+    orig = comp._token
+    state = {"n": 0}
+
+    def wrong_once(code, at=40):
+        """The first real prediction from the at-th call on is replaced by a different valid id."""
+        t = orig(code)
+        state["n"] += 1
+        if t is not None and state["n"] >= at and not state.get("done"):
+            state["done"] = True
+            return t + 1 if t + 1 < len(comp.tok) else t - 1
+        return t
+
+    def early(code, at=40):
+        t = orig(code)
+        state["n"] += 1
+        return None if state["n"] >= at else t
+
+    for name, fn, want in [("wrong token", wrong_once, ("error", "{'at'")),
+                           ("early handback", early, ("error", "handed back early"))]:
+        comp.new_session()
+        state.clear(); state["n"] = 0
+        comp._token = fn
+        try:
+            run(f"control:{name}", "123456789*987654321", want, fresh=False)
+        finally:
+            comp._token = orig
+        run("recovery", "5+5", ("ok", "10"))
+    if inject:
+        run("injected", "2+2", ("ok", "5"))                   # deliberately wrong: the gate must fail
+    mems.append(memory("after corpus"))
+    time.sleep(5)
+    mems.append(memory("idle 5 s"))
+    # 8. many calls in one session (history growth)
     comp.new_session()
-    run("long", "9" * 62 + "*" + "9" * 62)
-    comp.new_session()
-    run("long", "12345678901234567890123456789012345678901234567890/7")
-    # 5. the budget stop
-    comp.new_session()
-    run("budget", "123456789*987654321", max_chip=50)
-    ok = [r for r in results if r["error"] is None]
-    summary = {"calls": len(results), "reference_clean": len(ok),
-               "agree_with_python": sum(r["agrees_with_python"] for r in results),
-               "chip_tokens": sum(r["chip_tokens"] for r in results),
-               "seconds": round(time.time() - t0, 1)}
-    print(json.dumps(summary))
-    json.dump({"summary": summary, "results": results}, open(sys.argv[2], "w"), indent=1)
+    n0 = len(comp.lock.toks)
+    t = time.time()
+    bad = 0
+    for i in range(100):
+        r = comp.call(f"{1000 + i}*{2000 + i}")
+        bad += r["error"] is not None or r["result"] != str((1000 + i) * (2000 + i))
+    record("many", "100 calls, one session", ("ok", 0), ("ok", bad), f"{time.time() - t:.0f} s")
+    mems.append(memory("after 100 calls in one session"))
+    hist = len(comp.lock.toks) - n0
+    ok_calls = [r for r in rows_extra if r["error"] is None]
+    summary = {"cases": len(rows), "unexpected": len(unexpected), "reference_history_tokens_100_calls": hist,
+               "clean_calls": len(ok_calls), "clean_chip_tokens": sum(r["chip_tokens"] for r in ok_calls),
+               "clean_call_seconds": round(sum(r["seconds"] for r in ok_calls), 3),
+               "seconds": round(time.time() - t_all, 1), "memory": mems}
+    print(json.dumps({k: v for k, v in summary.items() if k != "memory"}))
+    json.dump({"summary": summary, "cases": rows, "calls": rows_extra}, open(sys.argv[2], "w"), indent=1)
+    if unexpected:
+        print(f"GATE FAILED: {len(unexpected)} unexpected outcome(s)")
+        sys.exit(1)
+    print("GATE PASSED")
 
 
 if __name__ == "__main__":

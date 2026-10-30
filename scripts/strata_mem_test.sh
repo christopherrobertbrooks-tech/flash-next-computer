@@ -11,18 +11,28 @@ c = json.load(open("$S/$CFG"))
 c["log"] = "$T/strata.log"
 json.dump(c, open("$T/config.json", "w"), indent=1)
 PY
+if curl -s -o /dev/null localhost:8091/health; then echo "ABORT: something already answers on port 8091"; exit 1; fi
+SRV=""; HOLD=""
+cleanup() {                         # only the processes this script started (their own process groups)
+  [ -n "$SRV" ] && { kill -TERM -- -$SRV 2>/dev/null; for i in $(seq 40); do kill -0 -- -$SRV 2>/dev/null || break; sleep 0.5; done; kill -KILL -- -$SRV 2>/dev/null; }
+  [ -n "$HOLD" ] && { kill -TERM -- -$HOLD 2>/dev/null; sleep 1; kill -KILL -- -$HOLD 2>/dev/null; }
+  [ -n "${MON:-}" ] && kill $MON 2>/dev/null
+}
+trap cleanup EXIT INT TERM
 nvidia-smi --id=1 --query-gpu=timestamp,memory.used --format=csv,noheader,nounits -lms 500 > $T/mem.csv &
 MON=$!
 snap() { echo "== $1 $(date +%T)"; nvidia-smi --query-compute-apps=pid,used_memory,name --format=csv,noheader | grep -v sunshine; nvidia-smi --id=1 --query-gpu=memory.used,memory.total --format=csv,noheader; free -m | sed -n 2p; }
 snap start
 if [ -n "$WITH" ]; then
   IDLE=""; [ "$WITH" = computer-idle ] && IDLE=idle
-  (cd /mnt/nvme/qwenputer/qwenputer/experimental/riscv && CUDA_VISIBLE_DEVICES=$V100 PYTHONPATH=. PYTHONWARNINGS=ignore \
+  cd /mnt/nvme/qwenputer/qwenputer/experimental/riscv
+  CUDA_VISIBLE_DEVICES=$V100 PYTHONPATH=. PYTHONWARNINGS=ignore \
      setsid /mnt/nvme/qwenputer/.venv/bin/python /mnt/nvme/qwenputer/computer_holder.py /mnt/nvme/qwenputer/model $T/computer.log $IDLE \
-     > $T/computer.out 2>&1 &)
+     > $T/computer.out 2>&1 &
+  HOLD=$!
   for i in $(seq 1 120); do grep -q ready $T/computer.log 2>/dev/null && break; sleep 1; done
   if ! grep -q ready $T/computer.log 2>/dev/null; then
-    echo "ABORT: the computer process did not become ready"; tail -5 $T/computer.out; kill $MON; exit 1
+    echo "ABORT: the computer process did not become ready"; tail -5 $T/computer.out; exit 1
   fi
   cat $T/computer.log; snap "computer running"
 fi
@@ -48,16 +58,24 @@ print(json.dumps({"model": "qwen3.8-flash-next-coder-iq1_m", "messages": [{"role
 PY
 )
   t1=$(date +%s.%N)
-  curl -s localhost:8091/v1/chat/completions -H 'Content-Type: application/json' -d "$PROMPT" > $T/reply.json
-  echo "request took $(python3 -c "print(round($(date +%s.%N)-$t1,1))") s"
-  python3 -c "import json;d=json.load(open('$T/reply.json'));print('usage', d.get('usage'));print(str(d)[:300] if 'choices' not in d else d['choices'][0]['message'].get('content','')[:300])"
+  code=$(curl -s -o $T/reply.json -w '%{http_code}' localhost:8091/v1/chat/completions -H 'Content-Type: application/json' -d "$PROMPT")
+  echo "request took $(python3 -c "print(round($(date +%s.%N)-$t1,1))") s, HTTP $code"
+  python3 - "$T/reply.json" <<'PY'
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    c = d["choices"][0]
+    print("usage", d.get("usage"), "| finish", c.get("finish_reason"))
+    print("content:", repr((c["message"].get("content") or "")[:200]), "| reasoning chars:",
+          len(c["message"].get("reasoning_content") or ""))
+except Exception as e:  # noqa: BLE001
+    print("BAD REPLY:", type(e).__name__, open(sys.argv[1]).read()[:300])
+PY
   snap "after request"
 fi
-kill -TERM -- -$SRV 2>/dev/null; for i in $(seq 40); do kill -0 -- -$SRV 2>/dev/null || break; sleep 0.5; done; kill -KILL -- -$SRV 2>/dev/null
-if [ -n "$WITH" ]; then
-  pkill -f "[c]omputer_holder.py /mnt/nvme/qwenputer/model $T/computer.log"; sleep 1; echo "== computer speed log"; cat $T/computer.log
-fi
-sleep 2; kill $MON
+[ -n "$WITH" ] && { echo "== computer speed log"; cat $T/computer.log; }
+cleanup; SRV=""; HOLD=""; MON=""
+sleep 2
 snap end
 echo "== peak V100 MiB during the run: $(cut -d, -f2 $T/mem.csv | sort -n | tail -1)"
 echo "== strata log: memory and slots"

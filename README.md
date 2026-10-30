@@ -12,9 +12,13 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 
 ## Status
 - 2026-10-30: Stage 1 done: Codex verified the last 40 paired records locally, no findings (`qwenputer-v100`, `REVIEW-40-FINDINGS.md`): all 200 pairs identical across both computer paths.
-- 2026-10-30: Stage 3 interface proof: the computer as a service, every token checked against the reference
-  machine: 88/88 clean calls (+1 budget stop as designed), 70/70 random calls equal to Python; ~1.6 s per call
-  (Python: microseconds). Stage 3 gate met. `results/stage3-interface.md`.
+- 2026-10-30: Codex reviewed stages 2-3 (`REVIEW-FINDINGS.md`): fail-open paths in the first service and runner,
+  memory measured on a stand-in, some overstated wording. All fixed: the service fails closed and the enforced gate
+  passes, 103 cases, 0 unexpected (and fails when a wrong expectation is injected); the real service uses ~450 MiB GPU
+  and ~1.7 GB host RAM. `results/stage3-gate.md`. Open for the stage 4 proof: real Flash-Next routing, vision +
+  service, pause/resume isolation.
+- 2026-10-30: Stage 3 first interface proof (superseded by the gate above): 88/88 clean calls, ~1.6 s per call
+  (Python: microseconds). `results/stage3-interface.md`.
 - 2026-10-30: Stage 3 Strata side by side: vision off + the computer process (434 MiB) = 12,152 expert slots and
   10.4 s per request, the same as today's vision-on setup (11,642 slots, 10.5 s); Strata alone with vision off 9.4 s;
   computing at the same time 23.3 s (take turns, don't overlap). `results/stage3-strata.md`.

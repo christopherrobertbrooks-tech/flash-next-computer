@@ -41,10 +41,10 @@ scratch, ~2 GB (UNCONFIRMED).
 | Checkpoints | at the last turn boundary, every 16,384 new prompt tokens, a system-prompt root at 2048; 6 in RAM (~118 MB each); GDN/PLE/indexer state, KV stays | `generate.cpp:597-601, 732-760`; `conversation_cache.hpp:10-30` |
 | `pin=N` | shared read-only prefix | `generate.cpp:8946-8953` |
 | Snapshots | `POST /slots/0?action=save|restore` | `docs/DETAILS.md:951-990` |
-| Hidden-token injection | no public API; the server does it internally (reasoning wrap-up: STOP, `prompt = prompt + seg + extra`, re-GEN on the live prefix) | `server.py:3621, 3631-3654` |
+| Hidden-token injection | no public HTTP raw-token endpoint; the engine's private stdin `GEN` protocol does take token ids (the Python server uses it). The server's reasoning wrap-up continues with `prompt = prompt + seg + extra` and re-GENs on the live prefix; the added text still goes through the output parser and is processed by the model like any tokens (it changes positions and state); it's a candidate control-flow hook, not a ready computer interface | `server.py:3621, 3631-3654` |
 | Steering | `--cvec` adds/projects the residual after a layer's FFN | `cvec.hpp`; `layer.cpp:1487-1491` |
 
-GDN state can't be truncated: reuse only at an exact live end or exact checkpoint.
+GDN state can't be truncated: a committed live prefix is reused only at its exact end or from an exact checkpoint (or a full saved snapshot, which restores GDN too). Speculative windows don't write GDN until commit, which replays the accepted tokens.
 
 ## 4. Speculative decoding
 
@@ -63,7 +63,7 @@ GDN state can't be truncated: reuse only at an exact live end or exact checkpoin
 | Format | XML `<tool_call>` (248058) ... `</tool_call>` (248059) with `<function=NAME>` and `<parameter=P>` | template; `frontend.py:9, 509-515, 665` |
 | Detection | Python `OutputParser` over the detokenized stream; `tool_start`, `tool_call` events; malformed-call recovery | `frontend.py:698-1184` |
 | Results | `<|im_start|>user\n<tool_response>\n...\n</tool_response><|im_end|>`: ordinary tokens | template |
-| Server-side execution | `run_with_mcp`: MCP tools run in the server, call + result appended, re-rendered, re-GEN (up to 8 rounds); opt-in (`"strata_mcp": true`), only from the server's own web page | `server.py:3829-3922, 4952-4970`; `mcp.py:1-38` |
+| Server-side execution | `run_with_mcp`: MCP tools run in the server, call + result appended, re-rendered, re-GEN (up to 8 rounds); opt-in per request (`"strata_mcp": true`) with configured MCP tools (the web app enables it); `mcp.py` caps joined result text and formats errors | `server.py:3829-3922, 4952-4970`; `mcp.py:1-38` |
 | Endpoints | OpenAI, Anthropic, Responses; no raw-token `/completion` | `server.py:1-20` |
 
 ## 6. Memory budget
@@ -98,7 +98,7 @@ AVX2 pool from the pinned RAM copy. Prefill borrows 1767 slots (3.40 GiB). Host 
 | HC, routers, indexer q/k, ssm_alpha/beta, PLE k/v | 16-bit bf16 widened to f32 by bit shift (no bf16 hardware needed) | `bf16_gemv.hpp:1-30`, `weights.hpp:41-46` |
 | Other projections | IQ quants; MTP Q8_0 | |
 
-A small fp32 module could sit after the FFN write (the cvec hook, `layer.cpp:1487`) or server side.
+A small fp32 module could sit server side. The cvec hook (`layer.cpp:1487`) is only a residual edit point: it gives no computer state, trace routing, reference checks or isolated positions, so it isn't an integration design by itself.
 
 ## 8. Tokenizer
 GPT-2 byte-level BPE (`pre qwen35`), 247,587 merges. 243 unused PAD ids could be named without retraining (their
@@ -110,14 +110,16 @@ generation prompt ends `<think>\n` (or an empty think block with thinking off); 
 No CHANGELOG in this repo. Checkouts 0142, 0143, 0144, 01441, 0145 exist on disk (not read).
 
 ## Facts for attaching the computer
-1. The cleanest injection point is `Service.run`'s continuation (`server.py:3621-3654`): STOP, re-GEN with prompt +
-   generated + injected ids, reusing live state with no prefill, if the injected ids bypass the parser.
+1. A candidate injection point is `Service.run`'s continuation (`server.py:3621-3654`): STOP, re-GEN with prompt +
+   generated + added ids. It can reuse an exact held prefix, but the added result tokens still go through the model and
+   update its normal state; no internal computer trace isolation has been demonstrated. MCP rounds are the
+   lower-risk first route (Codex's review).
 2. MCP rounds re-render via the template; reuse needs exact token match with the live sequence, else the turn
    checkpoint.
 3. GDN state rolls back only via checkpoints.
 4. Per-token state ~14 KB (KV + indexer) + ~118 MB fixed GDN.
-5. Without vision there is room for a few-hundred-MiB module with no loss of resident experts; with vision it costs
-   expert slots.
+5. Measured later (stage 3): with vision off, a 434 MiB companion process displaced 136 of 12,288 expert slots (the
+   cache resizes around it). An in-process port would have a different, unmeasured budget.
 
 ## Open questions that need a run (gateway, engine stopped first, one at a time)
 - Exact VRAM after each startup step: `STRATA_TRACE=1` with the novision launch (`engine-cuda12/strata --serve <args>`),

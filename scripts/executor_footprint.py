@@ -31,7 +31,9 @@ def main():
     before = used()
     torch.zeros(1, device="cuda")
     ctx = used() - before
-    print(f"CUDA context of this process: {ctx:.0f} MiB (a separate process pays this once)", flush=True)
+    print(f"device memory change from a 1-element tensor after the first CUDA query: {ctx:.0f} MiB "
+          "(NOT the CUDA context: the query itself created it; see stage3-executor.md for the 368 MiB nvidia-smi "
+          "reading)", flush=True)
     cfg = json.loads((model / "config.json").read_text())
     tc = cfg.get("text_config", cfg)
     builds = [("bare RV32 core", lambda: core.build()),
