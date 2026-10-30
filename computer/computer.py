@@ -177,11 +177,14 @@ class Computer:
 
     def _call(self, expr, ids, max_chip, max_seconds, deadline):
         t0 = time.monotonic()
-        out = {"expr": expr, "result": None, "response": None, "chip_tokens": 0, "error": None}
+        out = {"expr": expr, "result": None, "response": None, "chip_tokens": 0, "error": None, "error_kind": None}
         late = f"budget: more than {max_seconds} s"
 
-        def fail(why):
+        def fail(why, kind):
+            """kind: budget (a record/token/time cap) | trace_mismatch (the circuit and the reference disagree) |
+            reference_error (the reference machine itself gave no run)."""
             out["error"] = why
+            out["error_kind"] = kind
             out["seconds"] = round(time.monotonic() - t0, 3)
             return out
 
@@ -199,7 +202,7 @@ class Computer:
             out["seconds"] = round(time.monotonic() - t0, 3)
             return out
         except _Late:
-            return fail(late + " (in the reference run)")
+            return fail(late + " (in the reference run)", "budget")
         finally:
             del m.record
 
@@ -208,24 +211,24 @@ class Computer:
         expect = []
         for j, q in enumerate(ids):                       # the model's tokens: the circuit captures them
             if time.monotonic() > deadline:
-                return fail(late + f" (input token {j})")
+                return fail(late + f" (input token {j})", "budget")
             last = j == len(ids) - 1
             k = len(self.lock.toks)
             try:
                 self.lock.qwen([q], max_records=max_chip)
             except RuntimeError as e:                     # the reference machine did not halt within the budget
-                return fail(f"reference: {e} (budget {max_chip} records)")
+                return fail(f"reference: {e} (budget {max_chip} records)", "budget")
             added = list(self.lock.toks[k + 1:])
             keep = self._step(q)
             if not last:
                 if added:
-                    return fail(f"the reference ran before the call closed (input token {j})")
+                    return fail(f"the reference ran before the call closed (input token {j})", "trace_mismatch")
                 if self._token(keep[:self.ncode]) is not None:
-                    return fail(f"the circuit claimed a position inside the call (input token {j})")
+                    return fail(f"the circuit claimed a position inside the call (input token {j})", "trace_mismatch")
             else:
                 expect = added
         if not expect:
-            return fail("the reference produced no run at </tool_call>")
+            return fail("the reference produced no run at </tool_call>", "reference_error")
         produced = []
         nxt = self._token(keep[:self.ncode])
         while nxt is not None:
@@ -233,22 +236,22 @@ class Computer:
             if self._stream(nxt) != want:
                 return fail({"at": len(produced), "got": self._name(nxt),
                              "want": None if want is None else (S.name(want) if want < S.VOCAB else
-                                                                repr(self.tok.decode([want - S.TEXT_TOKEN])))})
+                                                                repr(self.tok.decode([want - S.TEXT_TOKEN])))}, "trace_mismatch")
             produced.append(nxt)
             if nxt >= self.v0:
                 out["chip_tokens"] += 1
                 if out["chip_tokens"] > max_chip:
-                    return fail(f"budget: more than {max_chip} computer tokens")
+                    return fail(f"budget: more than {max_chip} computer tokens", "budget")
             if time.monotonic() > deadline:
-                return fail(late)
+                return fail(late, "budget")
             keep = self._step(nxt)
             nxt = self._token(keep[:self.ncode])
         if expect:
-            return fail(f"handed back early: {len(expect)} reference tokens left")
+            return fail(f"handed back early: {len(expect)} reference tokens left", "trace_mismatch")
         text = self.tok.decode([t for t in produced if t < self.v0], skip_special_tokens=False)
         frames = re.findall(r"<tool_response>\n(.*?)\n</tool_response>", text, re.S)
         if len(frames) != 1 or text.count("<tool_response>") != 1:
-            return fail(f"expected exactly one complete response, found {len(frames)}")
+            return fail(f"expected exactly one complete response, found {len(frames)}", "trace_mismatch")
         out["response"] = text
         out["result"] = frames[0]
         return out

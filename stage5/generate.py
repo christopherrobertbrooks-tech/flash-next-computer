@@ -1,7 +1,10 @@
 """Stage 5 questions (STAGE5-PLAN.md). Pure Python, seeded, no model involved.
 
-usage: python generate.py pilot OUT.jsonl     (15 questions, seed 5001, its own task pools)
-       python generate.py final OUT.jsonl     (180 questions, seed 5002; generate only after the freeze)
+usage (on the gateway: riscv dir on PYTHONPATH, the qwenputer venv; CPU only):
+       python generate.py pilot OUT.jsonl MODEL_DIR     (15 questions, seed 5001, its own task pools)
+       python generate.py final OUT.jsonl MODEL_DIR     (180 questions, seed 5002; generate only after the freeze)
+MODEL_DIR supplies the Qwenputer tokenizer for the tools' shared input contract: every group-1 expression must pass
+it (the 80-token capture included); group 2 records whether its direct call passes ("over_capture").
 
 Each line: {"id", "group", "prompt", "answer"} plus, by group: "intermediates" (chains), "tests" + "func" (code).
 Answers are exact: an integer, a reduced fraction "p/q", or a decimal without trailing zeros. Every answer and every
@@ -56,37 +59,37 @@ def g1(rng):
         kind = rng.choice(["mul", "mul", "add", "sub", "floordiv", "mod", "pow", "gcd", "frac", "dec"])
         if kind == "mul":
             a, b = num(rng, 10, 30), num(rng, 10, 30)
-            text, v = f"{a} * {b}", a * b
+            expr, text, v = f"{a} * {b}", f"{a} * {b}", a * b
         elif kind == "add":
             a, b = num(rng, 20, 40), num(rng, 20, 40)
-            text, v = f"{a} + {b}", a + b
+            expr, text, v = f"{a} + {b}", f"{a} + {b}", a + b
         elif kind == "sub":
             a, b = num(rng, 20, 40), num(rng, 20, 40)
-            text, v = f"{a} - {b}", a - b
+            expr, text, v = f"{a} - {b}", f"{a} - {b}", a - b
         elif kind == "floordiv":
             a, b = num(rng, 25, 40), num(rng, 5, 15)
-            text, v = f"{a} // {b} (floor division)", a // b
+            expr, text, v = f"{a} // {b}", f"{a} // {b} (floor division)", a // b
         elif kind == "mod":
             a, b = num(rng, 25, 40), num(rng, 5, 15)
-            text, v = f"{a} % {b} (the remainder)", a % b
+            expr, text, v = f"{a} % {b}", f"{a} % {b} (the remainder)", a % b
         elif kind == "pow":
             base = rng.randint(3, 99)
             e = rng.randint(8, 40)
-            text, v = f"{base} ** {e}", base ** e
+            expr, text, v = f"{base} ** {e}", f"{base} ** {e}", base ** e
         elif kind == "gcd":
             g = num(rng, 4, 10)
             a, b = g * num(rng, 6, 15), g * num(rng, 6, 15)
-            text, v = f"gcd({a}, {b})", __import__("math").gcd(a, b)
+            expr, text, v = f"gcd({a}, {b})", f"gcd({a}, {b})", __import__("math").gcd(a, b)
         elif kind == "frac":
             a, b, c, d = (num(rng, 3, 9) for _ in range(4))
-            text, v = f"{a}/{b} + {c}/{d} (as a reduced fraction)", Fraction(a, b) + Fraction(c, d)
+            expr, text, v = f"{a}/{b} + {c}/{d}", f"{a}/{b} + {c}/{d} (as a reduced fraction)", Fraction(a, b) + Fraction(c, d)
         else:
             x, y = dec(rng, 3, 12), dec(rng, 3, 12)
             with localcontext() as ctx:
                 ctx.prec = 200
-                text, v = f"{x} * {y}", x * y
-        if fits(v):
-            return f"Compute {text} exactly.", fmt(v), {"kind": kind}
+                expr, text, v = f"{x} * {y}", f"{x} * {y}", x * y
+        if fits(v) and CONTRACT(expr):           # the direct call fits both tools' input rules (80-token capture)
+            return f"Compute {text} exactly.", fmt(v), {"kind": kind, "expression": expr}
 
 
 # ---- group 2: near the computer's limits --------------------------------------------------------------------------
@@ -102,8 +105,9 @@ def g2(rng):
             base = rng.randint(2, 9)
             e = rng.randint(40, 62)
             text, v = f"{base} ** {e}", base ** e
-        if fits(v):
-            return f"Compute {text} exactly.", fmt(v), {"kind": kind}
+        if fits(v):                              # over_capture: the direct call is refused by both tools
+            return f"Compute {text} exactly.", fmt(v), {"kind": kind, "expression": text,
+                                                         "over_capture": not CONTRACT(text)}
 
 
 def _evalfrac(text):
@@ -223,7 +227,7 @@ CODE_POOL = {
         ("flatten", "xs", "flattens arbitrarily nested lists into one flat list, keeping order",
          [("[1, [2, [3, [4]], 5]]",), ("[]",), ("[[[]]]",), ("[[1, 2], 3]",)],
          ["[1, 2, 3, 4, 5]", "[]", "[]", "[1, 2, 3]"]),
-        ("binary_to_int", "b", "converts a string of 0s and 1s to its integer value, without using int(b, 2)",
+        ("binary_to_int", "b", "converts a string of 0s and 1s to its integer value",
          [("'0'",), ("'101'",), ("'11111111'",), ("'1' + '0' * 70",)], ["0", "5", "255", str(2 ** 70)]),
         ("transpose", "m", "returns the transpose of the rectangular matrix m (a list of rows)",
          [("[[1, 2, 3], [4, 5, 6]]",), ("[[1]]",), ("[]",)], ["[[1, 4], [2, 5], [3, 6]]", "[[1]]", "[]"]),
@@ -263,8 +267,32 @@ def g5b(rng):
     return text, str(v), {"template": READ_TEMPLATES.index(tpl)}
 
 
+CONTRACT = None   # set in main(): does a calc expression pass the shared input contract (computer/contract.py)?
+
+
+def load_contract(model_dir):
+    """The tools' shared accepted-input check, with the real Qwenputer tokenizer (CPU only)."""
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "computer"))
+    from transformers import AutoTokenizer
+    from chipformer.rv import bridge as BR
+    from contract import CallRefused, check_input, first_special_id
+    tok = AutoTokenizer.from_pretrained(model_dir)
+    T, fs = BR.Text(Path(model_dir) / "tokenizer.json"), first_special_id(tok)
+
+    def ok(expr):
+        try:
+            check_input(expr, tok, T, fs)
+            return True
+        except CallRefused:
+            return False
+    return ok
+
+
 def main():
+    global CONTRACT
     which, out = sys.argv[1:3]
+    CONTRACT = load_contract(sys.argv[3])
     rng = random.Random(SEEDS[which])
     rows, used5a = [], []
     for group, count in COUNTS[which].items():
