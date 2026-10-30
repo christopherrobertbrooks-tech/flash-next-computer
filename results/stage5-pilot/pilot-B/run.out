@@ -1,0 +1,29 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+strata ready: 1 after 31 s
+tool ready after 38 s from launch
+== /mcp: {"servers": [{"name": "math", "transport": "stdio", "status": "ready", "error": null, "info": {"name": "calc-python", "version": "0.1", "protocol": "2025-06-18"}, "tools": [{"name": "math__calc", "tool": "calc", "description": "Evaluate an arithmetic expression exactly, with numbers of up to 62 digi
+eee173f5e11159a20c7f46170af6aae866d3f51400c822ab2823ac6908d58fde  /mnt/nvme/flashnext-test/stage5/pilot-questions.jsonl
+  1/17 warmup-1         HTTP 200 10.41s finish stop calls 1
+  2/17 warmup-2         HTTP 200 3.35s finish stop calls 1
+  3/17 pilot-1-001      HTTP 200 19.19s finish stop calls 3
+  4/17 pilot-1-002      HTTP 200 7.97s finish stop calls 1
+  5/17 pilot-1-003      HTTP 200 16.05s finish stop calls 5
+  6/17 pilot-2-001      HTTP 200 40.67s finish stop calls 4
+  7/17 pilot-2-002      HTTP 200 15.31s finish stop calls 1
+  8/17 pilot-2-003      HTTP 200 14.29s finish stop calls 1
+  9/17 pilot-3-001      HTTP 200 7.23s finish stop calls 1
+ 10/17 pilot-3-002      HTTP 200 7.03s finish stop calls 0
+ 11/17 pilot-3-003      HTTP 200 7.44s finish stop calls 1
+ 12/17 pilot-4-001      HTTP 200 28.29s finish stop calls 12
+ 13/17 pilot-4-002      HTTP 200 48.72s finish stop calls 0
+ 14/17 pilot-4-003      HTTP 200 54.3s finish stop calls 7
+ 15/17 pilot-5a-001     HTTP 200 1.96s finish stop calls 0
+ 16/17 pilot-5a-002     HTTP 200 4.18s finish stop calls 0
+ 17/17 pilot-5b-001     HTTP 200 31.08s finish length calls 0
+done: 17 requests (2 warm-up), harness errors 0
+tool process pid 3095887 host RSS MiB now (snapshot): 1316
+expert cache 12288 slots
+== peak V100 MiB:  32009
+ask.py exit 0
+v100: clock restored; released
