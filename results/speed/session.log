@@ -1,0 +1,28 @@
+== circuit probe 06:24:33
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+123456789*987654321      timed2 batch  1:   463.9 us/step,      2156 tokens/s
+123456789*987654321      timed2 batch  4:   540.7 us/step,      7398 tokens/s
+123456789*987654321      timed2 batch 16:  1027.9 us/step,     15565 tokens/s
+123456789*987654321      timed2 batch 64:  2933.0 us/step,     21820 tokens/s
+123456789*987654321      graph + CPU read per token:   486.2 us,    2057 tokens/s
+123456789*987654321      prefill 1111 tokens: 433.9 ms, 2,560 tokens/s, exact on 1111 positions
+(2**64 - 1) // 7         timed2 batch  1:   459.0 us/step,      2178 tokens/s
+(2**64 - 1) // 7         timed2 batch  4:   544.3 us/step,      7349 tokens/s
+(2**64 - 1) // 7         timed2 batch 16:  1027.5 us/step,     15571 tokens/s
+(2**64 - 1) // 7         timed2 batch 64:  2931.8 us/step,     21830 tokens/s
+(2**64 - 1) // 7         graph + CPU read per token:   483.6 us,    2068 tokens/s
+(2**64 - 1) // 7         prefill 4248 tokens: 1490.4 ms, 2,850 tokens/s, exact on 4248 positions
+4/(-203)*962-40*31-(-37) timed2 batch  1:   467.0 us/step,      2142 tokens/s
+4/(-203)*962-40*31-(-37) timed2 batch  4:   538.6 us/step,      7427 tokens/s
+4/(-203)*962-40*31-(-37) timed2 batch 16:  1034.9 us/step,     15461 tokens/s
+4/(-203)*962-40*31-(-37) timed2 batch 64:  2937.7 us/step,     21786 tokens/s
+4/(-203)*962-40*31-(-37) graph + CPU read per token:   486.6 us,    2055 tokens/s
+4/(-203)*962-40*31-(-37) prefill 14041 tokens: 5005.9 ms, 2,805 tokens/s, exact on 14041 positions
+done
+v100: clock restored; released
+== llama.cpp text speed 06:26:53
+llama-bench exit 0
+512 0 4979.3 tokens/s
+0 128 74.0 tokens/s
+== done 06:27:08
