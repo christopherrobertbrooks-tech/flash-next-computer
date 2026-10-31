@@ -6,8 +6,9 @@
 2. The backend sees the prompt at positions 0..P-1, then every generated token (forced response tokens included, in
    the emulator's order) at consecutive positions.
 3. helper_client fails closed: a child that exits at once, an error reply, a short reply, non-finite values, an id
-   outside the vocabulary, values out of order, no reply within the timeout, a nonzero exit after END; close() ends
-   a child that ignores END.
+   outside the vocabulary, values out of order, no reply within the timeout, a helper that stops reading in the
+   middle of a large row request (the send is bounded too), a nonzero exit after END; close() ends a child that
+   ignores END.
 3b. The production LlamaBackend, on a recording helper: RESET first, the prompt at 0..P-1, then every generated token
    (forced ones included) at P, P+1, ...; a backend with one position off is caught.
 4. run_plain_llama.main with a fake helper program: a normal run writes complete rows (exit 0); a helper that dies
@@ -156,7 +157,7 @@ def main():
                                  ("an id below 0", neg, "bad reply ids", {}),
                                  ("an id outside the vocabulary", big, "bad reply ids", {"n_vocab": 1000}),
                                  ("values out of order", order, "bad reply values", {}),
-                                 ("no reply within the timeout", silent, "no reply", {"timeout": 2.0})):
+                                 ("no reply within the timeout", silent, "not done within", {"timeout": 2.0})):
         h = Helper(exe, "x.gguf", **kw)
         try:
             h.reset()
@@ -166,6 +167,25 @@ def main():
             got = str(e)
         h.close()
         check(f"helper client: {label} raises HelperError ({got[:50]})", want in got)
+    import time as _t
+    import numpy as _np
+    stall = prog("stall.py", """
+        import struct, sys, time
+        sys.stdin.buffer.read(8); sys.stdout.buffer.write(struct.pack("<i", 0)); sys.stdout.buffer.flush()
+        while True: time.sleep(1)
+        """)
+    h = Helper(stall, "x.gguf", timeout=1.0)
+    h.reset()
+    t0 = _t.monotonic()
+    try:
+        h.rows(list(range(64)), _np.zeros((64, 3968), "f4"))   # ~1 MB: far more than a pipe holds
+        got = "no error"
+    except HelperError as e:
+        got = str(e)
+    took = _t.monotonic() - t0
+    h.close(wait=1.0)
+    check(f"helper client: a helper that stops reading mid-request raises in {took:.1f} s ({got[:45]}), "
+          f"child ended {h.p.poll() is not None}", "sent" in got and took < 3 and h.p.poll() is not None)
     try:
         with Helper(good, "x.gguf") as h:
             h.reset()
@@ -222,18 +242,8 @@ def main():
             got = str(e)
         h.close()
         check(f"helper client: {label} raises HelperError ({got[:60]})", want in got)
-    import subprocess as sp
     h = Helper(deaf, "x.gguf")
-    orig = sp.Popen.wait
-
-    def short_wait(self, timeout=None):
-        return orig(self, min(timeout or 2, 2))
-
-    sp.Popen.wait = short_wait
-    try:
-        h.close()
-    finally:
-        sp.Popen.wait = orig
+    h.close(wait=2.0)
     check("helper client: close() ends a child that ignores END", h.p.poll() is not None)
 
     # 4: the runner with a fake helper (always answers EOS); and one that dies at its 3rd request

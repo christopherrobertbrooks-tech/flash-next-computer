@@ -41,8 +41,10 @@ published scores re-score identically with the change). Raw: `results/llamacpp/s
   equivalence finding.
 - **Memory:** L's figure is the largest of nvidia-smi samples taken after each question, not a continuous peak.
 - **Fixed after the review (not affecting these results):** the helper now refuses any non-finite logit, and the
-  client rejects bad replies (ids outside the vocabulary or repeated, non-finite or unordered values), times out a
-  silent helper, and raises on a nonzero helper exit; the controls now drive the production backend's positions (a
-  one-position slip is caught). 30 CPU controls pass. The run that produced these results used the earlier helper
+  client rejects bad replies (ids outside the vocabulary or repeated, non-finite or unordered values), bounds every
+  request with one deadline (sending its rows and reading the reply; Codex's confirm 0cc5994 found the send had been
+  unbounded), and raises on a nonzero helper exit; the controls now drive the production backend's positions (a
+  one-position slip is caught). 31 CPU controls pass; 3 pilot questions re-run with the new client and helper give
+  identical text. The run that produced these results used the earlier helper
   (`9383c566...`, kept as `qwen_half_helper.v1`).
 - **Pilot first:** 12 questions (the stage-0 set), 12/12 EOS, no errors (`results/llamacpp/stage1-pilot/`).
