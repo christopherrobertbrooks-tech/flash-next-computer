@@ -1,0 +1,14 @@
+{
+ "commit": "3ff0dbef17f11fe6b63f089579c21a2eadcbd342",
+ "files": {
+  "stage5/score.py": "519d925482be205e931b358773f23391953ed169d3ee2f1dd1ccae16677b14e9",
+  "computer/stage4_requests.py": "8a22c1b0d57a67992adfcf9e0cbfeeca839a4c384e588a855884a3a84f37ed73",
+  "inside4b/final-primary.jsonl": "e3f98862352ad0111c5b5428a3580d01ebc0fcec3474b8a495300e577ca7074d",
+  "results/inside4b-full/full-C/replies.jsonl.gz": "6269d5b8a141007e2cec4fa7889d2c460ede7616e5280db3db57cd93dc459c44",
+  "results/inside4b-full/full-C/questions.sha256": "00f8e09c964013efe4b8cdfce1a9ceaf83bee70842fdc76e5715fc239106c3da",
+  "llamacpp/stage3.sh": "818f98f1ee7381c81f35938a8429774bc6da6d4687b985d40e431caf11d219b0",
+  "llamacpp/make_stage3_artifacts.py": "a82847f2e5ba665b1fcd842b292c62eef68b3644360da3a911c65eb40c63c64d",
+  "llamacpp/stage3_analysis.py": "94bc30960c42ca6f6f2facfec02c2bf639ce629f69a522af36bc4f2d54d3e418",
+  "results/llamacpp/stage3-artifacts.json": "90f9fa54d2b39e84f00d0f0877535a57fe387262a522adc04de2ae48ed3391e8"
+ }
+}
