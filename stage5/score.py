@@ -202,16 +202,18 @@ def score_one(q, row):
     content, finish = m.get("content"), c.get("finish_reason")
     events = m.get("strata_mcp") or []
     calls = row.get("tool_calls") or []
-    exprs = [str(x.get("expression")) for x in calls]
+    exprs = [str(x.get("expression") if x.get("expression") is not None else x.get("call_text")) for x in calls]
     gens = GEN_LINE.findall(row.get("engine_log") or "")
     out = {"id": q["id"], "group": q["group"], "arm": row["arm"], "seconds": row.get("seconds"), "finish": finish,
            "http": row.get("http"), "calls": len(calls), "tool_ms": round(sum(x.get("ms") or 0 for x in calls), 1),
-           "chip_tokens": sum(x.get("chip_tokens") or 0 for x in calls),
-           "computer_seconds": round(sum(x.get("computer_seconds") or 0 for x in calls), 3),
+           "chip_tokens": (row.get("inside") or {}).get("chip_tokens")
+                          or sum(x.get("chip_tokens") or x.get("trace_tokens") or 0 for x in calls),
+           "computer_seconds": round((row.get("inside") or {}).get("chip_seconds")
+                                     or sum(x.get("computer_seconds") or 0 for x in calls), 3),
            "rounds": len(gens), "generated_tokens": sum(int(g[2]) for g in gens),
            "tool_rss_peak_mib": max([x.get("rss_peak_mib") or 0 for x in calls], default=None),
            "fault_kinds": sorted({x.get("error_kind") for x in calls if x.get("error_kind")}),
-           "computer_error_results": [x["expression"] for x in calls
+           "computer_error_results": [x.get("expression", x.get("call_text")) for x in calls
                                       if x.get("error") is None and str(x.get("result")).startswith("error")],
            "loop": any(exprs.count(e) >= 3 for e in set(exprs)),
            "mismatch": any(x.get("error_kind") == "trace_mismatch" for x in calls)}
@@ -259,7 +261,7 @@ def score_one(q, row):
     out["layer"] = layer
     out["recovered"] = (out["fault_kinds"] or out["computer_error_results"]) if out["correct"] else []
     # 4. chains (B and C only): how many steps were seen in order in the tool results
-    if q["group"] == "4" and row["arm"] in ("B", "C"):
+    if q["group"] == "4" and row["arm"] in ("B", "C", "R"):
         results = [str(x.get("result")) for x in calls if x.get("error") is None]
         k = 0
         for r in results:
@@ -315,7 +317,7 @@ def paired(by, ids, first, second):
     return a, b, c, len(ids) - a - b - c
 
 
-def summarise(qs, scored, arms, runs):
+def summarise(qs, scored, arms, runs, other=None):
     S = {}
     by = {(r["id"], r["arm"]): r for r in scored}
     for arm in arms:
@@ -344,20 +346,23 @@ def summarise(qs, scored, arms, runs):
             S[arm]["chains_all_steps_seen_in_order"] = \
                 f"{sum(r['chain_in_order'] == r['chain_steps'] for r in ch)}/{len(ch)}"
     out = {"arms": S}
-    if "B" in arms and "C" in arms:
+    other = other or ("B" if "B" in arms else "R")   # stage 5: C vs B (frozen default); inside-4b: --compare C,R
+    if other in arms and "C" in arms:
         ids = [q["id"] for q in qs if q["group"] in PRIMARY]
-        a, b, c, dd = paired(by, ids, "C", "B")
+        a, b, c, dd = paired(by, ids, "C", other)
         delta, lo, hi = newcombe_paired(a, b, c, dd)
-        mb, mc = S["B"]["median_seconds_primary"], S["C"]["median_seconds_primary"]
-        out["primary"] = {"questions": len(ids), "pairs": {"both right": a, "C only": b, "B only": c, "both wrong": dd},
-                          "C_minus_B": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
+        mb, mc = S[other]["median_seconds_primary"], S["C"]["median_seconds_primary"]
+        out["primary"] = {"compared": f"C vs {other}", "questions": len(ids),
+                          "pairs": {"both right": a, "C only": b, f"{other} only": c, "both wrong": dd},
+                          f"C_minus_{other}": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
                           "verdict": verdict(lo, hi),
                           "practical": bool(mb and mc and mc <= 2 * mb and mc <= 60),
-                          "median_seconds": {"B": mb, "C": mc}}
+                          "median_seconds": {other: mb, "C": mc}}
         sids = [q["id"] for q in qs if q["group"] in SENSITIVITY]
-        a2, b2, c2, d2 = paired(by, sids, "C", "B")
+        a2, b2, c2, d2 = paired(by, sids, "C", other)
         out["sensitivity_groups_1_3_4"] = {"descriptive only": True, "questions": len(sids),
-                                           "pairs": {"both right": a2, "C only": b2, "B only": c2, "both wrong": d2}}
+                                           "pairs": {"both right": a2, "C only": b2, f"{other} only": c2,
+                                                     "both wrong": d2}}
     if "A" in arms:
         g5 = [q["id"] for q in qs if q["group"] in ("5a", "5b")]
         a_right = sum(by[i, "A"]["correct"] for i in g5)
@@ -368,8 +373,15 @@ def summarise(qs, scored, arms, runs):
 
 
 def main():
-    qpath, outpath = sys.argv[1:3]
-    dirs = dict(x.split("=", 1) for x in sys.argv[3:])
+    args = sys.argv[1:]
+    other = None
+    if "--compare" in args:                          # e.g. --compare C,R (default: C vs B if B is given, else R)
+        i = args.index("--compare")
+        first, other = args[i + 1].split(",")
+        assert first == "C", "the primary comparison is C against another arm"
+        del args[i:i + 2]
+    qpath, outpath = args[:2]
+    dirs = dict(x.split("=", 1) for x in args[2:])
     qs = [json.loads(l) for l in open(qpath) if l.strip()]
     qids, qhash = {q["id"] for q in qs}, sha256(qpath)
     if len(qids) != len(qs):
@@ -385,12 +397,12 @@ def main():
             problems.append(f"{arm}: {len(extra)} unexpected questions (first: {extra[:3]})")
     if any(q["group"] == "5a" for q in qs):
         wall_canary()
-    arms = [a for a in ("A", "B", "C") if a in runs]
+    arms = [a for a in ("A", "B", "C", "R") if a in runs]   # R: inside-4b's RISC-V-emulator-beside arm
     scored = [score_one(q, runs[arm][q["id"]]) for arm in arms for q in qs if q["id"] in runs[arm]]
     if problems:
         summary = {"incomplete": problems, "verdict": "withheld: the data is incomplete or inconsistent"}
     else:
-        summary = summarise(qs, scored, arms, runs)
+        summary = summarise(qs, scored, arms, runs, other)
         if "Brep" in runs:
             def content(r):
                 return json.dumps(((r.get("raw") or {}).get("choices") or [{}])[0].get("message", {}).get("content"))
@@ -565,6 +577,26 @@ def selftest():
                 check(f"integrity: {label} rejected", True)
         _, missing, _ = load_arm(arm_dir([{"id": "x", "arm": "B"}], F), "B", {"x", "y"}, F, ["x", "y"])
         check("integrity: a missing question is reported", missing == ["y"])
+    # summaries: stage 5's C vs B keys are unchanged; C vs R gets its own names
+    qs3 = [{"id": "p1", "group": "1", "answer": "4"}, {"id": "p2", "group": "1", "answer": "4"}]
+
+    def srow(i, arm, ok):
+        return score_one(qs3[0] if i == "p1" else qs3[1], row("ANSWER: 4" if ok else "ANSWER: 5", arm=arm,
+                                                           calls=[good] if arm != "A" else []))
+    scored = [srow("p1", "B", True), srow("p2", "B", False), srow("p1", "C", True), srow("p2", "C", True)]
+    for r in scored:
+        r["id"] = r["id"]
+    sc = [dict(r, id=i) for r, i in zip(scored, ["p1", "p2", "p1", "p2"])]
+    out = summarise(qs3, sc, ["B", "C"], {"B": {}, "C": {}})
+    check("summary C vs B keeps stage 5's keys", "C_minus_B" in out["primary"] and out["primary"]["compared"] == "C vs B"
+          and out["primary"]["pairs"]["B only"] == 0 and out["primary"]["pairs"]["C only"] == 1)
+    sc2 = [dict(r, arm="R") if r["arm"] == "B" else r for r in sc]
+    out2 = summarise(qs3, sc2, ["C", "R"], {"C": {}, "R": {}})
+    check("summary C vs R names R", "C_minus_R" in out2["primary"] and out2["primary"]["compared"] == "C vs R"
+          and "R only" in out2["primary"]["pairs"])
+    out3 = summarise(qs3, sc2 + [dict(r, arm="B") for r in sc2 if r["arm"] == "R"], ["B", "C", "R"],
+                     {"B": {}, "C": {}, "R": {}}, other="R")
+    check("an explicit comparator wins over the default", out3["primary"]["compared"] == "C vs R")
     print("SELFTEST", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)
 
