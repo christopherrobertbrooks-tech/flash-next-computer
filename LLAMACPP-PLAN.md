@@ -64,6 +64,12 @@ The moved share and the new boundary overhead will be measured; the speed gain i
       - **Stop rule, fixed now:** stop if the split's pooled top-1 agreement is more than 1.0 point below the
         control's, or if more than 2 of the 12 questions have a split disagreement where HF's margin is at least 1.0
         logit (not a near-tie).
+      - **Denominator:** every position in the 12 fixed questions where Qwen chooses the next token: the prompt's
+        last position and each generated position the circuit doesn't own. Positions the circuit owns (chip tokens,
+        forced byte echoes, the HALT newline) are excluded. The control uses the same positions, the same text
+        tokens before them and the same mask.
+      - **The optional two-call question** (added only if none of the 12 has two calls) counts in the hard checks,
+        not in the stop rule's agreement or its question count.
       - **Reported:** per-question disagreements, the first divergence and its margin.
       - Passing is a premise check, not proof the free-running answers match. Stages 2-3 still decide.
 1. **Matched plain baseline (Codex's first step; one evening).** Plain Qwen3.5-4B f16 in llama.cpp, with the same
