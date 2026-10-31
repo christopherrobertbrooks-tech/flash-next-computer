@@ -385,7 +385,7 @@ def main():
             problems.append(f"{arm}: {len(extra)} unexpected questions (first: {extra[:3]})")
     if any(q["group"] == "5a" for q in qs):
         wall_canary()
-    arms = [a for a in ("A", "B", "C") if a in runs]
+    arms = [a for a in ("A", "B", "C", "R") if a in runs]   # R: inside-4b's RISC-V-emulator-beside arm
     scored = [score_one(q, runs[arm][q["id"]]) for arm in arms for q in qs if q["id"] in runs[arm]]
     if problems:
         summary = {"incomplete": problems, "verdict": "withheld: the data is incomplete or inconsistent"}
