@@ -45,7 +45,9 @@ Keys: space = one step, r = run/pause, + / - = speed, q = quit.
   the right side keeps showing the shadow, labelled as no longer verified. Why not a hard stop: a rare checker or
   precision artifact shouldn't kill the demo. There's one on record: the all-fp32 module path mispredicted 1 of 193
   tokens on a test program's prefill in qwenputer-v100 (cause not proven), while the executor path phase 3 uses had
-  0 mismatches over 2.2 million computer tokens.
+  0 mismatches over 2.2 million computer tokens. Implementation note: upstream's `generate(lock=...)` breaks at the
+  first lock error, so phase 3 runs without `lock` and keeps its own shadow machine fed from `on_token`, which can
+  flag and continue.
 - Values decoded straight from the model's trace tokens (`spec.decode_value` on value records) can be shown beside the
   shadow's, as a check, in phase 3.
 
