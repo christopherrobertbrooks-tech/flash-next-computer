@@ -14,13 +14,17 @@ from chipformer.q35.fast import exact_matmuls
 
 
 def top5(logits, v0):
+    """[top-5 ids, values, argmax]: the order of tied ids in top-5 is topk's; the greedy choice is the argmax (the
+    lowest id at a tie, as torch.argmax and upstream decide)."""
     v, i = torch.topk(logits[:v0].float(), 5)
-    return [i.tolist(), v.tolist()]
+    return [i.tolist(), v.tolist(), int(torch.argmax(logits[:v0]))]
 
 
 @torch.no_grad()
 def main():
     base, fdir, out = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
+    if Path(out).exists():
+        sys.exit(f"{out} exists: never overwrite")
     exact_matmuls()
     model = Qwen3_5ForCausalLM.from_pretrained(base, dtype=torch.bfloat16, device_map="cuda").eval()
     man = json.loads((fdir / "manifest.json").read_text())

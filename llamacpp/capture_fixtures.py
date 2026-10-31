@@ -41,15 +41,22 @@ def sha(path):
 
 
 def top5(logits, v0):
+    """Diagnostics only: topk's order among tied values isn't the greedy choice. The choice is argmax() below."""
     v, i = torch.topk(logits[:v0].float(), 5)
     return i.tolist(), v.tolist()
+
+
+def argmax(logits, v0):
+    """The greedy choice exactly as upstream makes it (torch.argmax over the text vocabulary: the lowest id at a tie)."""
+    return int(torch.argmax(logits[:v0]))
 
 
 @torch.no_grad()
 def executor_prompt_rows(chat, ids):
     """Stage 0b's candidate: the prompt through the executor from zero state (ExecRow.start's loop), the kept values
-    after each position assembled into Qwen's input row by upstream's own _exec_hc. Leaves the executor in the same
-    state ExecRow.start would (the next question's start() zeroes it again)."""
+    after each position assembled into Qwen's input row by upstream's own _exec_hc. It does NOT call load_init(), so
+    the executor is left mid-start; harmless here (the next question's start() zeroes it), but a live runner must
+    do ExecRow.start's whole sequence."""
     er = chat.erow
     if er.graph is None:
         er._capture()
@@ -80,6 +87,7 @@ def main():
 
     def model_hook(mod, args, kwargs, output):           # fires only for the prompt prefill (decode uses lm_head)
         rec["prefill_top5"] = top5(output.logits[0, -1], chat.v0)
+        rec["prefill_argmax"] = argmax(output.logits[0, -1], chat.v0)
 
     chat.model.register_forward_hook(model_hook, with_kwargs=True)
     real_qwen, real_ct = chat._qwen_step, chat.circuit_token
@@ -87,7 +95,7 @@ def main():
     def qwen_step(hc, cache, pos):
         logits = real_qwen(hc, cache, pos)
         rec["steps"].append({"gen_index": rec["n_gen"] - 1, "input_id": rec["last_id"], "pos": pos,
-                             "top5": top5(logits, chat.v0)})
+                             "top5": top5(logits, chat.v0), "argmax": argmax(logits, chat.v0)})
         return logits
 
     def circuit_token(hc):
@@ -138,7 +146,7 @@ def main():
         fx = {"id": q["id"], "group": q["group"], "prompt": q["prompt"], "prompt_ids": ids, "generated": toks,
               "stop": stop, "lock_error": r.get("lock_error"), "text_tokens": r["text_tokens"],
               "chip_tokens": r["chip_tokens"], "calls": calls, "seconds": round(secs, 2),
-              "prefill_rows": prefill, "prefill_top5": rec["prefill_top5"], "step_rows": step_rows,
+              "prefill_rows": prefill, "prefill_top5": rec["prefill_top5"], "prefill_argmax": rec["prefill_argmax"], "step_rows": step_rows,
               "steps": rec["steps"], "executor_prompt_rows": cand}
         torch.save(fx, Path(out) / f"{q['id']}.pt")
         manifest["fixtures"].append({k: fx[k] for k in ("id", "group", "stop", "lock_error", "text_tokens",
@@ -147,6 +155,8 @@ def main():
                                        "sha256": sha(Path(out) / f"{q['id']}.pt")})
         print(f"{q['id']:16} {stop:10} {secs:6.1f}s text {r['text_tokens']} chip {r['chip_tokens']} calls {calls} "
               f"lock_error {r.get('lock_error')}", flush=True)
+        if stop != "eos" or r.get("lock_error"):
+            raise SystemExit(f"{q['id']}: {stop}, lock error {r.get('lock_error')}: not a valid fixture")
         return calls
 
     calls = [run(qs[i]) for i in FIXED]
