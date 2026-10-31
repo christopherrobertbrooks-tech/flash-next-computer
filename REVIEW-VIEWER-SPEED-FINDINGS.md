@@ -204,3 +204,19 @@ One status correction is still necessary: speed-results' next-step item 1 says t
 | Guided fusion / causal speed / port-gain overclaims | **Closed in narrative/plan** |
 
 The main result of this re-check is substantial verified progress, with **one remaining verification redline** and small lifecycle work. Both passes, source-branch merges and findings are on the review branch only; no implementation edit, dependency install, or push/merge into main or either source branch was performed. All new review commits use the requested GitHub noreply email.
+
+## Confirm
+
+Reviewed requested `viewer-live` **fc6540f3dcee5571591385ec5190b49b3c82794c** and `computer-speed` **52f82407d441ea09cccbe32ab2eaef04f18f1acb**, merged into this review branch. Ran the blind counterexamples and mutation before reading the specified `a59c121..94a587f` diff and the speed branch's last commit. The relevant viewer content at the brief's 94a587f matches the requested latest fc6540f. Gateway viewer/test hashes match the checked-out files. **CPU only: no GPU job, model load, install, or gateway source edit.** Temporary test logs stayed in own /tmp scratch.
+
+**Finding 2's remaining redline (10) is closed.** The incomplete predicate now includes `sess.armed`, so capture from TCO through TCC cannot masquerade as a completed verified answer. Independently swept **all 3352 prefixes** of the same two-call stream using call-open/HALT-echo boundaries as the oracle: **zero wrong completion statuses**, replacing the former 60 false completions. Real `headless()` with fake producers returns **0** on a complete stream and **1** immediately after TCO or in a parameter body followed by an EOS token. Every fake worker was stopped and joined.
+
+**Finding 11's lifecycle nits are closed for the reported cases.** An injected headless consumer exception still propagates, but its finally now sets stop and joins the producer: stop=True, actual thread.is_alive()=False. Fake-curses quit before completion prints **“INCOMPLETE (stopped, stopped inside a call)”**, followed by “model stopped,” with no live worker. The exception path finalizes an unfinished TUI as error; completed/mismatched results retain their prior state. These are cooperative cancellation checks, not a promise to interrupt arbitrary unresponsive GPU/native work instantly; the existing bounded stop routine still has its timeout semantics.
+
+The updated CPU test suite passes **38 controls**. Restoring the old predicate without `sess.armed` in memory makes it exit **1**, with **five failed controls**: the exhaustive sweep, three early capture EOF checks, and the headless early-EOF exit check. The sweep's negative control also observes the former **60** wrong prefixes. Thus the new tests detect the actual repaired bug, rather than merely exercising code that always passes.
+
+After those checks, read the requested diffs. The implementation changes match the demonstrated fixes, and the speed status now accurately distinguishes the prior re-check from the subsequent fix. **84.5%** correctly rounds 6438.53/7620.77 = 84.4866%. No new numerical or functional redline found.
+
+**NIT — test count in VIEWER-PLAN:** its updated status says “Live controls: 42, all pass”; this revision actually emits **38** controls. Replace 42 with 38. This is documentation only and does not affect closure.
+
+**Confirmation verdict:** original finding 2 and follow-up finding 10 are closed; the reported headless cleanup/quit-finalization work in 11 is also verified. The previously closed snapshot, queue, labels and speed-wording findings remain closed. No implementation edits or pushes/merges into main or either source branch were made by this confirmation.
