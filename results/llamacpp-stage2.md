@@ -1,7 +1,7 @@
-# llama.cpp port, stage 2: the split runner (2026-10-31, 12:30-2:15 pm)
+# llama.cpp port, stage 2: the split runner (2026-10-31; pilot 1:48-1:59 pm, diagnostics to 2:14 pm)
 
 **Answer:** Qwenputer runs with its Qwen half in llama.cpp and its computer on upstream's fp32 executor, with no HF
-checkpoint loaded. On the 12-question pilot every answer ended EOS with **0 lock errors** (147,000 checked chip
+checkpoint loaded. On the 12-question pilot every answer ended EOS with **0 lock errors** (188,945 checked chip
 tokens). Text ran at **43.5 tokens/s** vs 30 in inside-4b's C on the same questions; the computer at the same ~1,700
 tokens/s. A bf16 output head (a bit-exact copy of the source values) is 10.6% faster, picks the same token at all
 14,745 fixture positions, and passes the stage-0 gate. Not yet reviewed by Codex.
