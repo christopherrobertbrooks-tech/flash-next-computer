@@ -154,3 +154,53 @@ Ran two independent in-memory mutations against the unchanged test file (no gate
 These establish that the repaired controls can fail. They do not cover the newly identified pre-TCC capture EOF; that needs the additional negative controls in finding 10. No source fix was made by this review.
 
 **Pass-1 conclusion:** the original speculative display and full-queue cancellation defects are repaired and demonstrated by useful tests. One verification/exit-code redline remains: incomplete call capture can still be presented as complete VERIFIED. Headless finally-cleanup is a smaller remaining lifecycle improvement. Speed prose and the author's guided explanation are deliberately deferred until this pass is pushed.
+
+## Re-check pass 2
+
+Pass 1 **1eb2056** was pushed before opening `REVIEW-VIEWER-SPEED-RECHECK-PASS2.md`, VIEWER-PLAN's status or the revised speed narrative. This guided pass uses the same merged source revisions. No source fixes were made; this re-check reports closure and remaining work.
+
+### Viewer claims
+
+1. **Committed snapshot: closed.** The implementation and the author's explanation agree. Shared immutable ROM plus copied registers, RAM, digits, output and control/termination fields form a proper display snapshot. Snap replacement follows the last matching record/echo token. The independent witness test, restored-old-design negative control, original token-44 counterexample and injected regression all support closure. Mismatch freezes the last committed full state; later text cannot realign it.
+
+2. **Termination: correct after TCC, still open before TCC.** `start_model.generate` classifies upstream returns correctly for ordinary positive budgets: upstream appends EOS without counting it as text, and otherwise stops when text or chip count reaches its limit. Checking last-token EOS first, then chip limit, then text limit, then “ended early” matches that behavior. Exceptions become reason=error in make_producer. These reasons cannot repair an incomplete predicate: a started but unclosed captured call has `sess.armed=True` while `in_call/pending/expect` can be empty. Finding **10** remains a redline, including its demonstrated headless exit-0 false success. Add capture state to unfinished and the missing EOF/exit controls. The current status section's statement that every end inside a call is INCOMPLETE is therefore too broad until fixed.
+
+3. **Cancellation: original full-queue defect closed; cleanup/finalization nits remain.** Timed puts check stop for tokens and done metadata. stop_producer sets the flag, drains and joins; independent checks confirm actual thread death rather than just trusting a returned bool. Normal/error ordering tests pass. TUI finally handles quit or curses exceptions, and playback credit is correctly reset/gated. Its documented 4096-token lookahead/backpressure now matches the code.
+
+   Confirmed finding **11** with a CPU consumer exception injected into headless: `stop.is_set()` remained **False** and the producer thread remained alive; the review then explicitly stopped/joined it. This is why headless needs a finally too. A fake-curses CPU test (no real terminal or GPU) also found **TUI quit leaves `sh.final=None`**, prints “VERIFIED so far ...” and “model stopped,” and does not produce the plan's promised INCOMPLETE/stopped termination. The worker did stop. Mark quit as stopped before returning and consumer/UI exceptions as error, preserving any existing completed/mismatched result; put cleanup in finally. The prefix label is bounded rather than a completed-answer false pass, so this status issue is a nit alongside the cleanup gap, not a second correctness redline.
+
+4. **Labels and source honesty: requested defects closed.** At 80/120 columns the two short lines disclose reference shadow versus fp32 executor and that bf16 layers are not run. Stream/computer counters now distinguish echoes. BMAC overwrite/accumulation signs, parked status and replay-only next-call help match behavior. Replay capture is explicitly approximate; it still does not reconstruct original circuit tokens, and the code no longer implies that it does. A narrow screen can clip the long replay explanation, but this is not the former missing executor identity.
+
+5. **Premise wording: closed.** VIEWER-PLAN now restricts the conclusion to unattended demos under these prompts, greedy decoding and this 4B setup. The 0/8 and 3/8 observations remain accurate and do not become a universal capability/training claim. Using verified programs for an educational demo is a justified design decision without further model attempts.
+
+6. **Saved and new live checks.** The author's saved `live-check-2026-10-31.txt` records EOS, correct `2**64 // 7` result **2635249153387078802**, **4641 chip tokens + 31 echoes = 4672 checked stream tokens**, **3226 records**, complete VERIFIED. It is consistent with the revised counter semantics.
+
+   Used the re-check's **single allowed V100 job**, after confirming the card idle at 13 MiB and enough host memory, pinned to UUID **GPU-9c9e042a-edd4-dbf9-b6a4-c0d88b33a796** under `/mnt/nvme/humming-fast/tools/v100`. Question requested calc for `(2**64 - 1) // 7` and `7-9`. Headless exited **0** with both correct outputs **2635249153387078802** and **−2**, reason **eos**, **6637 computer tokens + 45 echoes = 6682 checked stream tokens**, **4562 committed records**, **161 text tokens**, and status **“VERIFIED, answer complete.”** Upstream generate seconds **10.00714**; this is a correctness smoke test, not a new speed comparison. Raw stdout/stderr remain in the review's own `/tmp/codex-viewer-speed-recheck-20261031/` scratch folder. No mismatch file was produced. The lock reported clock restored/released; a subsequent V100 query showed **13 MiB, 0% utilization, no compute process**. No 4070 model/context was used, and there were no other GPU jobs in this re-check.
+
+### Speed wording and plan
+
+The revised `results/speed-results.md` and `SPEED-PLAN.md` carry the previous corrections faithfully in substance. In particular:
+
+- timed2 is wall time in a teacher-forced Python loop, not GPU-only time; synthetic readback is not the real decoder, and the ~20% bookkeeping attribution is withdrawn;
+- default standalone versus merged-chat targets and workloads are distinguished;
+- the unsaved 21% apply share is withdrawn in favor of the recorded review profile statistics, with profiler limits explicit; atomic accumulation, ordering, old residual/history and exactness requirements make fusion a candidate redesign rather than a promised small 20% win;
+- draft/verify is not rejected from one HF path, and layer-major batching versus recurrent head work is described as a hypothesis; independent-machine batching is not silently relabeled as time;
+- the text table is explicitly unmatched across precision, lengths and history; Qwenputer-in-llama.cpp speed remains unknown; the Amdahl table is conditional, not a promised port result;
+- cold versus warm FLA timing and the one-trace scope are explicit; the unproven bf16 cause, broken selected-kernel detector, missing causal-conv measurement and uninvestigated reply differences are acknowledged.
+
+Recomputed the requested time shares: **6438.53/7620.77 = 84.4866%** (roughly 85%; “84.5%” would be more precise) and **943.65/7620.77 = 12.3826%** (12.4%). The conditional total savings **28.2/34.2/42.2%** remain correct when only the text bucket improves by **1.5/1.68/2×** and all else is held fixed. No fresh speed benchmark is needed for these prose corrections; the original probes remain historical exploratory measurements, not newly validated steady-state benchmarks.
+
+One status correction is still necessary: speed-results' next-step item 1 says the viewer contracts are **“done.”** Change that to “snapshot and queue fixes verified; completion re-check still open for EOF before TCC,” until finding 10 is fixed. Likewise do not present the current plan status as proof of the missing capture-EOF behavior. This is the same open redline, not a new speed-method defect.
+
+### Redline closure
+
+| Original issue | Re-check status |
+|---|---|
+| 1: speculative state displayed / wrong state frozen | **Closed** |
+| 2: incomplete/error termination shown as complete VERIFIED | **Partly closed; capture before TCC remains open (10)** |
+| 3: full queue blocks cooperative cancellation | **Closed for reported queue/TUI path; headless cleanup and quit-finalization nits remain (11)** |
+| 4: cold FLA timing interpreted as steady-state slowdown | **Closed in narrative/plan; historical probe limitations disclosed** |
+| 5: synthetic gap called the real decoder's speedup ceiling | **Closed in narrative/plan** |
+| Guided fusion / causal speed / port-gain overclaims | **Closed in narrative/plan** |
+
+The main result of this re-check is substantial verified progress, with **one remaining verification redline** and small lifecycle work. Both passes, source-branch merges and findings are on the review branch only; no implementation edit, dependency install, or push/merge into main or either source branch was performed. All new review commits use the requested GitHub noreply email.
