@@ -109,10 +109,15 @@ The moved share and the new boundary overhead will be measured; the speed gain i
      same argmax as the f32 head at all 14,745 fixture positions, and it passes the stage-0 gate. The f32-head GGUF
      stays the stage-0/2 reference; no full f32 run is part of this registration.
    - **Frozen identities:** `results/llamacpp/stage3-artifacts.json` lists the sha256 of every artifact (the GGUF,
-     the helper and llama.cpp libraries, the runner, split_chat, the pipe client, inside-4b's run_qwenputer and frames,
-     upstream's chipformer sources at their commit, the checkpoint's tokenizer, config, chipformer.json and embedding
-     shard, the firmware, the questions, the scorer). The runner checks them all at startup (`--expect`) and refuses
-     to start on any difference. Upstream is qwenputer `ca13310` with one local change, the qwenputer-v100 loading
+     the helper and llama.cpp libraries, the runner, split_chat, the pipe client, the stage-0 gate and comparison
+     scripts and data, inside-4b's run_qwenputer and frames, upstream's chipformer sources at their commit, the
+     checkpoint's tokenizer, config, chipformer.json and embedding shard, the firmware, the questions): the
+     **runtime** identity, which the runner checks at startup (`--expect`) and refuses to start on any difference.
+     The **analysis** identity is frozen separately (Codex stage-2 confirm, finding 6) in
+     `results/llamacpp/stage3-analysis.json`: the scorer (`stage5/score.py`) and its answer parser
+     (`computer/stage4_requests.py`), the saved C replies and their question hash, the question file, the launcher
+     (`llamacpp/stage3.sh`), the artifact builder and the runtime manifest, at a pinned repo commit;
+     `llamacpp/stage3_analysis.py score` verifies them before it scores. Upstream is qwenputer `ca13310` with one local change, the qwenputer-v100 loading
      patch in `chat.py` (`results/llamacpp/upstream-chat-py.diff`: load straight to the GPU; Codex-verified then;
      SplitChat doesn't use that loader, and inside-4b's C ran with it). llama.cpp is mainline `5e03bdd` (sm_70 build).
    - **Preflight, in the same V100 session, right before the run:** the stage-0 split comparison with this exact

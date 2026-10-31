@@ -27,6 +27,14 @@ def parked():
     return m
 
 
+def _sha(p):
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for b in iter(lambda: f.read(1 << 22), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
 class Rec:
     def __init__(self, h):
         self.h, self.sent = h, []
@@ -49,6 +57,7 @@ def main():
     man = json.loads((fdir / "manifest.json").read_text())
     chat = SC.SplitChat(model)
     files = {}
+    gguf_sha, helper_sha = _sha(gguf), _sha(helper)       # whole-file hashes (the first version hashed 1 MiB)
     with Helper(helper, gguf, 16384, n_vocab=chat.v0) as h:
         for f in man["fixtures"]:
             fx = torch.load(fdir / f"{f['id']}.pt", weights_only=False)
@@ -63,13 +72,14 @@ def main():
             hist = {"id": f["id"], "prompt_ids": ids, "generated": r["tokens"], "lock_error": r["lock_error"],
                     "prefill_pos": pre_pos, "prefill_rows": pre, "step_pos": [p[0] for p, _ in steps],
                     "step_rows": torch.cat([x for _, x in steps]) if steps else None,
-                    "gguf_sha256": hashlib.sha256(open(gguf, "rb").read(1 << 20)).hexdigest()}
+                    "gguf_sha256": gguf_sha, "helper_sha256": helper_sha}
             p = out / f"{f['id']}.pt"
             torch.save(hist, p)
             files[f["id"]] = hashlib.sha256(p.read_bytes()).hexdigest()
             print(f"{f['id']:14} {len(r['tokens'])} tokens, {len(steps)} text rows, lock error {r['lock_error']}",
                   flush=True)
-    (out / "manifest.json").write_text(json.dumps({"gguf": gguf, "helper": helper, "files": files}, indent=1) + "\n")
+    (out / "manifest.json").write_text(json.dumps({"gguf": gguf, "gguf_sha256": gguf_sha, "helper": helper,
+                                                   "helper_sha256": helper_sha, "files": files}, indent=1) + "\n")
 
 
 if __name__ == "__main__":
