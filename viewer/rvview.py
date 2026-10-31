@@ -34,8 +34,8 @@ DIGIT_ROW = {"BMAC", "BMSB", "BLD"}
 SPEEDS = [1, 2, 5, 10, 25, 100, 500, 2000]
 
 REFERENCE = "REFERENCE MACHINE (Python RV32 emulator), not the model"
-REPLAY = ("REPLAY: saved call text re-run on the reference machine (calc.elf); "
-          "the original computer trace was not recorded")
+REPLAY = ("REPLAY: saved call text re-run on the reference machine (calc.elf); the original computer trace was "
+          "not recorded, and the capture is approximated (newlines dropped; no token window or NUL handling)")
 
 
 def reg(i):
@@ -76,7 +76,8 @@ def disasm(word, pc, x=None):
         if x is not None:
             b = x[i.rs2]
             dd, ds, n, off, m = b & 7, b >> 3 & 7, b >> 7 & 63, b >> 13 & 127, min(b >> 20 & 15, 9)
-            s += {"BMAC": f"   d{dd}[{off}..] += d{ds} x {m} ({n} digits)",
+            ovw = b >> 6 & 1                              # overwrite: dD is replaced, not added to
+            s += {"BMAC": f"   d{dd}[{off}..] {'=' if ovw else '+='} d{ds} x {m} ({n} digits)",
                   "BMSB": f"   d{dd}[{off}..] -= d{ds} x {m} ({n} digits)",
                   "BLD": f"   d{dd}[{off}..] <- {n} digits from memory",
                   "BGET": f"   {reg(i.rd)} <- d{dd}[{off}]"}[op]
@@ -195,10 +196,12 @@ def right_pane(s, width):
     m, L = s.m, s.last
     lines = [("label", s.source[:width]), ("label", s.program[:width])]
     if hasattr(s, "status"):                              # the live view: verification status, always near the top
-        lines.append(("rev" if not s.verified else "hl", s.status()[:width]))
+        st = s.status()
+        lines.append(("hl" if st.startswith("VERIFIED") else "rev", st[:width]))
     lines.append(("", ""))
     status = ("HALTED, exit code %s" % m.exit_code if m.halted and m.fault is None else
-              f"FAULT {S.FAULTS[m.fault[0]]} at {m.fault[1]:#x}" if m.fault else "running")
+              f"FAULT {S.FAULTS[m.fault[0]]} at {m.fault[1]:#x}" if m.fault else
+              "parked (waits for the next call)" if getattr(m, "parked", False) else "running")
     lines += [("", f"pc {m.pc:#07x}   steps {m.steps}   records {s.records} ({s.refreshes} refresh)   {status}"[:width]),
               ("hl", f"last: {L['kind']} at {L['pc']:#07x}: {L['text']}"[:width])]
     if not m.halted:
@@ -255,7 +258,7 @@ def render(s, rows, cols, speed=None, running=False):
     rw = max(10, cols - lw - 3)
     left = code_window(s, lw) + wrap(s.left, lw)
     right = right_pane(s, rw)
-    help_ = f" space step | r {'pause' if running else 'run'} | +/- speed ({speed}/s) | n next call | q quit "
+    help_ = f" space step | r {'pause' if running else 'run'} | +/- speed ({speed}/s) " + ("| n next call " if hasattr(s, "replay") else "") + "| q quit "
     out = []
     for y in range(rows - 1):
         lt = left[y] if y < len(left) else ""
