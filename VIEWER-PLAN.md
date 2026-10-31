@@ -31,12 +31,21 @@ Keys: space = one step, r = run/pause, + / - = speed, q = quit.
    assembly" (the 4B was never trained on it: a premise check, it may write poor assembly).
 3. **Live, inside (the striking one):** Qwenputer answers; a shadow reference machine runs in lockstep with its trace
    tokens (via `on_token`), so the right side shows the CPU state **as the circuit in the weights produces it**.
-   Every token is checked against the shadow, so a mismatch would stop the display. Limited to the calculator
+   Every token is checked against the shadow; a mismatch is flagged and logged (below), not a halt. Limited to the calculator
    program (the only firmware Qwenputer runs); ~1,700 steps/s, so it needs a speed control or step-on-demand.
 
 ## Honesty rules for the display
 - Phases 1-2 show the **reference machine**, not the model. Phase 3 shows the reference machine's state **verified
   token by token** against the model's circuit. The label on screen says which.
+- **Phase 3 runs the calculator program only.** It's the only firmware Qwenputer runs, so the live inside view shows
+  calculations (e.g. 123456789 x 987654321 step by step), not arbitrary programs. Said on screen too.
+- **A mismatch in phase 3 is flagged and logged, not a halt.** At the first token where the circuit and the shadow
+  differ: the step is marked (both values shown), written to a log with the position and the recent tokens, and the
+  status line changes from "verified" to "UNVERIFIED since step N" for the rest of that answer. The chat continues;
+  the right side keeps showing the shadow, labelled as no longer verified. Why not a hard stop: a rare checker or
+  precision artifact shouldn't kill the demo. There's one on record: the all-fp32 module path mispredicted 1 of 193
+  tokens on a test program's prefill in qwenputer-v100 (cause not proven), while the executor path phase 3 uses had
+  0 mismatches over 2.2 million computer tokens.
 - Values decoded straight from the model's trace tokens (`spec.decode_value` on value records) can be shown beside the
   shadow's, as a check, in phase 3.
 
