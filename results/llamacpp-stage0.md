@@ -6,7 +6,7 @@ fixtures (202 MB) on the gateway at `/mnt/nvme/flashnext-test/llamacpp/fixtures-
 
 | Step | Result |
 |---|---|
-| 0a fixtures | 12 questions (first 3 per group) through upstream's generate (executor, lock): all EOS, 0 lock errors, 229,750 checked chip tokens; 1 to 9 calls each, so the optional two-call question wasn't needed |
+| 0a fixtures | 12 questions (first 3 per group) through upstream's generate (executor, lock): all EOS, 0 lock errors, 195,750 checked chip tokens; 1 to 9 calls each, so the optional two-call question wasn't needed |
 | 0b prompt rows | the executor-built prompt rows equal the full-checkpoint prefill rows **bit for bit** on all 12 prompts (5,753 rows); a one-value mutation is caught (exit 1) |
 | 0c cut | layers 11-42 renamed 0-31, final norm, embedding sliced to 248,320 rows: 426 tensors, all bit-identical to the source; tokenizers agree on every text id (the only difference is 250 unused `<\|reserved_N\|>` slots Qwenputer names and the base leaves empty) |
 | 0c convert | `convert_hf_to_gguf.py --outtype f32 --no-mtp`, then `llama-quantize F16 --token-embedding-type f32`: 15.0 GB GGUF (sha256 `b0f08db8...`) |
