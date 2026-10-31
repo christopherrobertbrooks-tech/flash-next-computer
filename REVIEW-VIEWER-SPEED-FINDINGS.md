@@ -118,3 +118,39 @@ A one-call demo or faster plain-model benchmark is not completion of native Qwen
 ### Review outcome
 
 The raw success cases and exploratory measurements are useful. **The viewer is not yet correct under its advertised verified-state/failure contract.** Fix findings 1–3 and add the missing CPU negative controls. Correct the speed narrative's cold/warm, timing/feedback, fusion and extrapolation claims before calling them established conclusions. The review branch contains findings and the requested branch merge only; no implementation fix, source-branch/main merge, dependency install or GPU optimization was made. All three review GPU jobs ended normally and the V100 was verified released.
+
+## Re-check pass 1
+
+Reviewed `viewer-live` **a59c121e7b7ac2074fb017d44ba2eee83c52b3be** and `computer-speed` **c9114e7fc595471d025e542e6a386903a26500ec**, merged into this review branch in the requested `/home/futtbuck/Code/flash-next-computer` clone. The brief mentions an earlier viewer revision; this check uses the user's explicitly requested latest revision. No commit messages, VIEWER-PLAN status section, speed-results narrative or re-check pass-2 file were opened. No GPU job used in this pass; the one-job allowance remains unused. Gateway source hashes match the reviewed rvlive/rvview/test_rvlive files. All gateway checks were CPU-only and any log writes went to own temporary scratch.
+
+### Remaining findings
+
+10. **REDLINE — EOF during call capture is still incorrectly accepted as a complete verified answer (finding 2 partly open).**
+    `Shadow.unfinished` now checks `in_call`, `pending` and `expect`, but `in_call` starts only at **`</tool_call>`**. Between **`<tool_call>`** and its closing token, the bridge has `self.sess.armed=True`; all three checked fields can still be false. A model EOS at that point is therefore accepted as “VERIFIED, answer complete.”
+
+    Independent CPU controls: feed only `<tool_call>`, then `finish('eos')`; status is **“VERIFIED, answer complete: 0 stream tokens checked (0 computer), 0 records.”** Feeding an unfinished function/parameter body has the same result. Exercised the real `headless()` with a synthetic producer ending EOS after TCO: it returns **exit 0**, not merely a misleading internal string. A complete stream returns 0 and a worker exception returns 1 as intended. Across **all 3352 token prefixes** of a real reference-generated two-call stream, **60** prefixes in the two call-capture regions falsely report complete verification when terminated as EOS.
+
+    Smallest fix: include bridge capture state in the predicate, e.g. `return self.sess.armed or self.in_call or self.pending is not None or bool(self.expect)`. Add after-TCO, mid-function/parameter and actual EOS-before-TCC controls, including headless exit status. The present EOF tests begin at TCC and thus miss this part of the frame. Keep normal no-tool EOS and complete parked calls accepted.
+
+11. **NIT — give headless consumer failures the same cleanup guarantee as the TUI.**
+    TUI now wraps curses in `try/finally` and stops/joins the worker, which fixes the reported terminal/quit path. `headless()` still has no analogous finally around Shadow construction, feed, render and output. An exception on the consumer side can skip stop/join and leave the producer blocked until process teardown. Wrap the consumer lifecycle in finally and call stop_producer there; preserve its normal completion/error exit codes. This is a defensive lifecycle gap, not a failure of the repaired full-queue stop routine. A worker error delivered through the done message is already handled correctly.
+
+### Counterexamples and closure evidence
+
+- **Finding 1, committed state: closed.** The screen now reads `Snap`; `cm` is private working state. Independent per-token checks covered **1297** partial-record positions in a two-call stream: displayed full state remained unchanged until commit. Re-ran the original earliest-partial-record counterexample at token **44**: after corrupting the record token, the display exactly equals the pre-record state and remains frozen through the entire suffix and `finish('eos')`. Status remains UNVERIFIED. The snapshot includes PC anchor/count, registers, RAM, digit file, output and halt/fault/exit data. ROM sharing is appropriate for immutable code.
+- **Finding 2, EOF/worker error: substantially fixed, capture gap above remains.** TCC, GO, partial multi-token record, BYTE-before-echo and HALT-before-newline all become INCOMPLETE. A normal completed call is parked and can finish VERIFIED. Explicit text-budget, error and stopped reasons do not become complete verification. Worker exceptions yield a done/error message; a fake headless worker-error run returned exit **1**, complete reference stream exit **0**. A pending prefix is correctly labeled “VERIFIED so far” before finalization, not a completed answer.
+- **Finding 3, full queue and pause: closed for the reported defect.** Puts are stop-aware and bounded by timeouts; the consumer retains a worker handle and stop_producer drains and joins. Independently filled a **two-item queue** and stopped it with a one-second bound: stop=True, helper=True and actual **thread.is_alive()=False**. The code now spends credit only while running and clears credit on toggle; its docstring accurately says playback pause with up to 4096 tokens of lookahead/eventual backpressure. GPU kernels or prefill cannot necessarily be interrupted instantly; the TUI's timeout warning makes the remaining distinction explicit.
+- **Finding 9, labels/counters/disassembly: closed for the requested cases.** At **80 and 120 columns**, the rendered screen contains both **“fp32 executor”** and **“bf16 layers NOT run.”** Checked stream tokens and computer tokens are separated. The machine shows parked status after a call. BMAC overwrite bit 0 displays `+=`, bit 1 displays `=`. Replay source now discloses approximate capture, with no claim to reconstruct original trace IDs. The long replay limitation line is still clipped in a narrow pane, but the underlying source statement is accurate; not a new correctness blocker.
+
+### Test instrument checks
+
+All **29** updated CPU `test_rvlive.py` controls pass. The new witness compares the displayed full state at every token, and an intentional old-design shadow demonstrates that the witness can catch speculative display: **1297 differing tokens** in its fixture. It is materially stronger than the former counter-only test.
+
+Ran two independent in-memory mutations against the unchanged test file (no gateway source edits):
+
+- Point the displayed machine at the working checker in `_next_record`: **exit 1, five failed controls**, including ordinary partial-state equality, mismatch freeze and partial EOF state checks.
+- Replace `unfinished` with `False`: **exit 1, five failed EOF controls**.
+
+These establish that the repaired controls can fail. They do not cover the newly identified pre-TCC capture EOF; that needs the additional negative controls in finding 10. No source fix was made by this review.
+
+**Pass-1 conclusion:** the original speculative display and full-queue cancellation defects are repaired and demonstrated by useful tests. One verification/exit-code redline remains: incomplete call capture can still be presented as complete VERIFIED. Headless finally-cleanup is a smaller remaining lifecycle improvement. Speed prose and the author's guided explanation are deliberately deferred until this pass is pushed.
