@@ -78,7 +78,8 @@ class Shadow:
 
     @property
     def unfinished(self):
-        return self.in_call or self.pending is not None or bool(self.expect)
+        """Inside a call: still writing it (<tool_call> seen, not </tool_call>), or the computer is still running."""
+        return self.sess.armed or self.in_call or self.pending is not None or bool(self.expect)
 
     def status(self):
         counts = f"{self.stream_checked} stream tokens checked ({self.chip_checked} computer), {self.records} records"
@@ -252,25 +253,27 @@ def to_stream(chat, t):
     return t - chat.v0 if t >= chat.v0 else BR.text_token(t)
 
 
-def headless(args):
-    chat, ids, q, stop, th = start_model(args.model, args.question, args.max_new, args.max_chip)
-    sh = Shadow(chat.T, ids, args.log)
-    while True:
-        t = q.get()
-        if isinstance(t, tuple):
-            info = t[1]
-            break
-        sh.feed(to_stream(chat, t))
-    sh.finish(info.get("reason", "unknown"))
-    print("\n".join(x.rstrip() for x in V.text_of(V.render(sh, args.rows, args.cols, 0), args.cols)))
-    print(json.dumps({"status": sh.status(), "generate": info, "output": sh.m.out.decode(errors="replace")}))
-    th.join(timeout=5)
+def headless(args, start=start_model):
+    chat, ids, q, stop, th = start(args.model, args.question, args.max_new, args.max_chip)
+    try:
+        sh = Shadow(chat.T, ids, args.log)
+        while True:
+            t = q.get()
+            if isinstance(t, tuple):
+                info = t[1]
+                break
+            sh.feed(to_stream(chat, t))
+        sh.finish(info.get("reason", "unknown"))
+        print("\n".join(x.rstrip() for x in V.text_of(V.render(sh, args.rows, args.cols, 0), args.cols)))
+        print(json.dumps({"status": sh.status(), "generate": info, "output": sh.m.out.decode(errors="replace")}))
+    finally:
+        stop_producer(q, stop, th)                       # also when the viewer side fails: the model always stops
     sys.exit(0 if sh.status().startswith("VERIFIED, answer complete") else 1)
 
 
-def tui(args):
+def tui(args, start=start_model):
     import curses
-    chat, ids, q, stop, th = start_model(args.model, args.question, args.max_new, args.max_chip)
+    chat, ids, q, stop, th = start(args.model, args.question, args.max_new, args.max_chip)
     sh = Shadow(chat.T, ids, args.log)
 
     def main(scr):
@@ -314,6 +317,8 @@ def tui(args):
             scr.timeout(50)
             k = scr.getch()
             if k in (ord("q"), 27):
+                if sh.final is None:
+                    sh.finish("stopped")                  # quit before the answer ended
                 return
             if k == ord(" "):
                 st["step"] = True
@@ -328,6 +333,8 @@ def tui(args):
     try:
         curses.wrapper(main)
     finally:
+        if sh.final is None:
+            sh.finish("error")                            # the viewer itself failed
         ended = stop_producer(q, stop, th)
         print(sh.status())
         print("model stopped" if ended else "WARNING: the model thread didn't stop; the process exit will end it")
