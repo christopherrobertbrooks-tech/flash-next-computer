@@ -261,7 +261,7 @@ def score_one(q, row):
     out["layer"] = layer
     out["recovered"] = (out["fault_kinds"] or out["computer_error_results"]) if out["correct"] else []
     # 4. chains (B and C only): how many steps were seen in order in the tool results
-    if q["group"] == "4" and row["arm"] in ("B", "C", "R"):
+    if q["group"] == "4" and row["arm"] in ("B", "C", "R", "L"):
         results = [str(x.get("result")) for x in calls if x.get("error") is None]
         k = 0
         for r in results:
@@ -317,7 +317,7 @@ def paired(by, ids, first, second):
     return a, b, c, len(ids) - a - b - c
 
 
-def summarise(qs, scored, arms, runs, other=None):
+def summarise(qs, scored, arms, runs, other=None, first="C"):
     S = {}
     by = {(r["id"], r["arm"]): r for r in scored}
     for arm in arms:
@@ -347,21 +347,21 @@ def summarise(qs, scored, arms, runs, other=None):
                 f"{sum(r['chain_in_order'] == r['chain_steps'] for r in ch)}/{len(ch)}"
     out = {"arms": S}
     other = other or ("B" if "B" in arms else "R")   # stage 5: C vs B (frozen default); inside-4b: --compare C,R
-    if other in arms and "C" in arms:
+    if other in arms and first in arms:
         ids = [q["id"] for q in qs if q["group"] in PRIMARY]
-        a, b, c, dd = paired(by, ids, "C", other)
+        a, b, c, dd = paired(by, ids, first, other)
         delta, lo, hi = newcombe_paired(a, b, c, dd)
-        mb, mc = S[other]["median_seconds_primary"], S["C"]["median_seconds_primary"]
-        out["primary"] = {"compared": f"C vs {other}", "questions": len(ids),
-                          "pairs": {"both right": a, "C only": b, f"{other} only": c, "both wrong": dd},
-                          f"C_minus_{other}": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
+        mb, mc = S[other]["median_seconds_primary"], S[first]["median_seconds_primary"]
+        out["primary"] = {"compared": f"{first} vs {other}", "questions": len(ids),
+                          "pairs": {"both right": a, f"{first} only": b, f"{other} only": c, "both wrong": dd},
+                          f"{first}_minus_{other}": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
                           "verdict": verdict(lo, hi),
                           "practical": bool(mb and mc and mc <= 2 * mb and mc <= 60),
-                          "median_seconds": {other: mb, "C": mc}}
+                          "median_seconds": {other: mb, first: mc}}
         sids = [q["id"] for q in qs if q["group"] in SENSITIVITY]
-        a2, b2, c2, d2 = paired(by, sids, "C", other)
+        a2, b2, c2, d2 = paired(by, sids, first, other)
         out["sensitivity_groups_1_3_4"] = {"descriptive only": True, "questions": len(sids),
-                                           "pairs": {"both right": a2, "C only": b2, f"{other} only": c2,
+                                           "pairs": {"both right": a2, f"{first} only": b2, f"{other} only": c2,
                                                      "both wrong": d2}}
     if "A" in arms:
         g5 = [q["id"] for q in qs if q["group"] in ("5a", "5b")]
@@ -374,11 +374,11 @@ def summarise(qs, scored, arms, runs, other=None):
 
 def main():
     args = sys.argv[1:]
-    other = None
+    other, first = None, "C"
     if "--compare" in args:                          # e.g. --compare C,R (default: C vs B if B is given, else R)
         i = args.index("--compare")
         first, other = args[i + 1].split(",")
-        assert first == "C", "the primary comparison is C against another arm"
+        assert first in ("C", "L"), "the primary comparison is C (or L, the llama.cpp arm) against another arm"
         del args[i:i + 2]
     qpath, outpath = args[:2]
     dirs = dict(x.split("=", 1) for x in args[2:])
@@ -397,12 +397,12 @@ def main():
             problems.append(f"{arm}: {len(extra)} unexpected questions (first: {extra[:3]})")
     if any(q["group"] == "5a" for q in qs):
         wall_canary()
-    arms = [a for a in ("A", "B", "C", "R") if a in runs]   # R: inside-4b's RISC-V-emulator-beside arm
+    arms = [a for a in ("A", "B", "C", "R", "L") if a in runs]   # R: inside-4b's emulator-beside arm; L: R in llama.cpp
     scored = [score_one(q, runs[arm][q["id"]]) for arm in arms for q in qs if q["id"] in runs[arm]]
     if problems:
         summary = {"incomplete": problems, "verdict": "withheld: the data is incomplete or inconsistent"}
     else:
-        summary = summarise(qs, scored, arms, runs, other)
+        summary = summarise(qs, scored, arms, runs, other, first)
         if "Brep" in runs:
             def content(r):
                 return json.dumps(((r.get("raw") or {}).get("choices") or [{}])[0].get("message", {}).get("content"))
@@ -597,6 +597,10 @@ def selftest():
     out3 = summarise(qs3, sc2 + [dict(r, arm="B") for r in sc2 if r["arm"] == "R"], ["B", "C", "R"],
                      {"B": {}, "C": {}, "R": {}}, other="R")
     check("an explicit comparator wins over the default", out3["primary"]["compared"] == "C vs R")
+    sc4 = [dict(r, arm="L") if r["arm"] == "C" else r for r in sc2]          # the llama.cpp arm against R
+    out4 = summarise(qs3, sc4, ["R", "L"], {"R": {}, "L": {}}, other="R", first="L")
+    check("summary L vs R (llama.cpp arm first)", out4["primary"]["compared"] == "L vs R" and "L_minus_R" in
+          out4["primary"] and out4["primary"]["pairs"]["L only"] == 1 and out4["primary"]["pairs"]["R only"] == 0)
     print("SELFTEST", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)
 
