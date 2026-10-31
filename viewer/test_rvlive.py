@@ -3,7 +3,7 @@
 
 usage (riscv dir on PYTHONPATH): python test_rvlive.py QWENPUTER_MODEL_DIR
 """
-import queue, sys, threading, time
+import argparse, contextlib, io, queue, sys, threading, time, types
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -221,6 +221,134 @@ def main():
     items = [q.get() for _ in range(6)]
     check("producer: a normal end passes every token, then done/eos", items[:5] == list(range(5))
           and items[5] == ("done", {"reason": "eos"}) and not th.is_alive())
+
+    # EOF while the model is still writing a call (after <tool_call>, before </tool_call>) is not a complete answer.
+    # Sweep every prefix: the shadow must count itself unfinished exactly from <tool_call> to the HALT newline.
+    TCO, TCC = BR.text_token(T.TCO), BR.text_token(T.TCC)
+
+    def call_regions(toks):
+        out = []
+        for i, t in enumerate(toks):
+            if t == TCO:
+                h = next(j for j in range(i, len(toks)) if toks[j] == S.tok("HALT"))
+                out.append((i, h + 1))                          # h + 1: the HALT's newline echo
+        return out
+
+    def sweep(sh, toks):
+        regions, wrong = call_regions(toks), 0
+        for n, t in enumerate(toks, 1):                         # n tokens fed
+            sh.feed(t)
+            inside = any(a + 1 <= n <= b for a, b in regions)
+            wrong += sh.unfinished != inside
+        return wrong, regions
+
+    sh = L.Shadow(T, prompt)
+    wrong, regions = sweep(sh, toks)
+    check(f"EOF sweep: unfinished exactly inside the {len(regions)} calls at all {len(toks)} prefixes ({wrong} wrong)",
+          wrong == 0 and len(regions) == 2)
+
+    class NoArmed(L.Shadow):                                    # control: the predicate before this fix
+        @property
+        def unfinished(self):
+            return self.in_call or self.pending is not None or bool(self.expect)
+
+    wrong, _ = sweep(NoArmed(T, prompt), toks)
+    check(f"EOF sweep control: ignoring the call being written is caught ({wrong} wrong prefixes)", wrong > 0)
+    tco = toks.index(TCO)
+    tcc = toks.index(TCC)
+    for label, n in (("right after <tool_call>", tco + 1), ("mid-parameter", (tco + tcc) // 2),
+                     ("just before </tool_call>", tcc)):
+        sh = L.Shadow(T, prompt)
+        for t in toks[:n]:
+            sh.feed(t)
+        sh.finish("eos")
+        check(f"EOF {label} (token {n}): {sh.status()[:45]}", sh.status().startswith("INCOMPLETE"))
+
+    # the real headless() with a fake model: exit status, and cleanup when the viewer side fails
+    def fake_start(raw, fail_feed=False):
+        chat = types.SimpleNamespace(T=T, v0=10**9)
+
+        def start(*a):
+            def gen(on_token):
+                for r in raw:
+                    on_token(r)
+                return {"reason": "eos"}
+            q, stop, th = L.make_producer(gen, q_size=8)
+            fake_start.last = (q, stop, th)
+            return chat, prompt, q, stop, th
+        return start
+
+    def raw_of(stream_toks):
+        return [t - S.TEXT_TOKEN if S.is_text(t) else 10**9 + t for t in stream_toks]
+
+    args = argparse.Namespace(model=None, question=None, max_new=0, max_chip=0, log=None, rows=30, cols=120)
+
+    def run_headless(raw):
+        with contextlib.redirect_stdout(io.StringIO()):
+            try:
+                L.headless(args, start=fake_start(raw))
+            except SystemExit as e:
+                return e.code
+
+    check("headless: a complete two-call answer exits 0", run_headless(raw_of(toks)) == 0)
+    check("headless: an answer ending right after <tool_call> exits 1", run_headless(raw_of(toks[:tco + 1])) == 1)
+    real_feed = L.Shadow.feed
+
+    def bad_feed(self, st):
+        if self.stream_checked > 50:
+            raise RuntimeError("viewer bug")
+        return real_feed(self, st)
+
+    L.Shadow.feed = bad_feed
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            L.headless(args, start=fake_start(raw_of(toks) * 30))
+        raised = False
+    except RuntimeError:
+        raised = True
+    finally:
+        L.Shadow.feed = real_feed
+    q, stop, th = fake_start.last
+    th.join(2)
+    check(f"headless: a viewer-side error stops the model (raised {raised}, stop {stop.is_set()}, "
+          f"alive {th.is_alive()})", raised and stop.is_set() and not th.is_alive())
+
+    # the TUI with a fake terminal: quit before the end is INCOMPLETE (stopped), and the model thread ends
+    class Scr:
+        def __init__(self, keys):
+            self.keys = list(keys)
+
+        def getmaxyx(self):
+            return 30, 120
+
+        def getch(self):
+            return self.keys.pop(0) if self.keys else -1
+
+        def erase(self): pass
+        def refresh(self): pass
+        def timeout(self, ms): pass
+        def addnstr(self, *a): pass
+
+    def run_tui(keys, raw):
+        fake = types.SimpleNamespace(A_NORMAL=0, A_DIM=0, A_BOLD=0, A_REVERSE=0, error=Exception,
+                                     curs_set=lambda n: None, use_default_colors=lambda: None,
+                                     wrapper=lambda f: f(Scr(keys)))
+        saved = sys.modules.get("curses")
+        sys.modules["curses"] = fake
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                L.tui(args, start=fake_start(raw))
+        finally:
+            if saved is not None:
+                sys.modules["curses"] = saved
+            else:
+                sys.modules.pop("curses")
+        return out.getvalue(), fake_start.last[2]
+
+    text, th = run_tui([-1, -1, ord("q")], raw_of(toks) * 30)
+    check(f"tui: quit mid-answer prints {text.splitlines()[0][:40]!r}, model thread ended {not th.is_alive()}",
+          text.startswith("INCOMPLETE (stopped") and not th.is_alive())
     print("LIVE CONTROLS", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)
 
