@@ -18,6 +18,9 @@ from stage4_requests import final_answer, value  # noqa: E402  (the exact ANSWER
 PRIMARY = ["1", "2", "3", "4"]
 SENSITIVITY = ["1", "3", "4"]       # descriptive only: the primary set without the limit-seeking group 2
 MARGIN = 0.05                       # equivalence margin, 5 points
+# R: inside-4b's emulator-beside arm; L: R in llama.cpp; S: Qwenputer split (Qwen half in llama.cpp, the executor)
+KNOWN_ARMS = ("A", "B", "C", "R", "L", "S", "Brep")
+FIRST_ARMS = ("C", "L", "S")
 
 
 class DataError(Exception):
@@ -261,7 +264,7 @@ def score_one(q, row):
     out["layer"] = layer
     out["recovered"] = (out["fault_kinds"] or out["computer_error_results"]) if out["correct"] else []
     # 4. chains (B and C only): how many steps were seen in order in the tool results
-    if q["group"] == "4" and row["arm"] in ("B", "C", "R", "L"):
+    if q["group"] == "4" and row["arm"] in ("B", "C", "R", "L", "S"):
         results = [str(x.get("result")) for x in calls if x.get("error") is None]
         k = 0
         for r in results:
@@ -378,10 +381,16 @@ def main():
     if "--compare" in args:                          # e.g. --compare C,R (default: C vs B if B is given, else R)
         i = args.index("--compare")
         first, other = args[i + 1].split(",")
-        assert first in ("C", "L"), "the primary comparison is C (or L, the llama.cpp arm) against another arm"
+        if first not in FIRST_ARMS:
+            raise DataError(f"--compare: the first arm must be one of {FIRST_ARMS} (got {first})")
         del args[i:i + 2]
     qpath, outpath = args[:2]
     dirs = dict(x.split("=", 1) for x in args[2:])
+    unknown = sorted(a for a in dirs if a not in KNOWN_ARMS)
+    if unknown:                                      # never load an arm only to drop it from the summary
+        raise DataError(f"unknown arm label(s) {unknown}; known: {KNOWN_ARMS}")
+    if other is not None and (first not in dirs or other not in dirs):
+        raise DataError(f"--compare {first},{other}: both arms must be given")
     qs = [json.loads(l) for l in open(qpath) if l.strip()]
     qids, qhash = {q["id"] for q in qs}, sha256(qpath)
     if len(qids) != len(qs):
@@ -397,7 +406,7 @@ def main():
             problems.append(f"{arm}: {len(extra)} unexpected questions (first: {extra[:3]})")
     if any(q["group"] == "5a" for q in qs):
         wall_canary()
-    arms = [a for a in ("A", "B", "C", "R", "L") if a in runs]   # R: inside-4b's emulator-beside arm; L: R in llama.cpp
+    arms = [a for a in KNOWN_ARMS if a in runs and a != "Brep"]
     scored = [score_one(q, runs[arm][q["id"]]) for arm in arms for q in qs if q["id"] in runs[arm]]
     if problems:
         summary = {"incomplete": problems, "verdict": "withheld: the data is incomplete or inconsistent"}
