@@ -1,4 +1,4 @@
-# llama.cpp port, stage 1: plain Qwen in llama.cpp with the emulator beside it (2026-10-31, 11:00-11:50 am)
+# llama.cpp port, stage 1: plain Qwen in llama.cpp with the emulator beside it (2026-10-31, 10:32-11:19 am)
 
 **Answer:** inside-4b's arm R (plain Qwen3.5-4B + the calc firmware on the RV32 reference machine) with the model in
 **llama.cpp f16** instead of Hugging Face bf16 scored **129/160** vs R's **130/160**: L minus R = -0.6 points, 95%
