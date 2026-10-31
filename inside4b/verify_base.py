@@ -26,7 +26,7 @@ def main():
         return handles[fn].get_tensor(name)
 
     names = [k for k in bi if k.startswith("model.language_model.")]
-    same, diff_kinds, ratios, missing = 0, collections.Counter(), [], []
+    same, diff_kinds, ratios, missing, exact_norms = 0, collections.Counter(), [], [], []
     for k in names:
         rest = k[len("model.language_model."):]
         if rest.startswith("layers."):
@@ -42,9 +42,13 @@ def main():
         if tq.dim() == tb.dim() and all(a >= b for a, b in zip(tq.shape, tb.shape)) and torch.equal(tq[sl], tb):
             same += 1
         else:
-            diff_kinds[rest.split(".")[-2] if rest.startswith("layers.") else rest] += 1
+            kind = rest.split(".")[-2] if rest.startswith("layers.") else rest
+            diff_kinds[kind] += 1
             r = (1 + tq[sl].float()) / (1 + tb.float())
             ratios.append((r.mean().item(), r.std().item(), r.min().item(), r.max().item()))
+            # elementwise (Codex): the norm must be exactly bf16((1 + w_base) * sqrt(2560/3968) - 1)
+            want_t = ((1 + tb.float()) * math.sqrt(2560 / 3968) - 1).to(torch.bfloat16)
+            exact_norms.append(bool(torch.equal(tq[sl], want_t)) and "norm" in kind)
         del tb, tq
     want = math.sqrt(2560 / 3968)
     print(f"base language-model tensors: {len(names)}; missing in Qwenputer: {len(missing)}")
@@ -54,8 +58,10 @@ def main():
         print(f"(1+w_q)/(1+w_b) means: {min(means):.5f} .. {max(means):.5f}; largest spread (std) "
               f"{max(s for _, s, _, _ in ratios):.5f}; overall min {min(r[2] for r in ratios):.5f}, "
               f"max {max(r[3] for r in ratios):.5f}; sqrt(2560/3968) = {want:.5f}")
+    print(f"norm tensors exactly bf16((1 + w_base) * sqrt(2560/3968) - 1), element by element: "
+          f"{sum(exact_norms)} of {len(exact_norms)}")
     ok = not missing and set(diff_kinds) <= {"input_layernorm", "post_attention_layernorm", "norm.weight"} \
-        and all(abs(m - want) < 2e-3 for m, _, _, _ in ratios)
+        and all(exact_norms)
     print("VERDICT:", "the base model is inside Qwenputer unchanged except the norm rescale" if ok else
           "NOT as claimed: see above")
     sys.exit(0 if ok else 1)

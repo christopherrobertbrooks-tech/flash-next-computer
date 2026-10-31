@@ -37,6 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import frames  # noqa: E402
 
 EOS = {248046, 248044}
+DEVICE = "cuda"                                            # test_streams.py drives generate() on the CPU
 FIRMWARE = Path(calc.__file__).parents[2] / "tests" / "data" / "rv" / "calc-bridge.elf"
 
 
@@ -50,13 +51,14 @@ def emulator_response(T, call_ids, max_records):
     </tool_call>. Raises RuntimeError if the run doesn't halt within max_records."""
     m = ref.Machine.from_program(elf.program(FIRMWARE))
     BR.park(m)
+    steps0 = m.steps                                        # parking ran some instructions: count only this call's
     sess = BR.Session(T, m)
     k = len(sess.toks)
     sess.qwen(call_ids, max_records=max_records)
     after = sess.toks[k + len(call_ids):]                   # everything the run pushed after </tool_call>
     text = [t - S.TEXT_TOKEN for t in after if S.is_text(t)]
     trace = sum(1 for t in after if not S.is_text(t))
-    return text, trace, m.steps
+    return text, trace, m.steps - steps0                    # instructions executed (refresh records aren't counted)
 
 
 # ---- arm B: the firmware's capture and frame, Python's value -------------------------------------------------
@@ -121,7 +123,7 @@ def python_value(expr):
 def generate(model, ids, max_new, max_trace, arm, T):
     """Greedy, one token per forward step, KV cache. Returns (generated ids, text tokens, calls, stop reason,
     trace tokens used)."""
-    out = model(input_ids=torch.tensor([ids], device="cuda"), use_cache=True)
+    out = model(input_ids=torch.tensor([ids], device=DEVICE), use_cache=True)
     cache = out.past_key_values
     gen, n_text, calls, forced, trace_used = [], 0, [], [], 0
     nxt = int(torch.argmax(out.logits[0, -1]))
@@ -142,7 +144,9 @@ def generate(model, ids, max_new, max_trace, arm, T):
             ts = time.time()
             start = max(i for i, t in enumerate(gen) if t == T.TCO) if T.TCO in gen else len(gen) - 1
             call_ids = gen[start:]                          # <tool_call> ... </tool_call>
-            rec = {"call_text": T.decode_bytes(call_ids[1:-1]).decode(errors="replace"), "error": None}
+            cap_expr, _ = firmware_expression(T, call_ids[1:-1])     # what the firmware captures, for every arm
+            rec = {"call_text": T.decode_bytes(call_ids[1:-1]).decode(errors="replace"), "expression": cap_expr,
+                   "error": None}
             if arm == "R":
                 try:
                     forced, trace, records = emulator_response(T, call_ids, max(1, max_trace - trace_used))
@@ -150,7 +154,7 @@ def generate(model, ids, max_new, max_trace, arm, T):
                     forced, trace, records = [], max_trace - trace_used + 1, None
                     rec.update(error=f"emulator: {e}", error_kind="budget")
                 trace_used += trace
-                rec.update(trace_tokens=trace, records=records)
+                rec.update(trace_tokens=trace, instructions=records)
                 rtext = T.decode_bytes(forced).decode(errors="replace")
                 rec["result"] = (rtext.split("<tool_response>")[-1].split("</tool_response>")[0].strip()
                                  if "<tool_response>" in rtext else None)
@@ -164,12 +168,12 @@ def generate(model, ids, max_new, max_trace, arm, T):
                 rec["python_reference"] = ferr or python_value(fx)
             rec["ms"] = round((time.time() - ts) * 1000, 3)
             calls.append(rec)
-            if trace_used > max_trace or not forced:
+            if trace_used >= max_trace or not forced:       # like upstream's loop: reaching the cap stops
                 stop = "computer budget"
                 break
             forced = list(forced)
             nxt_after = forced.pop(0)
-        o = model(input_ids=torch.tensor([[nxt]], device="cuda"), past_key_values=cache, use_cache=True)
+        o = model(input_ids=torch.tensor([[nxt]], device=DEVICE), past_key_values=cache, use_cache=True)
         cache = o.past_key_values
         nxt = nxt_after if nxt_after is not None else int(torch.argmax(o.logits[0, -1]))
     return gen, n_text, calls, stop, trace_used

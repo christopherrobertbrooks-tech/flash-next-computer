@@ -202,7 +202,7 @@ def score_one(q, row):
     content, finish = m.get("content"), c.get("finish_reason")
     events = m.get("strata_mcp") or []
     calls = row.get("tool_calls") or []
-    exprs = [str(x.get("expression")) for x in calls]
+    exprs = [str(x.get("expression") if x.get("expression") is not None else x.get("call_text")) for x in calls]
     gens = GEN_LINE.findall(row.get("engine_log") or "")
     out = {"id": q["id"], "group": q["group"], "arm": row["arm"], "seconds": row.get("seconds"), "finish": finish,
            "http": row.get("http"), "calls": len(calls), "tool_ms": round(sum(x.get("ms") or 0 for x in calls), 1),

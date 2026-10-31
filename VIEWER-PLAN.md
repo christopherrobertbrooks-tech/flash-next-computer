@@ -33,8 +33,9 @@ Keys: space = one step, r = run/pause, + / - = speed, q = quit.
    assembles and steps it on the emulator as the reply streams. Needs a prompt or tool definition for "run this
    assembly" (the 4B was never trained on it: a premise check, it may write poor assembly).
 3. **Live, inside (the striking one):** Qwenputer answers; a shadow reference machine runs in lockstep with its trace
-   tokens (via `on_token`), so the right side shows the CPU state **as the circuit in the weights produces it**.
-   Every token is checked against the shadow; a mismatch is flagged and logged (below), not a halt. Limited to the calculator
+   tokens (via `on_token`): the right side shows **a reference shadow checked against Qwenputer's fast circuit
+   executor** (the checkpoint's bf16 computer layers aren't executed on that path). A mismatch is flagged and logged
+   (below), not a halt. Limited to the calculator
    program (the only firmware Qwenputer runs); ~1,700 steps/s, so it needs a speed control or step-on-demand.
 
 ## Honesty rules for the display
@@ -42,10 +43,13 @@ Keys: space = one step, r = run/pause, + / - = speed, q = quit.
   token by token** against the model's circuit. The label on screen says which.
 - **Phase 3 runs the calculator program only.** It's the only firmware Qwenputer runs, so the live inside view shows
   calculations (e.g. 123456789 x 987654321 step by step), not arbitrary programs. Said on screen too.
-- **A mismatch in phase 3 is flagged and logged, not a halt.** At the first token where the circuit and the shadow
-  differ: the step is marked (both values shown), written to a log with the position and the recent tokens, and the
-  status line changes from "verified" to "UNVERIFIED since step N" for the rest of that answer. The chat continues;
-  the right side keeps showing the shadow, labelled as no longer verified. Why not a hard stop: a rare checker or
+- **A mismatch in phase 3 is flagged and logged, not a halt. One behaviour (Codex re-check):** at the first token
+  where the executor and the shadow differ, the last verified snapshot is kept in its own panel; the step is marked
+  (both values shown) and written to a log with the position and the recent tokens; the status line changes from
+  "verified" to "UNVERIFIED since step N" for the rest of that answer, and it can't turn back to verified until the
+  next answer. The chat continues. The shadow stops at the mismatch (it isn't fed anything after it, so it can't
+  silently realign); the main panel shows the frozen last verified state. This is a demonstration rule, not
+  experiment verification. Why not a hard stop: a rare checker or
   precision artifact shouldn't kill the demo. There's one on record: the all-fp32 module path mispredicted 1 of 193
   tokens on a test program's prefill in qwenputer-v100 (cause not proven), while the executor path phase 3 uses had
   0 mismatches over 2.2 million computer tokens. Implementation note: upstream's `generate(lock=...)` breaks at the
@@ -68,8 +72,8 @@ Phase 1 now (CPU). Phase 3 after the inside-4b run (it needs the card). Phase 2 
 - **A step is one record, not one token.** `Machine.record()` commits a whole instruction (or a refresh record) and
   returns several trace tokens. The display advances only when a complete record has been checked.
 - **Phase 3: verify before showing.** Upstream's `on_token` fires before the token is checked, so the viewer buffers
-  each record's tokens, checks them against the shadow, and only then shows the committed state. On a mismatch it
-  keeps the last verified state on screen, marks "UNVERIFIED since step N" and logs it (the flag-and-log rule above).
+  each record's tokens, checks them against the shadow, and only then shows the committed state. On a mismatch, the
+  rule above.
 - **Phase 3 needs a real event design:** a bounded queue between the generating model (GPU) and the screen, with
   backpressure; a stated choice between pausing the model and pausing only the playback; cancellation; budget,
   partial-record, end-of-answer and resize states.

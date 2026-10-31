@@ -70,3 +70,20 @@ also differ in model width, numerics and runtime path, so this does not isolate 
 R first (~1.75 h), then C (~3.5 h), one job at a time in the V100 lock, overnight. Frozen at tag `inside4b-freeze-2`.
 After the run, an audit lists every length, budget and lock stop and each answer's trace tokens, so whether any
 budget bound is visible (Codex).
+
+## After Codex's re-check (282c777)
+- **Verified by Codex:** every element of all 426 base language-model tensor blocks: 361 bit-identical, and all
+  166,400 norm elements exactly `bf16((1 + w_base) * sqrt(2560/3968) - 1)`; the chat template is byte-identical; and
+  the rendered prompt ids are identical for **all 160** questions. `verify_base.py` now checks the norms element by
+  element too.
+- **Exact-cap edge (finding 9), disclosed, not fixed in the running v2:** v2's R stops only when its trace count goes
+  *over* 2,000,000, while upstream's C loop stops on *reaching* it. They differ only if a call ends exactly on the cap.
+  The pilot's largest answer used 63,223 trace tokens. The post-run audit lists every answer's trace tokens and every
+  budget stop, so whether this edge was ever reached will be shown, not assumed. Fixed after the freeze (`>=`, with
+  an exact-cap and a cap-plus-one control in `test_streams.py`, both passing) for any later run. R also runs a whole
+  call before writing its answer, where C interleaves trace and response tokens; R's counters describe the work done.
+- **R's call records (finding 10):** v2's R rows have `call_text` but no `expression`, so the scorer's loop flag would
+  see three different calls as one repeated. The scorer now falls back to `call_text` (the loop flag is diagnostic
+  only; no verdict uses it). Fixed in the runner after the freeze, with the instruction count corrected for parking.
+- These post-freeze changes are on the branch; the running v2 uses the code at tag `inside4b-freeze-2`
+  (gateway copies unchanged; hashes checked).

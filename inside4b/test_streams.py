@@ -91,6 +91,31 @@ def main():
     except RuntimeError:
         check("a too-small record budget raises", True)
 
+    # 4b: the exact cap (Codex re-check finding 9): a call that reaches the trace budget stops the answer; one more
+    # token of budget lets it finish, as upstream's loop does (it stops when the chip count reaches max_chip)
+    import torch
+
+    class FakeModel:
+        """Writes a fixed script of tokens (greedy picks), ignoring its input."""
+        def __init__(self, script):
+            self.script, self.i = list(script), 0
+
+        def __call__(self, input_ids=None, past_key_values=None, use_cache=True):
+            t = self.script[min(self.i, len(self.script) - 1)]
+            self.i += 1
+            logits = torch.full((1, input_ids.shape[1], T.n + 1), -1e9)
+            logits[0, -1, t] = 0.0
+            return type("Out", (), {"logits": logits, "past_key_values": None})()
+
+    RP.DEVICE = "cpu"
+    call = T.encode(CALL.format(e="2+2"))
+    _, need, _ = RP.emulator_response(T, call, 2_000_000)
+    after_call = [T.encode("ANSWER: 4")[0]] + [248046]
+    for cap, want in [(need, "computer budget"), (need + 1, "eos")]:
+        model = FakeModel(call + after_call * 4000)
+        _, _, _, stop, used = RP.generate(model, [1, 2, 3], 8192, cap, "R", T)
+        check(f"exact cap: budget {cap} for a {need}-token call -> {stop} (want {want})", stop == want)
+
     # 5: frames
     t = ("<tool_call>\n<function=calc>\n<parameter=expression>\n2+2\n</parameter>\n</function>\n</tool_call>\n"
          "<tool_response>\n4\n</tool_response>\n<think>\n\n</think>\n\nANSWER: 4<|im_end|>")
