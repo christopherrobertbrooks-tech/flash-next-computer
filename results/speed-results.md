@@ -22,12 +22,14 @@ latency-bound: at batch 64 a step is only 6x longer, so a single step leaves mos
 | plain Qwen3.5-4B, Hugging Face (inside-4b run, greedy decode) | ~37 |
 | Qwenputer-4B text steps, Hugging Face (inside-4b run) | ~28 |
 | plain Qwen3.5-4B, **llama.cpp** f16 GGUF (mainline 5e03bdd, sm70 build), `llama-bench` tg128 | **74** |
+| plain Qwen3.5-4B, Hugging Face, short decode test (256 tokens), PyTorch fallback / with flash-linear-attention | 44 / 48 |
 | the same, prompt reading (pp512) | ~4,980 |
 
 ## What it means
 1. **The biggest end-to-end lever is the text side.** In the inside-4b run, Qwenputer spent 6,439 s in text steps and 944
-   s in computer steps. llama.cpp runs the plain 4B's text 2x faster than Hugging Face here, so a llama.cpp port of
-   Qwenputer (Codex's route 2) would roughly halve its total time. That's an estimate from the plain model: the widened
+   s in computer steps. llama.cpp runs the plain 4B's text 2x faster than our runs' Hugging Face speed (about 1.5x
+   faster than the best Hugging Face manages on this card, 48 tokens/s; see the kernel test below), so a llama.cpp
+   port of Qwenputer (Codex's route 2) would cut its total time by about a third to a half. That's an estimate from the plain model: the widened
    Qwenputer model isn't measured in llama.cpp, because llama.cpp can't run it yet.
 2. **The circuit's time is its kernels, not the CPU.** Removing the per-token round trip gains ~5% (more, ~20%, if the
    Python decode also moves onto the GPU). Folding the 18 apply kernels into their producers would cut ~20%. Using the
@@ -47,3 +49,23 @@ latency-bound: at batch 64 a step is only 6x longer, so a single step leaves mos
 | 3 | Move token decode + embedding onto the GPU, many steps per graph | ~20% of circuit time | small to medium |
 | 4 | More parallelism inside the head/FFN kernels | up to ~2x circuit time | medium to large |
 | 5 | A parallel-scan kernel for prefill verification | large, if it works | research |
+
+## The "fast kernels" test (flash-linear-attention, 2026-10-31)
+The viewer printed transformers' warning that Qwen3.5's gated-delta layers were running on PyTorch fallbacks
+because `flash-linear-attention` (fla) and `causal-conv1d` aren't installed. Our own log filtering had hidden that
+warning in every earlier run. fla 0.6.0 (with fla-core 0.6.0 and einops: 7.7 MB, pure Python and Triton) was
+installed with `--no-deps` into a separate folder (`/mnt/nvme/qwenputer/fla-pkgs`, used only via PYTHONPATH; the
+venv is unchanged), and `speed/fla_probe.py` ran with and without it (`speed/fla-fallback.json`, `speed/fla-fla.json`):
+
+| | PyTorch fallback | fla 0.6.0 |
+|---|---|---|
+| plain 4B prompt reading, 4,096 tokens | **994 tokens/s** | 320 tokens/s |
+| plain 4B decoding, 256 tokens | 44.1 tokens/s | **48.2 tokens/s** |
+| the circuit's teacher-forced prefill (4,248-token trace) | **2,841 tokens/s**, exact | 221 tokens/s, exact |
+| greedy replies to 5 pilot prompts | | 1 of 5 identical to the fallback's (different arithmetic order) |
+
+fla's kernels run correctly on the V100 but compute in bf16, which Volta lacks in hardware. So they're 3-13x slower
+for prompt reading and parallel verification, and only 9% faster for decoding. **The fallback is the better choice on
+this card**: the earlier runs weren't crippled by the missing kernels, and the parallel-verify route still needs a
+kernel written for Volta (fp32 or fp16), not fla. `causal-conv1d` wasn't tried (it needs a build for sm_70 against
+torch 2.14; its share of decode time is small).
