@@ -5,8 +5,11 @@
    computer-budget edge, an over-long call.
 2. The backend sees the prompt at positions 0..P-1, then every generated token (forced response tokens included, in
    the emulator's order) at consecutive positions.
-3. helper_client fails closed: a child that exits at once, an error reply, a short reply; close() ends a child that
-   ignores END.
+3. helper_client fails closed: a child that exits at once, an error reply, a short reply, non-finite values, an id
+   outside the vocabulary, values out of order, no reply within the timeout, a nonzero exit after END; close() ends
+   a child that ignores END.
+3b. The production LlamaBackend, on a recording helper: RESET first, the prompt at 0..P-1, then every generated token
+   (forced ones included) at P, P+1, ...; a backend with one position off is caught.
 4. run_plain_llama.main with a fake helper program: a normal run writes complete rows (exit 0); a helper that dies
    mid-run records harness_error on that question and stops the run (exit 1, no later rows).
 
@@ -125,6 +128,87 @@ def main():
         sys.stdin.buffer.read(16); sys.stdout.buffer.write(struct.pack("<i", 0) + b"\\0" * 7); sys.stdout.buffer.flush()
         """)
     deaf = prog("deaf.py", "import time\nwhile True: time.sleep(1)\n")
+    def replier(name, payload):
+        """A fake helper that answers RESET, then replies `payload` (a python bytes expression) to TOKENS."""
+        return prog(name, f"""
+            import math, struct, sys
+            r, w = sys.stdin.buffer, sys.stdout.buffer
+            while True:
+                hdr = r.read(8)
+                if len(hdr) < 8: sys.exit(0)
+                t, n = struct.unpack("<II", hdr)
+                if t == 3: sys.exit(3)
+                if t == 1: w.write(struct.pack("<i", 0)); w.flush(); continue
+                r.read(8 * n); w.write({payload}); w.flush()
+            """)
+    nan = replier("nan.py", 'struct.pack("<i5i5f", 0, 1, 2, 3, 4, 5, *([math.nan] * 5))')
+    neg = replier("neg.py", 'struct.pack("<i5i5f", 0, -1, 2, 3, 4, 5, 5, 4, 3, 2, 1)')
+    big = replier("big.py", 'struct.pack("<i5i5f", 0, 999999, 2, 3, 4, 5, 5, 4, 3, 2, 1)')
+    order = replier("order.py", 'struct.pack("<i5i5f", 0, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5)')
+    good = replier("good.py", 'struct.pack("<i5i5f", 0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1)')
+    silent = prog("silent.py", """
+        import struct, sys, time
+        r, w = sys.stdin.buffer, sys.stdout.buffer
+        r.read(8); w.write(struct.pack("<i", 0)); w.flush()
+        while True: time.sleep(1)
+        """)
+    for label, exe, want, kw in (("non-finite values", nan, "bad reply values", {}),
+                                 ("an id below 0", neg, "bad reply ids", {}),
+                                 ("an id outside the vocabulary", big, "bad reply ids", {"n_vocab": 1000}),
+                                 ("values out of order", order, "bad reply values", {}),
+                                 ("no reply within the timeout", silent, "no reply", {"timeout": 2.0})):
+        h = Helper(exe, "x.gguf", **kw)
+        try:
+            h.reset()
+            h.tokens([0], [5])
+            got = "no error"
+        except HelperError as e:
+            got = str(e)
+        h.close()
+        check(f"helper client: {label} raises HelperError ({got[:50]})", want in got)
+    try:
+        with Helper(good, "x.gguf") as h:
+            h.reset()
+            h.tokens([0], [5])
+        got = "no error"
+    except HelperError as e:
+        got = str(e)
+    check(f"helper client: a nonzero exit after END raises on a normal exit ({got[:40]})", "exited with code 3" in got)
+
+    class RecHelper:
+        """Records what the production backend sends; answers from a script."""
+        def __init__(self, script):
+            self.script, self.i, self.log = list(script), 0, []
+
+        def reset(self):
+            self.log.append(("reset",))
+
+        def tokens(self, pos, ids):
+            self.log.append(("tokens", list(pos), list(ids)))
+            t = self.script[min(self.i, len(self.script) - 1)]
+            self.i += 1
+            return [t, 0, 1, 2, 3], [5.0, 4.0, 3.0, 2.0, 1.0]
+
+    def backend_ok(be_cls, script):
+        rh = RecHelper(script)
+        gen = L.generate(be_cls(rh), prompt, 8192, 2_000_000, "R", T)[0]
+        log = rh.log
+        P = len(prompt)
+        ok = log[0] == ("reset",) and log[1] == ("tokens", list(range(P)), prompt)
+        steps = log[2:]
+        ok = ok and all(len(x[1]) == 1 and x[1][0] == P + k for k, x in enumerate(steps))
+        fed = [x[2][0] for x in steps]
+        return ok and fed == gen[:len(fed)] and len(fed) == len(gen) - 1
+
+    class OffBy1(L.LlamaBackend):
+        def step(self, t):
+            self.pos += 1 if self.pos == 3 + 5 else 0      # one position skipped mid-answer
+            return super().step(t)
+
+    script = c1 + text("ANSWER: 4") + [EOS]
+    check("production backend: RESET, prompt at 0..P-1, every token at P, P+1, ... (forced included)",
+          backend_ok(L.LlamaBackend, script))
+    check("production backend control: one skipped position is caught", not backend_ok(OffBy1, script))
     for label, exe, call, want in (("a child that exits at once", dead, "reset", "output ended"),
                                    ("an error reply", errp, "reset", "model load failed"),
                                    ("a short reply", short, "tokens", "output ended")):
