@@ -1,0 +1,42 @@
+Loading Qwenputer onto the V100 (about 30 s); messages go to /mnt/nvme/flashnext-test/viewer/rvlive-stderr.log
+Code around the pc:                                | SHADOW vs fp32 executor
+  0x41474          addi a1, zero, 0                | bf16 layers NOT run; calc-bridge.elf
+  0x41478          addi a2, zero, 0                | VERIFIED, answer complete: 4672 stream tokens checked (4641 compute
+  0x4147c          addi a7, zero, 93               |
+  0x41480          ecall                           | pc 0x41484   steps 3276   records 3226 (0 refresh)   parked (waits
+> 0x41484          lui a1, 0x8                     | last: instruction at 0x41480: ecall  (exit a0)
+  0x41488          addi a1, a1, 32                 | next: lui a1, 0x8
+  0x4148c          addi a6, zero, 0                |
+  0x41490          addi a7, zero, 1                | zero 00000000     s0 00000001     a6 00130001     s8 0000005e
+  0x41494          addi a0, zero, 254              |   ra 00041eec     s1 00000000     a7 0000005d     s9 00000000
+  0x41498          addi t1, zero, 81               |   sp 00007f80     a0 00000000     s2 00000378    s10 0000003c
+                                                   |   gp 00000000     a1 00000000     s3 00000028    s11 0000000a
+Qwenputer's answer (text as it streams):           |   tp 00000218     a2 00000000     s4 00000067     t3 00000001
+                                                   |   t0 000000f9     a3 00000000     s5 00000100     t4 00000009
+<tool_call>                                        |   t1 00000013     a4 00000218     s6 00000067     t5 00000001
+<function=calc>                                    |   t2 ffffc000     a5 00000000     s7 00000064     t6 ffffe000
+<parameter=expression>                             |
+2**64 // 7                                         | digit file (most significant first):
+</parameter>                                       | d0 7
+</function>                                        | d1 2635249153387078802
+</tool_call>                                       | d2 2
+<tool_response>                                    | d3 0
+2635249153387078802                                | d4 0
+</tool_response>                                   | d5 0
+<think>                                            | d6 0
+                                                   | d7 1
+</think>                                           |
+                                                   | stack (sp = 0x7f80):
+The exact answer is 2635249153387078802.<|im_end|> |   0x07f80: 00000000
+                                                   |   0x07f84: 00000000
+                                                   |   0x07f88: 00000001
+                                                   |   0x07f8c: 00000001
+                                                   |   0x07f90: 00000100
+                                                   |   0x07f94: 00000218
+                                                   |
+                                                   | output: '\n\n2635249153387078802\n\n\n\n\n'
+                                                   |
+                                                   |
+                                                   |
+ space step | r run | +/- speed (0/s) | q quit
+{"status": "VERIFIED, answer complete: 4672 stream tokens checked (4641 computer), 3226 records", "generate": {"reason": "eos", "text_tokens": 87, "chip_tokens": 4641, "seconds": 6.1883697509765625}, "output": "\n\n2635249153387078802\n\n\n\n\n"}
