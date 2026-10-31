@@ -85,3 +85,33 @@ Phase 1 now (CPU). Phase 3 after the inside-4b run (it needs the card). Phase 2 
   have only text and counters, so phase-1 replay can only re-run the saved expression on the reference machine.
 - **Headless tests:** branches, loads/stores, ABI names, refresh records, the custom digit ops, a mismatch, end of
   program, terminal resize.
+
+## Status (2026-10-31)
+- **Phase 1 built:** `viewer/rvview.py` (`--program`, `--asm`, `--calc`, `--replay`, `--headless`); controls in
+  `viewer/test_rvview.py`, all passing on the gateway CPU.
+- **Phase 3 built and run live:** `viewer/rvlive.py`. Qwenputer answered 123456789 x 987654321 on the V100 with the
+  shadow VERIFIED on all 2,460 checked stream tokens (2,430 computer tokens and 30 text echoes; 1,570 records, 0
+  mismatches); CPU controls in `viewer/test_rvlive.py` (one call, two calls, a single wrong token caught at its exact
+  position, a computer token outside a call).
+- **Fixed after Codex's review (review/codex-viewer-speed 809ed9c / 2970e32):** the screen now shows a separate
+  committed snapshot, updated only after a record and all its echoes matched (before, it showed the checker machine,
+  one record ahead of the check); an independent witness machine checks this at every token, and a control shows the
+  old design is caught. The answer's end is explicit: only an EOS outside a call is "VERIFIED, answer complete";
+  an end inside a call, a budget stop, a quit or a model error is INCOMPLETE (headless exits 1). Quit stops the model
+  even when the queue is full, and waits for it. Pausing pauses playback only: the model keeps generating until the
+  4,096-token queue is full. Labels: a short source line ("SHADOW vs fp32 executor; bf16 layers NOT run"),
+  BMAC-overwrite shown as "=", and the replay label says its capture is approximate.
+  Codex's re-check (1eb2056 / 82a4484) closed the snapshot, queue and label findings and found one more gap: an end
+  while the model was still writing a call (after `<tool_call>`, before `</tool_call>`) still showed VERIFIED. Fixed:
+  that counts as inside the call too (a sweep over every prefix of a two-call stream; the old rule is caught on 60).
+  Headless always stops the model, even if the viewer itself fails; quitting the terminal view before the end shows
+  INCOMPLETE (stopped). Live controls: 38, all pass; Codex confirmed the fix (7d4f7a8).
+  Launch: `ssh -t ember-gateway /mnt/nvme/flashnext-test/viewer/rvlive.sh` (default question), or with your own question inside outer single quotes: `ssh -t ember-gateway '/mnt/nvme/flashnext-test/viewer/rvlive.sh "your question"'`.
+- **Phase 2's premise failed:** `viewer/asm_premise.py` (`results/viewer/asm-premise.jsonl`). Plain Qwen3.5-4B wrote a
+  correct, running RV32IM program for **0 of 8** small tasks without thinking and **3 of 8** with thinking (factorial,
+  the function with a prologue, Fibonacci). The failures were logic bugs in plausible code (an off-by-one sum of 45,
+  the wrong register returned, a max that keeps the last value) and degenerate repetition with thinking (the same line
+  until the token budget ran out). So "the model writes programs to demonstrate" is unreliable for unattended demos under this tested setup (greedy,
+  these prompts, this 4B model). The
+  honest substitute: the model explains, and the viewer steps one of a library of **verified** example programs
+  (phase 1's `--program` already does that).
