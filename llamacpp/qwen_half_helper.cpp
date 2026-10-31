@@ -137,6 +137,7 @@ int main(int argc, char ** argv) {
         put(&st, 4); put(ids, sizeof ids); put(vals, sizeof vals);
         fflush(stdout);
     }
+    llama_perf_context_print(ctx);                         // llama.cpp's own timings (to stderr), for the pipe-cost check
     llama_free(ctx);
     llama_model_free(model);
     llama_backend_free();

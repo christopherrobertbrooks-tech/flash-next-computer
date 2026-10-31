@@ -1,0 +1,26 @@
+ok  final-1-001: prompt rows = HF prefill rows (438), executor state = ExecRow.start's
+ok  final-1-001: EOS True, lock error None, 113 text rows, the first 113 equal the fixture's; identical to the fixture
+ok  final-1-002: prompt rows = HF prefill rows (426), executor state = ExecRow.start's
+ok  final-1-002: EOS True, lock error None, 121 text rows, the first 121 equal the fixture's; identical to the fixture
+ok  final-1-003: prompt rows = HF prefill rows (448), executor state = ExecRow.start's
+ok  final-1-003: EOS True, lock error None, 189 text rows, the first 189 equal the fixture's; identical to the fixture
+ok  final-2-001: prompt rows = HF prefill rows (438), executor state = ExecRow.start's
+ok  final-2-001: EOS True, lock error None, 1477 text rows, the first 458 equal the fixture's; first divergence at generated token 458 (HF margin 0.000, chip owner None)
+ok  final-2-002: prompt rows = HF prefill rows (447), executor state = ExecRow.start's
+ok  final-2-002: EOS True, lock error None, 3269 text rows, the first 1321 equal the fixture's; first divergence at generated token 1321 (HF margin 0.000, chip owner None)
+ok  final-2-003: prompt rows = HF prefill rows (436), executor state = ExecRow.start's
+ok  final-2-003: EOS True, lock error None, 4259 text rows, the first 8 equal the fixture's; first divergence at generated token 8 (HF margin 0.000, chip owner None)
+ok  final-3-001: prompt rows = HF prefill rows (460), executor state = ExecRow.start's
+ok  final-3-001: EOS True, lock error None, 456 text rows, the first 378 equal the fixture's; first divergence at generated token 4247 (HF margin 0.000, chip owner None)
+ok  final-3-002: prompt rows = HF prefill rows (479), executor state = ExecRow.start's
+ok  final-3-002: EOS True, lock error None, 1119 text rows, the first 548 equal the fixture's; first divergence at generated token 6234 (HF margin 0.000, chip owner None)
+ok  final-3-003: prompt rows = HF prefill rows (434), executor state = ExecRow.start's
+ok  final-3-003: EOS True, lock error None, 263 text rows, the first 243 equal the fixture's; first divergence at generated token 3582 (HF margin 0.000, chip owner None)
+ok  final-4-001: prompt rows = HF prefill rows (625), executor state = ExecRow.start's
+ok  final-4-001: EOS True, lock error None, 3918 text rows, the first 222 equal the fixture's; first divergence at generated token 222 (HF margin 0.000, chip owner None)
+ok  final-4-002: prompt rows = HF prefill rows (557), executor state = ExecRow.start's
+ok  final-4-002: EOS True, lock error None, 2140 text rows, the first 403 equal the fixture's; first divergence at generated token 403 (HF margin 0.000, chip owner None)
+ok  final-4-003: prompt rows = HF prefill rows (565), executor state = ExecRow.start's
+ok  final-4-003: EOS True, lock error None, 879 text rows, the first 15 equal the fixture's; first divergence at generated token 15 (HF margin 0.000, chip owner None)
+ok  reset: final-1-001 again after all others gives the same tokens
+SPLIT GPU CONTROLS PASSED
