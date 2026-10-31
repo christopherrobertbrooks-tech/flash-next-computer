@@ -193,7 +193,10 @@ def wrap(lines, width):
 
 def right_pane(s, width):
     m, L = s.m, s.last
-    lines = [("label", s.source[:width]), ("label", s.program[:width]), ("", "")]
+    lines = [("label", s.source[:width]), ("label", s.program[:width])]
+    if hasattr(s, "status"):                              # the live view: verification status, always near the top
+        lines.append(("rev" if not s.verified else "hl", s.status()[:width]))
+    lines.append(("", ""))
     status = ("HALTED, exit code %s" % m.exit_code if m.halted and m.fault is None else
               f"FAULT {S.FAULTS[m.fault[0]]} at {m.fault[1]:#x}" if m.fault else "running")
     lines += [("", f"pc {m.pc:#07x}   steps {m.steps}   records {s.records} ({s.refreshes} refresh)   {status}"[:width]),
