@@ -1,0 +1,169 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights:   0%|          | 1/426 [00:00<03:33,  1.99it/s]Loading weights:   3%|▎         | 14/426 [00:00<00:13, 30.20it/s]Loading weights:   7%|▋         | 28/426 [00:00<00:07, 56.47it/s]Loading weights:  10%|▉         | 42/426 [00:00<00:04, 77.20it/s]Loading weights:  14%|█▍        | 61/426 [00:00<00:03, 97.83it/s]Loading weights:  18%|█▊        | 78/426 [00:01<00:02, 116.38it/s]Loading weights:  22%|██▏       | 93/426 [00:01<00:02, 119.40it/s]Loading weights:  25%|██▌       | 107/426 [00:01<00:02, 114.58it/s]Loading weights:  28%|██▊       | 120/426 [00:01<00:02, 117.02it/s]Loading weights:  31%|███▏      | 134/426 [00:01<00:02, 115.68it/s]Loading weights:  35%|███▍      | 147/426 [00:01<00:02, 119.21it/s]Loading weights:  39%|███▊      | 165/426 [00:01<00:02, 129.77it/s]Loading weights:  42%|████▏     | 181/426 [00:01<00:01, 137.59it/s]Loading weights:  46%|████▌     | 196/426 [00:01<00:01, 138.92it/s]Loading weights:  50%|████▉     | 211/426 [00:02<00:01, 125.30it/s]Loading weights:  53%|█████▎    | 226/426 [00:02<00:01, 125.64it/s]Loading weights:  56%|█████▋    | 240/426 [00:02<00:01, 128.80it/s]Loading weights:  60%|█████▉    | 254/426 [00:02<00:01, 121.29it/s]Loading weights:  64%|██████▍   | 272/426 [00:02<00:01, 128.56it/s]Loading weights:  68%|██████▊   | 289/426 [00:02<00:00, 139.17it/s]Loading weights:  71%|███████▏  | 304/426 [00:02<00:00, 138.92it/s]Loading weights:  75%|███████▍  | 319/426 [00:03<00:01, 104.51it/s]Loading weights:  78%|███████▊  | 331/426 [00:03<00:01, 78.48it/s] Loading weights:  81%|████████  | 343/426 [00:03<00:01, 74.90it/s]Loading weights:  83%|████████▎ | 352/426 [00:03<00:01, 67.41it/s]Loading weights:  85%|████████▍ | 360/426 [00:03<00:01, 57.82it/s]Loading weights:  87%|████████▋ | 371/426 [00:03<00:00, 65.83it/s]Loading weights:  90%|█████████ | 384/426 [00:04<00:00, 77.72it/s]Loading weights:  94%|█████████▎| 399/426 [00:04<00:00, 92.26it/s]Loading weights:  97%|█████████▋| 413/426 [00:04<00:00, 99.09it/s]Loading weights: 100%|█████████▉| 424/426 [00:04<00:00, 97.45it/s]Loading weights: 100%|██████████| 426/426 [00:04<00:00, 96.31it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+[transformers] `causal_conv1d_update` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `fused_recurrent_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+  1/160 final-1-001          3.6s eos calls 1 text 113 trace 3791
+  2/160 final-1-002          3.3s eos calls 1 text 121 trace 3511
+  3/160 final-1-003          4.9s eos calls 1 text 189 trace 3968
+  4/160 final-1-004          4.0s eos calls 1 text 153 trace 3118
+  5/160 final-1-005          3.9s eos calls 1 text 145 trace 3094
+  6/160 final-1-006          3.2s eos calls 1 text 115 trace 3950
+  7/160 final-1-007          2.5s eos calls 1 text 87 trace 3901
+  8/160 final-1-008          3.2s eos calls 1 text 116 trace 3940
+  9/160 final-1-009          4.1s eos calls 1 text 157 trace 3280
+ 10/160 final-1-010          4.7s eos calls 1 text 180 trace 3708
+ 11/160 final-1-011          5.1s eos calls 1 text 198 trace 4080
+ 12/160 final-1-012          3.5s eos calls 1 text 126 trace 4694
+ 13/160 final-1-013          4.0s eos calls 1 text 150 trace 3193
+ 14/160 final-1-014          5.1s eos calls 1 text 198 trace 4200
+ 15/160 final-1-015          2.6s eos calls 1 text 92 trace 8405
+ 16/160 final-1-016          3.6s eos calls 1 text 135 trace 3057
+ 17/160 final-1-017          2.9s eos calls 1 text 102 trace 3425
+ 18/160 final-1-018          2.6s eos calls 1 text 92 trace 4198
+ 19/160 final-1-019          2.9s eos calls 1 text 105 trace 4084
+ 20/160 final-1-020          3.1s eos calls 1 text 113 trace 3996
+ 21/160 final-1-021          3.0s eos calls 1 text 108 trace 3576
+ 22/160 final-1-022          4.4s eos calls 1 text 168 trace 5995
+ 23/160 final-1-023          4.1s eos calls 1 text 152 trace 4768
+ 24/160 final-1-024          3.2s eos calls 1 text 116 trace 11334
+ 25/160 final-1-025          7.3s eos calls 1 text 293 trace 19104
+ 26/160 final-1-026          4.2s eos calls 1 text 158 trace 3128
+ 27/160 final-1-027          2.9s eos calls 1 text 104 trace 9694
+ 28/160 final-1-028          2.2s eos calls 1 text 73 trace 2655
+ 29/160 final-1-029          4.7s eos calls 1 text 183 trace 3803
+ 30/160 final-1-030          3.1s eos calls 1 text 114 trace 2647
+ 31/160 final-1-031          4.1s eos calls 1 text 157 trace 3324
+ 32/160 final-1-032          3.9s eos calls 1 text 145 trace 3975
+ 33/160 final-1-033          3.0s eos calls 1 text 109 trace 3235
+ 34/160 final-1-034          4.5s eos calls 1 text 171 trace 3614
+ 35/160 final-1-035          4.7s eos calls 1 text 180 trace 3710
+ 36/160 final-1-036          3.5s eos calls 1 text 128 trace 3643
+ 37/160 final-1-037          2.6s eos calls 1 text 89 trace 7115
+ 38/160 final-1-038          2.6s eos calls 1 text 90 trace 8741
+ 39/160 final-1-039          2.6s eos calls 1 text 90 trace 4287
+ 40/160 final-1-040          2.7s eos calls 1 text 96 trace 3365
+ 41/160 final-1-041          2.9s eos calls 1 text 103 trace 3072
+ 42/160 final-1-042          2.9s eos calls 1 text 103 trace 3799
+ 43/160 final-1-043          3.7s eos calls 1 text 140 trace 3700
+ 44/160 final-1-044          2.6s eos calls 1 text 91 trace 9666
+ 45/160 final-1-045          3.1s eos calls 1 text 111 trace 3711
+ 46/160 final-1-046          3.2s eos calls 1 text 117 trace 2694
+ 47/160 final-1-047          2.8s eos calls 1 text 99 trace 4784
+ 48/160 final-1-048          4.3s eos calls 1 text 165 trace 3377
+ 49/160 final-1-049          2.8s eos calls 1 text 100 trace 3840
+ 50/160 final-1-050          3.9s eos calls 1 text 147 trace 3211
+ 51/160 final-1-051          3.0s eos calls 1 text 110 trace 4063
+ 52/160 final-1-052          3.2s eos calls 1 text 117 trace 3997
+ 53/160 final-1-053         23.9s eos calls 1 text 985 trace 15934
+ 54/160 final-1-054          3.0s eos calls 1 text 109 trace 2627
+ 55/160 final-1-055          2.2s eos calls 1 text 76 trace 2875
+ 56/160 final-1-056          3.5s eos calls 1 text 131 trace 4349
+ 57/160 final-1-057          7.1s eos calls 1 text 282 trace 22676
+ 58/160 final-1-058          2.1s eos calls 1 text 71 trace 2687
+ 59/160 final-1-059          3.6s eos calls 1 text 135 trace 2977
+ 60/160 final-1-060        242.5s text budget calls 2 text 8192 trace 36148
+ 61/160 final-1-061          3.9s eos calls 1 text 145 trace 4894
+ 62/160 final-1-062         23.5s eos calls 1 text 966 trace 14602
+ 63/160 final-1-063          2.6s eos calls 1 text 92 trace 10210
+ 64/160 final-1-064          2.9s eos calls 1 text 102 trace 8879
+ 65/160 final-1-065          2.9s eos calls 1 text 102 trace 6954
+ 66/160 final-1-066          4.5s eos calls 1 text 167 trace 3231
+ 67/160 final-1-067          3.8s eos calls 1 text 141 trace 3051
+ 68/160 final-1-068          4.0s eos calls 1 text 150 trace 3237
+ 69/160 final-1-069          3.4s eos calls 1 text 126 trace 4134
+ 70/160 final-1-070          4.5s eos calls 1 text 171 trace 3522
+ 71/160 final-2-001         36.4s eos calls 1 text 1484 trace 26088
+ 72/160 final-2-002         58.2s eos calls 1 text 2329 trace 36028
+ 73/160 final-2-003         57.0s eos calls 3 text 2283 trace 42923
+ 74/160 final-2-004          2.9s eos calls 1 text 105 trace 4225
+ 75/160 final-2-005          3.7s eos calls 1 text 137 trace 5056
+ 76/160 final-2-006          3.2s eos calls 1 text 117 trace 4347
+ 77/160 final-2-007         22.6s eos calls 1 text 931 trace 47127
+ 78/160 final-2-008         37.5s eos calls 1 text 1525 trace 32160
+ 79/160 final-2-009          2.5s eos calls 1 text 85 trace 3277
+ 80/160 final-2-010         14.2s eos calls 1 text 581 trace 37600
+ 81/160 final-3-001         11.1s eos calls 1 text 454 trace 4057
+ 82/160 final-3-002        242.9s text budget calls 1 text 8192 trace 5686
+ 83/160 final-3-003          7.4s eos calls 1 text 296 trace 3339
+ 84/160 final-3-004         14.3s eos calls 1 text 583 trace 8084
+ 85/160 final-3-005          7.2s eos calls 1 text 285 trace 3640
+ 86/160 final-3-006         20.2s eos calls 2 text 828 trace 10627
+ 87/160 final-3-007          5.5s eos calls 1 text 214 trace 3870
+ 88/160 final-3-008          8.9s eos calls 1 text 362 trace 3388
+ 89/160 final-3-009         10.7s eos calls 1 text 436 trace 3519
+ 90/160 final-3-010         10.0s eos calls 1 text 406 trace 3392
+ 91/160 final-3-011         14.4s eos calls 1 text 591 trace 3647
+ 92/160 final-3-012         21.0s eos calls 1 text 860 trace 6251
+ 93/160 final-3-013         11.0s eos calls 1 text 449 trace 3284
+ 94/160 final-3-014         28.7s eos calls 1 text 1176 trace 3512
+ 95/160 final-3-015         18.6s eos calls 1 text 767 trace 4103
+ 96/160 final-3-016          6.0s eos calls 1 text 238 trace 3155
+ 97/160 final-3-017          9.6s eos calls 1 text 389 trace 3317
+ 98/160 final-3-018          6.5s eos calls 1 text 259 trace 3378
+ 99/160 final-3-019         18.4s eos calls 0 text 753 trace 0
+100/160 final-3-020         37.1s eos calls 2 text 1512 trace 6898
+101/160 final-3-021          8.3s eos calls 1 text 335 trace 3181
+102/160 final-3-022         27.4s eos calls 3 text 1124 trace 8792
+103/160 final-3-023         27.6s eos calls 2 text 1130 trace 8100
+104/160 final-3-024         19.7s eos calls 1 text 812 trace 3689
+105/160 final-3-025          6.9s eos calls 1 text 274 trace 3388
+106/160 final-3-026         13.9s eos calls 1 text 571 trace 3582
+107/160 final-3-027         23.4s eos calls 2 text 956 trace 14037
+108/160 final-3-028         17.2s eos calls 0 text 703 trace 0
+109/160 final-3-029          7.4s eos calls 1 text 299 trace 3252
+110/160 final-3-030         38.9s eos calls 3 text 1578 trace 10854
+111/160 final-3-031          9.2s eos calls 1 text 373 trace 3414
+112/160 final-3-032         19.1s eos calls 0 text 782 trace 0
+113/160 final-3-033         15.9s eos calls 1 text 650 trace 6024
+114/160 final-3-034         15.5s eos calls 0 text 637 trace 0
+115/160 final-3-035         61.6s eos calls 4 text 2458 trace 11928
+116/160 final-3-036         11.1s eos calls 1 text 452 trace 3550
+117/160 final-3-037          9.9s eos calls 1 text 403 trace 3542
+118/160 final-3-038          8.3s eos calls 0 text 338 trace 0
+119/160 final-3-039         16.9s eos calls 1 text 692 trace 7707
+120/160 final-3-040         13.7s eos calls 1 text 561 trace 7533
+121/160 final-4-001         72.2s eos calls 6 text 2807 trace 14437
+122/160 final-4-002         37.5s eos calls 9 text 1513 trace 22916
+123/160 final-4-003         60.9s eos calls 9 text 2404 trace 20924
+124/160 final-4-004         44.4s eos calls 9 text 1783 trace 22249
+125/160 final-4-005         83.4s eos calls 9 text 3213 trace 27887
+126/160 final-4-006         44.0s eos calls 9 text 1759 trace 22402
+127/160 final-4-007        245.9s text budget calls 0 text 8192 trace 0
+128/160 final-4-008         49.5s eos calls 3 text 1968 trace 7072
+129/160 final-4-009         64.2s eos calls 8 text 2525 trace 20448
+130/160 final-4-010         74.0s eos calls 11 text 2875 trace 26641
+131/160 final-4-011        243.6s text budget calls 10 text 8192 trace 30946
+132/160 final-4-012        201.0s eos calls 12 text 6935 trace 32391
+133/160 final-4-013         37.1s eos calls 7 text 1487 trace 18772
+134/160 final-4-014         24.5s eos calls 2 text 990 trace 5456
+135/160 final-4-015        245.2s text budget calls 0 text 8192 trace 0
+136/160 final-4-016         62.9s eos calls 6 text 2486 trace 15743
+137/160 final-4-017         62.8s eos calls 5 text 2484 trace 15388
+138/160 final-4-018         74.8s eos calls 14 text 2891 trace 34331
+139/160 final-4-019         44.9s eos calls 5 text 1792 trace 12046
+140/160 final-4-020         67.9s eos calls 7 text 2662 trace 17850
+141/160 final-4-021         57.0s eos calls 6 text 2268 trace 24440
+142/160 final-4-022        187.2s eos calls 8 text 6538 trace 39459
+143/160 final-4-023         78.5s eos calls 4 text 3031 trace 10036
+144/160 final-4-024         78.4s eos calls 6 text 3031 trace 16536
+145/160 final-4-025        118.5s eos calls 9 text 4422 trace 21080
+146/160 final-4-026        244.5s text budget calls 13 text 8192 trace 40881
+147/160 final-4-027         30.2s eos calls 4 text 1217 trace 10707
+148/160 final-4-028         29.9s eos calls 4 text 1202 trace 9969
+149/160 final-4-029        244.5s eos calls 16 text 8183 trace 41660
+150/160 final-4-030        243.6s text budget calls 9 text 8192 trace 21422
+151/160 final-4-031        176.1s eos calls 12 text 6219 trace 32186
+152/160 final-4-032         31.5s eos calls 4 text 1278 trace 11003
+153/160 final-4-033        152.8s eos calls 7 text 5500 trace 22806
+154/160 final-4-034         38.3s eos calls 7 text 1547 trace 19067
+155/160 final-4-035         25.6s eos calls 2 text 1035 trace 5473
+156/160 final-4-036         27.7s eos calls 2 text 1119 trace 5348
+157/160 final-4-037         39.6s eos calls 11 text 1586 trace 29889
+158/160 final-4-038         45.9s eos calls 9 text 1841 trace 22180
+159/160 final-4-039        121.8s eos calls 8 text 4507 trace 21275
+160/160 final-4-040         31.4s eos calls 8 text 1273 trace 19584
+done
+v100: clock restored; released

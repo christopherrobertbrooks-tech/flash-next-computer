@@ -1,0 +1,12 @@
+{
+ "arm": "R",
+ "load_seconds": 5.6,
+ "params_b": 4.21,
+ "gpu_allocated_gib": 7.83,
+ "tokenizer_sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+ "firmware_sha256": "b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d",
+ "max_new": 8192,
+ "max_trace": 2000000,
+ "allow_bf16_reduced_precision": false,
+ "gpu_peak_allocated_gib": 8.98
+}

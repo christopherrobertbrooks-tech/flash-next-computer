@@ -213,7 +213,7 @@ def score_one(q, row):
            "rounds": len(gens), "generated_tokens": sum(int(g[2]) for g in gens),
            "tool_rss_peak_mib": max([x.get("rss_peak_mib") or 0 for x in calls], default=None),
            "fault_kinds": sorted({x.get("error_kind") for x in calls if x.get("error_kind")}),
-           "computer_error_results": [x["expression"] for x in calls
+           "computer_error_results": [x.get("expression", x.get("call_text")) for x in calls
                                       if x.get("error") is None and str(x.get("result")).startswith("error")],
            "loop": any(exprs.count(e) >= 3 for e in set(exprs)),
            "mismatch": any(x.get("error_kind") == "trace_mismatch" for x in calls)}

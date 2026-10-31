@@ -1,0 +1,13 @@
+{
+ "arm": "C",
+ "path": "upstream fast circuit executor (fp32), checked against the RV32 reference; the checkpoint's bf16 computer layers are not executed",
+ "load_seconds": 20.4,
+ "gpu_allocated_gib": 17.45,
+ "tokenizer_sha256": "e19093118788e378d474b0a7f6d7f7c321da1fabcc6fd5ef6c68c3c28cf79e66",
+ "firmware_sha256": "b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d",
+ "max_new": 8192,
+ "max_chip": 2000000,
+ "lock_max_records_per_call": 2000000,
+ "allow_bf16_reduced_precision": false,
+ "gpu_peak_allocated_gib": 18.98
+}
