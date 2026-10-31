@@ -208,3 +208,98 @@ No GPU jobs were launched, so this review acquired no V100 lock or model memory
 and had none to release. All gateway execution was CPU-only; no source/deployment
 files were edited there. Only this findings document is changed in the review
 branch.
+
+## Confirm
+
+Merged `origin/llamacpp-port` at `513c6f248ac744bad5d5c837b545bb7ac33b4e9c`
+into the review branch, then followed `REVIEW-LLAMACPP-STAGE1-CONFIRM.md`.
+Ran independent counterexamples and the updated controls before reading the
+requested `2fa7d34..e58a254` diff. The subsequent `e58a254..513c6f2` diff adds
+only the confirmation brief.
+
+### Original findings
+
+- **Finding 1 CLOSED for the stage-1 path.** The original BytesIO NaN/EOS
+  frame now raises HelperError, as do negative, out-of-vocabulary and repeated
+  IDs; a valid frame is accepted. Because `_read` now requires a real file
+  descriptor, the BytesIO parser control supplies its `.read` method as `_read`;
+  separate actual-pipe controls exercise the real transport. Production main
+  now passes the configured vocabulary size. Stage 2 must likewise pass the
+  cut GGUF's vocabulary size, rather than rely on the client's optional bound.
+  The C++ source rejects every non-finite output logit before selection. A local
+  CPU harness compiled the exact selection block: finite ties retain ascending
+  IDs, and NaN, +Inf and -Inf at a non-winning position all raise an error.
+  No assertion is made about GPU execution of the rebuilt binary in this CPU-only
+  review.
+- **Finding 2 CLOSED.** The new backend control drives production LlamaBackend
+  with RecHelper and checks RESET, prompt payload/positions, every processed
+  generated token and its position, including forced response tokens. Its
+  deliberate offset is detected. An independent mutation omitting RESET is
+  also rejected by the new `backend_ok` control. A separate local production-
+  class control verifies a second prefill restarts positions and RESET.
+- **Finding 3 CLOSED.** The narrative now limits speed to the observed combined
+  change, disclaims repeatability and decode-only throughput, and no longer
+  attributes each divergence to near-ties. Accuracy remains correctly
+  inconclusive. Its explanation of `practical` is correct: this flag is the
+  median-latency rule (first arm at most twice the other and at most 60 s),
+  not an accuracy or equivalence decision. The earlier review's phrase
+  “observed point-estimate test” should be understood specifically as that
+  latency rule, not the accuracy point estimate.
+
+### Additional finding
+
+4. **REDLINE — the reply timeout does not bound a blocked row send.**
+   The client advertises “no reply within the timeout” as a HelperError, and the
+   updated narrative says it “times out a silent helper.” `_read` now has a
+   deadline, but `_send` still performs a blocking raw pipe write before `_read`
+   is reached. This matters for stage 2's large row-prefill messages. Local
+   reproduction: an owned fake helper acknowledges RESET, then never reads
+   another byte; `Helper(timeout=0.1).rows(range(64), zeros((64,3968)))` remains
+   blocked until an independent one-second signal watchdog interrupts it.
+   The configured timeout never fires. The fake child was killed and reaped
+   locally; no gateway process was signalled. `close()` also uses a blocking
+   END write before its wait timeout, so it needs the same treatment.
+
+   Smallest complete fix: use a deadline-aware write-all loop (nonblocking
+   descriptor plus readiness waiting), account for short writes, and make END
+   transmission bounded before terminate/kill/reap cleanup. Prefer one deadline
+   per whole request rather than restarting it for every reply field. Add a
+   fake helper that ACKs RESET then stops consuming a row request; require a
+   bounded HelperError and confirmed cleanup. Until that fix, narrow the
+   timeout claim to reply reads, and do not rely on it as a whole-request
+   watchdog for stage 2. This is separate from the now-closed numerical guard.
+
+### Validation and limits
+
+- Local actual-pipe controls passed for NaNs, negative and out-of-range IDs,
+  unordered values, silent reply timeout, and nonzero exit after END. The local
+  cleanup wait was capped at one second for these fake children; the tested
+  reply timeout remained two seconds. Parser controls additionally cover
+  duplicate IDs and a valid reply.
+- On the gateway, executed only the read-only generation/backend portions of
+  the hash-matched deployed test, using an in-memory AST selection. All six
+  generation comparisons passed (including the two-call and exact-budget
+  cases), as did forced HALT newline, production backend, offset negative
+  control, and the independent omitted-RESET mutation. No scratch files,
+  helper subprocesses or model loads were created there. This was not a rerun
+  of the entire 30-control executable; runner integration was inspected in the
+  diff rather than re-executed in this confirmation.
+- Local and deployed hashes match for client, runner, test and helper source.
+  Deployed helper SHA256 is
+  `d17cb46d1f605b5c5705462ae5fcee82fd7dc988f0bb57abc0af8a04665de198`;
+  preserved `.v1` is
+  `9383c5668a1cecebfc1ce6845890150c2c72f2540fe2abbe059e25fb0976eab3`,
+  matching the original results. The historical results have not been replaced
+  by measurements using the rebuilt helper.
+- Stage-2 plan additions correctly separate placement diagnostics from timing
+  and the bf16-head variant from the f32 baseline, with hash/round-trip/gate
+  checks. Stage-3 memory specifies simultaneous PID/UUID sums, a fixed cadence,
+  unavailable samples, and remeasurement of original C for a fair comparison.
+  The runner now preserves unavailable sample counts and labels its maximum
+  as sampled. No additional numerical or wording issue found in these changes.
+
+Automatic approval review rejected a proposed copy-and-run in gateway /tmp
+because gateway access is read-only. That action was not executed or retried.
+The safer local/read-only checks above completed the required confirmation;
+no remote-write approval is needed. No GPU work, installs, or deployment edits
+were performed. Only the review branch is being pushed.
