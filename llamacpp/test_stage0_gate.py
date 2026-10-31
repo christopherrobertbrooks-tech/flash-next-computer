@@ -74,6 +74,12 @@ def main():
         j = max(qpos, key=lambda j: top[j][1][0] - top[j][1][1])
         s[qid][j][0][0] = (s[qid][j][0][0] + 1) % man0["v0"]
     run("3 questions with a high-margin split disagreement", "STOP", man0, s=s)
+    s = copy.deepcopy(split)                              # a helper that answers EOS at every position (Codex stage 2)
+    for qid in s:
+        if not qid.startswith("_"):
+            for e in s[qid]:
+                e[0][0] = 248046
+    run("a helper that always answers EOS", "STOP", man0, s=s)
     shutil.rmtree(scratch)
     print("GATE CONTROLS", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)

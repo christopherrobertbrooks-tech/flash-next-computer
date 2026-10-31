@@ -1,0 +1,43 @@
+== record split histories (bf16 head) 02:36:18 PM
+final-1-001    3905 tokens, 113 text rows, lock error None
+final-1-002    3633 tokens, 121 text rows, lock error None
+final-1-003    4158 tokens, 189 text rows, lock error None
+final-2-001    27566 tokens, 1477 text rows, lock error None
+final-2-002    39298 tokens, 3269 text rows, lock error None
+final-2-003    47832 tokens, 4259 text rows, lock error None
+final-3-001    4326 tokens, 456 text rows, lock error None
+final-3-002    6806 tokens, 1119 text rows, lock error None
+final-3-003    3603 tokens, 263 text rows, lock error None
+final-4-001    47169 tokens, 3918 text rows, lock error None
+final-4-002    17984 tokens, 2140 text rows, lock error None
+final-4-003    880 tokens, 879 text rows, lock error None
+== HF chip-view oracle 02:45:11 PM
+final-1-001    3905 tokens through the HF chip view, 113 text rows
+final-1-002    3633 tokens through the HF chip view, 121 text rows
+final-1-003    4158 tokens through the HF chip view, 189 text rows
+final-2-001    27566 tokens through the HF chip view, 1477 text rows
+final-2-002    39298 tokens through the HF chip view, 3269 text rows
+final-2-003    47832 tokens through the HF chip view, 4259 text rows
+final-3-001    4326 tokens through the HF chip view, 456 text rows
+final-3-002    6806 tokens through the HF chip view, 1119 text rows
+final-3-003    3603 tokens through the HF chip view, 263 text rows
+final-4-001    47169 tokens through the HF chip view, 3918 text rows
+final-4-002    17984 tokens through the HF chip view, 2140 text rows
+final-4-003    880 tokens through the HF chip view, 879 text rows
+== done 03:01:45 PM
+ok  final-1-001    438 prompt + 113 text rows equal, 3821 circuit-owned choices agree
+ok  final-1-002    426 prompt + 121 text rows equal, 3549 circuit-owned choices agree
+ok  final-1-003    448 prompt + 189 text rows equal, 4029 circuit-owned choices agree
+ok  final-2-001    438 prompt + 1477 text rows equal, 26113 circuit-owned choices agree
+ok  final-2-002    447 prompt + 3269 text rows equal, 36056 circuit-owned choices agree
+ok  final-2-003    436 prompt + 4259 text rows equal, 43658 circuit-owned choices agree
+ok  final-3-001    460 prompt + 456 text rows equal, 3901 circuit-owned choices agree
+ok  final-3-002    479 prompt + 1119 text rows equal, 5711 circuit-owned choices agree
+ok  final-3-003    434 prompt + 263 text rows equal, 3367 circuit-owned choices agree
+ok  final-4-001    625 prompt + 3918 text rows equal, 43567 circuit-owned choices agree
+ok  final-4-002    557 prompt + 2140 text rows equal, 15999 circuit-owned choices agree
+ok  final-4-003    565 prompt + 879 text rows equal, 0 circuit-owned choices agree
+ok  control: a corrupted suffix row is caught
+ok  control: a corrupted prompt row is caught
+ok  control: a changed circuit-owned token is caught
+HISTORY ORACLE PASSED: 23956 rows and 189771 circuit choices compared

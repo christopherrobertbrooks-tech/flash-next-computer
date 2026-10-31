@@ -1,4 +1,4 @@
-# Qwenputer's language part in llama.cpp (plan v2, 2026-10-31; for Chris's yes)
+# Qwenputer's language part in llama.cpp (plan v3, 2026-10-31; stage 3 registered after Codex's stage-2 review)
 
 v2 carries Codex's plan review (review/codex-llamacpp-port 83904cc): the prompt-prefill path, new fixtures instead of
 "historical" rows, a helper/state contract, a pre-registered stop rule, and corrected attribution.
@@ -99,17 +99,48 @@ The moved share and the new boundary overhead will be measured; the speed gain i
      op runs, prompt and one-token paths; not timed); the per-token cost of the pipe; and, as a separate variant with
      its own GGUF hash, a **bf16 output head** (the source is bf16, so the stored values are identical; check the
      round trip bitwise, the placement, speed, and the stage-0 gate before using it). The baseline stays the f32 head.
-3. **Full run (one evening, ~1 hour).** Pre-registered like inside-4b: 160 questions, the same budgets, Newcombe
-   interval with ±5 margin against inside-4b's C (135/160, 16.77 s median, 18.98 GiB), median time, 0 lock errors
-   required (any mismatch fails this design).
-   - Recorded: the clocks, the timing boundaries, and GPU memory measured the same way for both configurations:
-     nvidia-smi samples at a fixed cadence (prefill, generation, shutdown), each cooperating process by PID on the
-     V100's UUID, summed per sample, then the maximum of the sums; baseline and after-load values too; a failed query
-     is "unavailable", never 0. It's a sampled footprint, not an allocation peak, and the historical 18.98 GiB
-     (PyTorch peak allocated) can't be converted into it: re-measure the original C configuration the same way if a
-     like-for-like claim is wanted.
+3. **Full run (one evening, ~1-2 hours).** The registration below (v3, Codex stage-2 review c23fe76) is frozen
+   before any stage-3 data; nothing in it changes after the run starts.
+   - **Questions:** inside-4b's 160 (`inside4b/final-primary.jsonl`, sha256 `e3f98862352ad011...`), in file order;
+     no exclusions, retries or substitutions.
+   - **Arm S (primary):** the split runner (`llamacpp/run_split.py`) with the **bf16 output head** GGUF
+     (`qwen-half-f16-bf16head.gguf`, sha256 `643e78a920c52bce...`). Chosen on development data (the stage-0 fixtures
+     and the stage-2 pilot), before any stage-3 data: its stored values are bit-identical to the source, it picks the
+     same argmax as the f32 head at all 14,745 fixture positions, and it passes the stage-0 gate. The f32-head GGUF
+     stays the stage-0/2 reference; no full f32 run is part of this registration.
+   - **Frozen identities:** `results/llamacpp/stage3-artifacts.json` lists the sha256 of every artifact (the GGUF,
+     the helper and llama.cpp libraries, the runner, split_chat, the pipe client, inside-4b's run_qwenputer and frames,
+     upstream's chipformer sources at their commit, the checkpoint's tokenizer, config, chipformer.json and embedding
+     shard, the firmware, the questions, the scorer). The runner checks them all at startup (`--expect`) and refuses
+     to start on any difference. Upstream is qwenputer `ca13310` with one local change, the qwenputer-v100 loading
+     patch in `chat.py` (`results/llamacpp/upstream-chat-py.diff`: load straight to the GPU; Codex-verified then;
+     SplitChat doesn't use that loader, and inside-4b's C ran with it). llama.cpp is mainline `5e03bdd` (sm_70 build).
+   - **Preflight, in the same V100 session, right before the run:** the stage-0 split comparison with this exact
+     helper and GGUF, then `stage0_gate.py` must PASS (this also rules out a helper that answers EOS or anything
+     else wrong).
+   - **Budgets:** 8,192 processed text tokens and 2,000,000 chip tokens per question; the lock's separate cap of
+     2,000,000 machine records per call (a different unit, as in inside-4b); helper context 16,384 (the largest
+     prompt is 726 tokens; the runner refuses a prompt that can't fit with the text budget). Greedy, the lowest id
+     at a tie, EOS not fed, forced tokens as upstream, the computer on the executor only, no context shifting.
+   - **Comparison:** S against inside-4b's saved C (`results/inside4b-full/full-C`), all 160 paired, scored with
+     `stage5/score.py --compare S,C` (arm S added; unknown arms refused; inside-4b and stage 1 re-score identically):
+     **S minus C**, Newcombe method 10 with the covariance correction, 95% interval, ±5-point margins; difference
+     or equivalence only if the interval says so, else inconclusive. The four paired counts and every failure layer
+     are reported. **Latency rule (as inherited, S-relative):** median S <= 2 x median C and <= 60 s; the speed ratio
+     (median and summed time) is reported separately; no stricter speed target is registered.
+   - **Timing:** each question's outer time (reset, prompt rows, prefill, generation; startup excluded and reported
+     separately) and the inner chip/text buckets, which aren't compared with outer times. Clocks locked by the V100
+     lock; no warm-up beyond the loader's.
+   - **Memory:** S's sampled footprint by the method above (V100 UUID, both processes, through shutdown). **No
+     memory comparison with C is claimed** (C's 18.98 GiB is PyTorch's allocated peak, a different quantity).
+   - **Validity:** any lock error invalidates the design (the run stops, exit nonzero, "INVALID DESIGN"). A helper,
+     protocol, non-finite-output or OOM error stops the run as incomplete. Every attempted row is kept. A text or
+     chip budget stop or a wrong answer is a failed question, never a reason to rerun. If the run is interrupted by
+     infrastructure (power, the machine, an unrelated crash), one restart from the beginning into a new folder is
+     allowed and disclosed; no per-question reruns. Missing or duplicate ids withhold the verdict (the scorer
+     refuses). Failed memory queries make the memory figure unavailable, not the accuracy result.
    - It's port-versus-original evidence (engine, precision and process split together), not an isolated engine
-     effect.
+     effect, and not a native circuit in llama.cpp.
 4. **Write-up and your call on sharing:** a private results page; an optional upstream Qwenputer issue (I draft, you
    approve; nothing to llama.cpp, whose policy bans AI-written posts).
 5. *(Only if you want it after stage 4)* the circuit natively in llama.cpp: an exact executor op, or a precision

@@ -1,0 +1,17 @@
+diff --git a/experimental/riscv/chipformer/rv/chat.py b/experimental/riscv/chipformer/rv/chat.py
+index 2bfbb2d..386ab07 100644
+--- a/experimental/riscv/chipformer/rv/chat.py
++++ b/experimental/riscv/chipformer/rv/chat.py
+@@ -108,8 +108,10 @@ class RvChat:
+         self.path = Path(path)
+         self.meta = json.loads((self.path / "chipformer.json").read_text())
+         self.dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+-        self.model = Qwen3_5ForCausalLM.from_pretrained(self.path, dtype=torch.bfloat16)
+-        self.model = self.model.to(self.dev).eval()
++        # qwenputer-v100 patch: load straight onto the device (the 18.8 GB checkpoint would otherwise be built in
++        # host RAM first; the gateway has 16 GB)
++        self.model = Qwen3_5ForCausalLM.from_pretrained(self.path, dtype=torch.bfloat16, device_map=self.dev)
++        self.model = self.model.eval()
+         self.lm = self.model.model
+         self.tok = AutoTokenizer.from_pretrained(self.path)
+         self.T = BR.Text(self.path / "tokenizer.json")
