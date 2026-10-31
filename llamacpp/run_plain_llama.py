@@ -126,17 +126,22 @@ def main():
     tok = AutoTokenizer.from_pretrained(a.model)
     T = BR.Text(Path(a.model) / "tokenizer.json")
     qs = [json.loads(l) for l in open(a.questions) if l.strip()]
+    cfg = json.loads(Path(a.model, "config.json").read_text())
+    n_vocab = cfg.get("text_config", cfg)["vocab_size"]   # the GGUF's vocabulary (the embedding rows)
     t0 = time.time()
-    with open(Path(a.out, "helper-stderr.log"), "w") as herr, Helper(a.helper, a.gguf, 16384, stderr=herr) as h:
+    with open(Path(a.out, "helper-stderr.log"), "w") as herr, \
+            Helper(a.helper, a.gguf, 16384, stderr=herr, n_vocab=n_vocab) as h:
         be = LlamaBackend(h)
         be.prefill([1])                                  # wait until the model is loaded
         info = {"arm": "L", "engine": "llama.cpp via qwen_half_helper (token mode)", "load_seconds":
                 round(time.time() - t0, 1), "gguf": a.gguf, "gguf_sha256": RP.sha(a.gguf),
                 "helper_sha256": RP.sha(a.helper), "tokenizer_sha256": RP.sha(Path(a.model) / "tokenizer.json"),
+                "runner_sha256": RP.sha(__file__), "run_plain_sha256": RP.sha(RP.__file__),
+                "frames_sha256": RP.sha(frames.__file__), "client_sha256": RP.sha(sys.modules["helper_client"].__file__),
                 "firmware_sha256": RP.sha(RP.FIRMWARE), "max_new": a.max_new, "max_trace": a.max_trace,
                 "helper_gpu_mib_after_load": gpu_mib(h.p.pid)}
         Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
-        peak = info["helper_gpu_mib_after_load"] or 0
+        samples = [info["helper_gpu_mib_after_load"]]      # sampled after each question; None = query failed
         failed = None
         for n, q in enumerate(qs):
             ids = tok.apply_chat_template([{"role": "user", "content": q["prompt"]}], tools=[CH.CALC_TOOL],
@@ -149,7 +154,7 @@ def main():
             except Exception as e:  # noqa: BLE001
                 gen, n_text, calls, stop, trace_used, err = [], 0, [], None, 0, f"{type(e).__name__}: {e}"
             secs = round(time.time() - t, 2)
-            peak = max(peak, gpu_mib(h.p.pid) or 0)
+            samples.append(gpu_mib(h.p.pid))
             text = tok.decode(gen, skip_special_tokens=False)
             fr = frames.parse(text)
             row = {"id": q["id"], "group": q["group"], "arm": "L", "http": 200 if err is None else None,
@@ -170,7 +175,9 @@ def main():
             if err:
                 failed = err
                 break
-        info["helper_gpu_mib_peak"] = peak
+        ok = [m for m in samples if m is not None]
+        info["helper_gpu_mib_sampled_max"] = max(ok) if ok else None
+        info["helper_gpu_mib_samples_unavailable"] = len(samples) - len(ok)
         Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
     if failed:
         sys.exit(f"stopped: {failed}")

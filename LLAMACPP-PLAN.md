@@ -95,10 +95,19 @@ The moved share and the new boundary overhead will be measured; the speed gain i
      - the prompt and `_exec_hc` rows equal the fixtures bit for bit.
    - The lock checks every chip token, as in inside-4b. The live viewer gets a `--backend llama` switch. 12-question
      pilot.
+   - **Added after stage 0/1 reviews (Muse, Codex):** one short diagnostic run with `GGML_SCHED_DEBUG=2` (where each
+     op runs, prompt and one-token paths; not timed); the per-token cost of the pipe; and, as a separate variant with
+     its own GGUF hash, a **bf16 output head** (the source is bf16, so the stored values are identical; check the
+     round trip bitwise, the placement, speed, and the stage-0 gate before using it). The baseline stays the f32 head.
 3. **Full run (one evening, ~1 hour).** Pre-registered like inside-4b: 160 questions, the same budgets, Newcombe
    interval with ±5 margin against inside-4b's C (135/160, 16.77 s median, 18.98 GiB), median time, 0 lock errors
    required (any mismatch fails this design).
-   - Recorded: the clocks, the timing boundaries, and the summed GPU memory of both cooperating processes.
+   - Recorded: the clocks, the timing boundaries, and GPU memory measured the same way for both configurations:
+     nvidia-smi samples at a fixed cadence (prefill, generation, shutdown), each cooperating process by PID on the
+     V100's UUID, summed per sample, then the maximum of the sums; baseline and after-load values too; a failed query
+     is "unavailable", never 0. It's a sampled footprint, not an allocation peak, and the historical 18.98 GiB
+     (PyTorch peak allocated) can't be converted into it: re-measure the original C configuration the same way if a
+     like-for-like claim is wanted.
    - It's port-versus-original evidence (engine, precision and process split together), not an isolated engine
      effect.
 4. **Write-up and your call on sharing:** a private results page; an optional upstream Qwenputer issue (I draft, you

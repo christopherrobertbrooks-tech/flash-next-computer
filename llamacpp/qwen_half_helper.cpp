@@ -6,7 +6,7 @@
 //             type END   (3): exit 0
 //             type TOKENS(4): like ROWS but i32 ids[n] instead of rows (the plain-model control)
 //   reply:    i32 status (0 ok), then for ROWS: i32 ids[5], f32 vals[5] (top 5 over the whole vocabulary, which is
-//             the text vocabulary in this GGUF). status != 0: u32 len, char msg[len], then the helper exits 1.
+//             the text vocabulary in this GGUF). Any non-finite logit is an error, never a reply. status != 0: u32 len, char msg[len], then the helper exits 1.
 // Positions follow llama.cpp's M-RoPE text rule [p, p, p, 0], which matches Qwenputer's p4 (three rope sections = p,
 // position ids = p). Rows must be finite. One process = one model; it never takes the V100 lock (its parent holds it).
 //
@@ -126,6 +126,7 @@ int main(int argc, char ** argv) {
         for (int k = 0; k < 5; ++k) { ids[k] = -1; vals[k] = -INFINITY; }
         for (int t = 0; t < n_vocab; ++t) {
             const float v = lg[t];
+            if (!std::isfinite(v)) { fail("non-finite logit at id " + std::to_string(t)); }
             if (v > vals[4]) {
                 int k = 4;
                 while (k > 0 && v > vals[k - 1]) { vals[k] = vals[k - 1]; ids[k] = ids[k - 1]; --k; }

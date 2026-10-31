@@ -1,7 +1,9 @@
 """The Python side of qwen_half_helper's pipe (see qwen_half_helper.cpp for the protocol), for the runners. Fails
-closed: a helper error, a short read (the child died or closed its output) or a bad reply raises HelperError; close()
-always ends the child (END, then kill after a timeout). Use it as a context manager."""
-import struct, subprocess
+closed: a helper error, a short read (the child died or closed its output), no reply within the timeout, or a bad
+reply (ids outside the vocabulary or repeated, non-finite values, values not in descending order) raises
+HelperError; close() always ends the child (END, then kill after a timeout). As a context manager, a nonzero helper
+exit on a normal exit also raises."""
+import math, os, select, struct, subprocess, time
 
 import numpy as np
 
@@ -11,22 +13,31 @@ class HelperError(RuntimeError):
 
 
 class Helper:
-    def __init__(self, exe, gguf, n_ctx=16384, stderr=None):
+    def __init__(self, exe, gguf, n_ctx=16384, stderr=None, n_vocab=None, timeout=300.0):
         self.p = subprocess.Popen([exe, gguf, str(n_ctx)], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=stderr)
+                                  stderr=stderr, bufsize=0)
+        self.n_vocab, self.timeout = n_vocab, timeout
 
     def __enter__(self):
         return self
 
-    def __exit__(self, *exc):
-        self.close()
+    def __exit__(self, exc_type, *exc):
+        rc = self.close()
+        if exc_type is None and rc != 0:
+            raise HelperError(f"helper exited with code {rc}")
 
     def _read(self, n):
-        b = self.p.stdout.read(n)
-        if b is None or len(b) != n:
-            raise HelperError(f"helper output ended (read {0 if b is None else len(b)} of {n} bytes; "
-                              f"exit code {self.p.poll()})")
-        return b
+        buf, end = b"", time.monotonic() + self.timeout
+        fd = self.p.stdout.fileno()
+        while len(buf) < n:
+            left = end - time.monotonic()
+            if left <= 0 or not select.select([fd], [], [], left)[0]:
+                raise HelperError(f"no reply from the helper within {self.timeout:.0f} s (read {len(buf)} of {n})")
+            chunk = os.read(fd, n - len(buf))
+            if not chunk:
+                raise HelperError(f"helper output ended (read {len(buf)} of {n} bytes; exit code {self.p.poll()})")
+            buf += chunk
+        return buf
 
     def _send(self, data):
         try:
@@ -44,6 +55,11 @@ class Helper:
             return None
         ids = list(struct.unpack("<5i", self._read(20)))
         vals = list(struct.unpack("<5f", self._read(20)))
+        hi = self.n_vocab if self.n_vocab is not None else 2**31
+        if not all(0 <= t < hi for t in ids) or len(set(ids)) != 5:
+            raise HelperError(f"bad reply ids {ids}")
+        if not all(math.isfinite(v) for v in vals) or any(a < b for a, b in zip(vals, vals[1:])):
+            raise HelperError(f"bad reply values {vals}")
         return ids, vals
 
     def reset(self):
