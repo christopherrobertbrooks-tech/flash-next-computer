@@ -1,0 +1,1 @@
+model loaded in 3.6 s, arm R, 4.21 B params, GPU 7.8 GiB
