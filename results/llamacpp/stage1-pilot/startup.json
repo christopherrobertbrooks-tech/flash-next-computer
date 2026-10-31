@@ -1,0 +1,14 @@
+{
+ "arm": "L",
+ "engine": "llama.cpp via qwen_half_helper (token mode)",
+ "load_seconds": 7.7,
+ "gguf": "/mnt/nvme/qwen35-4b/gguf/qwen35-4b-f16.gguf",
+ "gguf_sha256": "958a023c89b1bdf35776d011ec295c243d1aea8c21f122f74207c6a8bdfdbc18",
+ "helper_sha256": "9383c5668a1cecebfc1ce6845890150c2c72f2540fe2abbe059e25fb0976eab3",
+ "tokenizer_sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42",
+ "firmware_sha256": "b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d",
+ "max_new": 8192,
+ "max_trace": 2000000,
+ "helper_gpu_mib_after_load": 11006,
+ "helper_gpu_mib_peak": 11072
+}
