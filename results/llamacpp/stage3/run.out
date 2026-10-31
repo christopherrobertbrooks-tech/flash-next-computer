@@ -1,0 +1,196 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+== identity check 05:19:22 PM
+106 artifacts match
+== preflight: stage-0 split comparison with this helper and GGUF 05:20:01 PM
+final-1-001 114
+final-1-002 122
+final-1-003 190
+final-2-001 1485
+final-2-002 2422
+final-2-003 2907
+final-3-001 469
+final-3-002 649
+final-3-003 297
+final-4-001 2381
+final-4-002 1311
+final-4-003 2398
+reset check (A, B, ..., A): {'id': 'final-1-001', 'same': True}
+final-1-001       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-002       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-003      129 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-2-001     1460 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-2-002     2394 positions | split disagree   5 (>= 1.0 logit: 0) | control disagree   4
+final-2-003     2801 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-001      437 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-3-002      624 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-003      269 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-4-001     2164 positions | split disagree   8 (>= 1.0 logit: 0) | control disagree   7
+final-4-002     1126 positions | split disagree   2 (>= 1.0 logit: 0) | control disagree   4
+final-4-003     2174 positions | split disagree  10 (>= 1.0 logit: 0) | control disagree   6
+hard checks: all passed. Over 13746 Qwen-chosen positions (greedy argmax, lowest id at a tie): split 99.782%, control 99.796% (rule: split >= control - 1.0); questions with a split disagreement at margin >= 1.0: 0 (rule: <= 2)
+PREMISE PASS
+== stage 3: 160 questions 05:25:23 PM
+  1/160 final-1-001          7.1s eos calls 1 chip 3791 lock_error None
+  2/160 final-1-002          5.0s eos calls 1 chip 3511 lock_error None
+  3/160 final-1-003          6.7s eos calls 1 chip 3968 lock_error None
+  4/160 final-1-004          5.4s eos calls 1 chip 3118 lock_error None
+  5/160 final-1-005          5.2s eos calls 1 chip 3094 lock_error None
+  6/160 final-1-006          5.1s eos calls 1 chip 3950 lock_error None
+  7/160 final-1-007          4.5s eos calls 1 chip 3901 lock_error None
+  8/160 final-1-008          5.1s eos calls 1 chip 3940 lock_error None
+  9/160 final-1-009          5.5s eos calls 1 chip 3280 lock_error None
+ 10/160 final-1-010          6.3s eos calls 1 chip 3708 lock_error None
+ 11/160 final-1-011          6.9s eos calls 1 chip 4080 lock_error None
+ 12/160 final-1-012          5.8s eos calls 1 chip 4694 lock_error None
+ 13/160 final-1-013          5.4s eos calls 1 chip 3193 lock_error None
+ 14/160 final-1-014          7.0s eos calls 1 chip 4200 lock_error None
+ 15/160 final-1-015          7.2s eos calls 1 chip 8405 lock_error None
+ 16/160 final-1-016          5.0s eos calls 1 chip 3057 lock_error None
+ 17/160 final-1-017          4.5s eos calls 1 chip 3425 lock_error None
+ 18/160 final-1-018          4.7s eos calls 1 chip 4198 lock_error None
+ 19/160 final-1-019          4.9s eos calls 1 chip 4084 lock_error None
+ 20/160 final-1-020          5.1s eos calls 1 chip 3996 lock_error None
+ 21/160 final-1-021          4.7s eos calls 1 chip 3576 lock_error None
+ 22/160 final-1-022          7.3s eos calls 1 chip 5995 lock_error None
+ 23/160 final-1-023          6.3s eos calls 1 chip 4768 lock_error None
+ 24/160 final-1-024          9.4s eos calls 1 chip 11334 lock_error None
+ 25/160 final-1-025         17.7s eos calls 1 chip 19104 lock_error None
+ 26/160 final-1-026          5.5s eos calls 1 chip 3128 lock_error None
+ 27/160 final-1-027          8.2s eos calls 1 chip 9694 lock_error None
+ 28/160 final-1-028          3.4s eos calls 1 chip 2655 lock_error None
+ 29/160 final-1-029          6.4s eos calls 1 chip 3803 lock_error None
+ 30/160 final-1-030          4.3s eos calls 1 chip 2647 lock_error None
+ 31/160 final-1-031          5.6s eos calls 1 chip 3324 lock_error None
+ 32/160 final-1-032          5.7s eos calls 1 chip 3975 lock_error None
+ 33/160 final-1-033          4.5s eos calls 1 chip 3235 lock_error None
+ 34/160 final-1-034          6.0s eos calls 1 chip 3614 lock_error None
+ 35/160 final-1-035          6.3s eos calls 1 chip 3710 lock_error None
+ 36/160 final-1-036          5.2s eos calls 1 chip 3643 lock_error None
+ 37/160 final-1-037          6.3s eos calls 1 chip 7115 lock_error None
+ 38/160 final-1-038          7.3s eos calls 1 chip 8741 lock_error None
+ 39/160 final-1-039          4.7s eos calls 1 chip 4287 lock_error None
+ 40/160 final-1-040          4.3s eos calls 1 chip 3365 lock_error None
+ 41/160 final-1-041          4.3s eos calls 1 chip 3072 lock_error None
+ 42/160 final-1-042          4.7s eos calls 1 chip 3799 lock_error None
+ 43/160 final-1-043          5.4s eos calls 1 chip 3700 lock_error None
+ 44/160 final-1-044          7.9s eos calls 1 chip 9666 lock_error None
+ 45/160 final-1-045          4.8s eos calls 1 chip 3711 lock_error None
+ 46/160 final-1-046          4.4s eos calls 1 chip 2694 lock_error None
+ 47/160 final-1-047          5.2s eos calls 1 chip 4784 lock_error None
+ 48/160 final-1-048          5.8s eos calls 1 chip 3377 lock_error None
+ 49/160 final-1-049          4.7s eos calls 1 chip 3840 lock_error None
+ 50/160 final-1-050          5.3s eos calls 1 chip 3211 lock_error None
+ 51/160 final-1-051          5.0s eos calls 1 chip 4063 lock_error None
+ 52/160 final-1-052          5.1s eos calls 1 chip 3997 lock_error None
+ 53/160 final-1-053         34.4s eos calls 1 chip 15934 lock_error None
+ 54/160 final-1-054          4.2s eos calls 1 chip 2627 lock_error None
+ 55/160 final-1-055          3.6s eos calls 1 chip 2875 lock_error None
+ 56/160 final-1-056          5.6s eos calls 1 chip 4349 lock_error None
+ 57/160 final-1-057         20.3s eos calls 1 chip 22676 lock_error None
+ 58/160 final-1-058          3.4s eos calls 1 chip 2687 lock_error None
+ 59/160 final-1-059          4.9s eos calls 1 chip 2977 lock_error None
+ 60/160 final-1-060        182.4s text budget calls 1 chip 18074 lock_error None
+ 61/160 final-1-061          6.2s eos calls 1 chip 4894 lock_error None
+ 62/160 final-1-062         92.6s eos calls 1 chip 14510 lock_error None
+ 63/160 final-1-063          8.2s eos calls 1 chip 10210 lock_error None
+ 64/160 final-1-064          7.7s eos calls 1 chip 8879 lock_error None
+ 65/160 final-1-065          6.5s eos calls 1 chip 6954 lock_error None
+ 66/160 final-1-066          5.7s eos calls 1 chip 3231 lock_error None
+ 67/160 final-1-067          5.1s eos calls 1 chip 3051 lock_error None
+ 68/160 final-1-068          5.4s eos calls 1 chip 3237 lock_error None
+ 69/160 final-1-069          5.4s eos calls 1 chip 4134 lock_error None
+ 70/160 final-1-070          6.0s eos calls 1 chip 3522 lock_error None
+ 71/160 final-2-001         46.3s eos calls 1 chip 26088 lock_error None
+ 72/160 final-2-002         89.8s eos calls 1 chip 36028 lock_error None
+ 73/160 final-2-003        114.8s eos calls 3 chip 43572 lock_error None
+ 74/160 final-2-004          5.0s eos calls 1 chip 4225 lock_error None
+ 75/160 final-2-005          6.1s eos calls 1 chip 5056 lock_error None
+ 76/160 final-2-006          5.3s eos calls 1 chip 4347 lock_error None
+ 77/160 final-2-007         47.7s eos calls 1 chip 47127 lock_error None
+ 78/160 final-2-008        134.6s eos calls 1 chip 32160 lock_error None
+ 79/160 final-2-009          4.0s eos calls 1 chip 3277 lock_error None
+ 80/160 final-2-010         46.5s eos calls 1 chip 37600 lock_error None
+ 81/160 final-3-001         12.1s eos calls 1 chip 3869 lock_error None
+ 82/160 final-3-002         27.0s eos calls 1 chip 5686 lock_error None
+ 83/160 final-3-003          7.8s eos calls 1 chip 3339 lock_error None
+ 84/160 final-3-004         21.4s eos calls 1 chip 7993 lock_error None
+ 85/160 final-3-005         65.3s eos calls 5 chip 13913 lock_error None
+ 86/160 final-3-006         23.0s eos calls 2 chip 10627 lock_error None
+ 87/160 final-3-007          7.2s eos calls 1 chip 3870 lock_error None
+ 88/160 final-3-008          9.8s eos calls 1 chip 3388 lock_error None
+ 89/160 final-3-009         11.4s eos calls 1 chip 3519 lock_error None
+ 90/160 final-3-010         10.8s eos calls 1 chip 3392 lock_error None
+ 91/160 final-3-011         14.8s eos calls 1 chip 3647 lock_error None
+ 92/160 final-3-012         15.2s eos calls 1 chip 6251 lock_error None
+ 93/160 final-3-013         34.2s eos calls 4 chip 9555 lock_error None
+ 94/160 final-3-014         20.4s eos calls 1 chip 3512 lock_error None
+ 95/160 final-3-015         26.3s eos calls 1 chip 4103 lock_error None
+ 96/160 final-3-016          7.2s eos calls 1 chip 3155 lock_error None
+ 97/160 final-3-017         10.4s eos calls 1 chip 3317 lock_error None
+ 98/160 final-3-018          7.7s eos calls 1 chip 3378 lock_error None
+ 99/160 final-3-019         56.4s eos calls 2 chip 8718 lock_error None
+100/160 final-3-020          6.0s eos calls 0 chip 0 lock_error None
+101/160 final-3-021          9.2s eos calls 1 chip 3181 lock_error None
+102/160 final-3-022         46.6s eos calls 5 chip 16005 lock_error None
+103/160 final-3-023         36.7s eos calls 2 chip 8100 lock_error None
+104/160 final-3-024         33.0s eos calls 3 chip 8646 lock_error None
+105/160 final-3-025          8.0s eos calls 1 chip 3388 lock_error None
+106/160 final-3-026         10.4s eos calls 1 chip 3493 lock_error None
+107/160 final-3-027        102.7s eos calls 3 chip 19186 lock_error None
+108/160 final-3-028         10.9s eos calls 0 chip 0 lock_error None
+109/160 final-3-029          8.5s eos calls 1 chip 3252 lock_error None
+110/160 final-3-030         50.4s eos calls 3 chip 10854 lock_error None
+111/160 final-3-031         10.2s eos calls 1 chip 3414 lock_error None
+112/160 final-3-032         16.7s eos calls 0 chip 0 lock_error None
+113/160 final-3-033         17.1s eos calls 1 chip 6024 lock_error None
+114/160 final-3-034         13.6s eos calls 0 chip 0 lock_error None
+115/160 final-3-035         84.8s eos calls 4 chip 11928 lock_error None
+116/160 final-3-036         11.8s eos calls 1 chip 3550 lock_error None
+117/160 final-3-037          6.3s eos calls 0 chip 0 lock_error None
+118/160 final-3-038          7.4s eos calls 0 chip 0 lock_error None
+119/160 final-3-039         49.8s eos calls 3 chip 17393 lock_error None
+120/160 final-3-040         16.4s eos calls 1 chip 7533 lock_error None
+121/160 final-4-001        107.2s eos calls 14 chip 43250 lock_error None
+122/160 final-4-002         54.2s eos calls 6 chip 15843 lock_error None
+123/160 final-4-003         18.8s eos calls 0 chip 0 lock_error None
+124/160 final-4-004        108.7s eos calls 8 chip 21357 lock_error None
+125/160 final-4-005         15.6s eos calls 0 chip 0 lock_error None
+126/160 final-4-006         48.4s eos calls 4 chip 11152 lock_error None
+127/160 final-4-007        172.4s text budget calls 0 chip 0 lock_error None
+128/160 final-4-008         45.8s eos calls 3 chip 7055 lock_error None
+129/160 final-4-009         63.7s eos calls 8 chip 20448 lock_error None
+130/160 final-4-010         74.0s eos calls 11 chip 26641 lock_error None
+131/160 final-4-011         81.5s eos calls 8 chip 20580 lock_error None
+132/160 final-4-012         91.8s eos calls 14 chip 34053 lock_error None
+133/160 final-4-013         46.8s eos calls 3 chip 7753 lock_error None
+134/160 final-4-014         24.2s eos calls 2 chip 5456 lock_error None
+135/160 final-4-015         51.2s eos calls 5 chip 14610 lock_error None
+136/160 final-4-016         44.4s eos calls 8 chip 18815 lock_error None
+137/160 final-4-017         53.9s eos calls 7 chip 17561 lock_error None
+138/160 final-4-018         75.5s eos calls 16 chip 37541 lock_error None
+139/160 final-4-019        173.8s text budget calls 1 chip 2739 lock_error None
+140/160 final-4-020         69.8s eos calls 10 chip 24675 lock_error None
+141/160 final-4-021         48.1s eos calls 9 chip 23291 lock_error None
+142/160 final-4-022        153.3s eos calls 11 chip 56409 lock_error None
+143/160 final-4-023         34.1s eos calls 4 chip 10019 lock_error None
+144/160 final-4-024         92.6s eos calls 10 chip 25177 lock_error None
+145/160 final-4-025        109.8s eos calls 7 chip 21651 lock_error None
+146/160 final-4-026        111.6s eos calls 0 chip 0 lock_error None
+147/160 final-4-027        172.3s text budget calls 0 chip 0 lock_error None
+148/160 final-4-028         55.4s eos calls 7 chip 20633 lock_error None
+149/160 final-4-029        103.4s eos calls 2 chip 5675 lock_error None
+150/160 final-4-030         27.6s eos calls 3 chip 7999 lock_error None
+151/160 final-4-031         59.9s eos calls 2 chip 14021 lock_error None
+152/160 final-4-032         78.4s eos calls 9 chip 24852 lock_error None
+153/160 final-4-033        120.9s eos calls 8 chip 24726 lock_error None
+154/160 final-4-034         49.4s eos calls 8 chip 20560 lock_error None
+155/160 final-4-035         27.4s eos calls 2 chip 5497 lock_error None
+156/160 final-4-036         93.1s eos calls 12 chip 35906 lock_error None
+157/160 final-4-037         43.3s eos calls 6 chip 17416 lock_error None
+158/160 final-4-038         58.7s eos calls 4 chip 10528 lock_error None
+159/160 final-4-039         91.8s eos calls 13 chip 31968 lock_error None
+160/160 final-4-040         38.3s eos calls 8 chip 19584 lock_error None
+done
+== done 06:55:04 PM
+v100: clock restored; released
