@@ -115,3 +115,96 @@ measure the widened circuit model's speed, or demonstrate the split circuit
 port. No repeated timing trial or causal attribution follows from these single
 historical runs. The numerical guard should be fixed before relying on the
 same helper as a fail-closed split-runner component.
+
+## Pass 2 — guided
+
+Opened `REVIEW-LLAMACPP-STAGE1-PASS2.md` and the results narrative only after
+blind commit `50b81e2` was successfully pushed to origin.
+
+### Narrative and additional findings
+
+3. **NIT — qualify the speed conclusion and divergence explanation.**
+   The page says “Speed is the robust result” and “f16 and bf16 pick differently
+   at near-ties.” The measured speed advantage is substantial and supported by
+   both aggregate token throughput and median question latency. However, this
+   is one run per configuration, with different trajectories, and does not
+   establish timing repeatability or attribute each free-running divergence to
+   precision/near-ties. Replace with: “The observed speed advantage is substantial
+   in this comparison: aggregate text throughput is 72.7 versus 36.8 tokens/s and
+   median latency is 4.67 versus 8.63 seconds. Engine and precision changed
+   together; trajectories differ, and timing repeatability was not measured.”
+   Replace the causal divergence sentence with: “Generated texts differ on
+   79/160 questions; these runs do not isolate the cause of each divergence.”
+   Independently verified 81/160 identical raw texts. Accuracy wording is already
+   correct: neither difference nor equivalence is established. No correction to
+   the page's numerical table is needed.
+
+### Answers to the guided questions
+
+1. The page agrees with the independent totals, paired outcomes, confidence
+   interval and failure counts. The combined-change caveat and memory caveat
+   are appropriate. State that tokens/s includes the full question timing
+   boundary, rather than implying a model-only decode benchmark. The remaining
+   wording qualification is finding 3. The CPU controls pass, but do not close
+   findings 1 and 2.
+
+2. Using current main's emulator/generation copy is acceptable for this saved
+   comparison, with the disclosed changes. Neither L nor R reaches the trace
+   cap, so the historical `>` versus current `>=` difference cannot determine
+   an answer here. Preserve the exact-cap controls for future runs and record
+   the deployed runner/emulator hashes alongside model/helper hashes so the
+   compatibility argument remains reproducible. Do not retroactively claim
+   every line is identical to the historical R runner.
+
+3. For stage 3, sample device memory with the same nvidia-smi query for both
+   configurations. Identify each cooperating process by PID and pinned GPU
+   UUID; sum their memory at each sample, then take the maximum of the sums.
+   Do not sum independent per-process maxima from different instants. Record
+   baseline, after-load, and sampled maximum, the sampling cadence and scope,
+   and cover prefill, generation and shutdown. Label it a sampled process
+   footprint, not an exact allocation peak; retain per-process values too.
+   Missing/failed queries must be recorded as unavailable, not converted to
+   zero (the present runner uses `None`/`or 0` in its samples). Re-measure the
+   original comparison configuration with that same method if a like-for-like
+   claim is wanted; the historical 8.98 GiB number cannot be converted into it.
+
+4. Before stage 2, fix the finite-output/reply guard (finding 1) and strengthen
+   the production-backend checks (finding 2). Retain the plan's A,B,A reset,
+   row-bit-equality, prefill/step-history, circuit ownership, chip-position and
+   forced-echo/HALT controls. These must exercise the split path, not infer its
+   correctness from stage 1's token mode. Verify that helper exceptions, premature
+   termination, lock mismatch and budget exhaustion cannot become successful
+   scored answers. Check subprocess exit status on normal context exit too:
+   `Helper.close()` returns it but `__exit__` ignores it. A bounded request
+   timeout would also improve handling of a live child that never replies;
+   currently read calls can block before the close timeout is reached.
+
+   Scheduler diagnostics are worth adding as a separate, short diagnostic run.
+   The pinned local `ggml-backend.cpp` does read `GGML_SCHED_DEBUG` as an integer;
+   use `GGML_SCHED_DEBUG=2` to inspect placement, including prompt and one-token
+   decode paths. Save logs and account for deliberate host operations and
+   transfers. Do not include diagnostic overhead in timed results or treat
+   mere CUDA visibility as proof every expensive operation runs there.
+
+   A bf16 head is a worthwhile optional memory experiment, not a stage-2
+   correctness shortcut. Read-only safetensors metadata confirms the source
+   tied embedding is BF16, shape [478656,3968]. The cut copies its first 248320
+   rows unchanged. Representing those source values in bf16 rather than f32
+   preserves their stored values and halves that tensor's storage (about
+   3.67 to 1.84 GiB); verify the converted tensor actually round-trips bitwise.
+   This does not guarantee identical matmul arithmetic, argmax, device
+   placement, actual resident memory, or V100 speed. Check the pinned backend's
+   supported path, inspect placement, and rerun the same fixture/argmax gates
+   before adopting it. Record a distinct GGUF hash and test it as a separate
+   variant; do not silently change the baseline or all tensors at once.
+
+### Disposition
+
+The saved stage-1 numerical result is reproducible. Its interpretation is a
+promising speed observation with inconclusive accuracy, not a completed
+Qwenputer port. One fail-closed guard needs correction before stage 2; the
+production-backend control and wording improvements are specified above.
+No GPU jobs were launched, so this review acquired no V100 lock or model memory
+and had none to release. All gateway execution was CPU-only; no source/deployment
+files were edited there. Only this findings document is changed in the review
+branch.
