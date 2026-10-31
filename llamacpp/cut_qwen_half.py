@@ -29,7 +29,9 @@ def main():
     bv = json.loads((base / "tokenizer.json").read_text())
     qmap = {i: t for t, i in qv["model"]["vocab"].items()} | {a["id"]: a["content"] for a in qv["added_tokens"]}
     bmap = {i: t for t, i in bv["model"]["vocab"].items()} | {a["id"]: a["content"] for a in bv["added_tokens"]}
-    diff = [i for i in range(v0) if qmap.get(i) != bmap.get(i)]
+    # Qwenputer names the unused padding slots <|reserved_N|>; the base tokenizer leaves them empty. Only those may differ.
+    diff = [i for i in range(v0) if qmap.get(i) != bmap.get(i)
+            and not (bmap.get(i) is None and str(qmap.get(i)).startswith("<|reserved_"))]
     assert not diff, f"tokenizers differ on {len(diff)} text ids, first {diff[:5]}"
     assert max(bmap) < v0, (max(bmap), v0)
 

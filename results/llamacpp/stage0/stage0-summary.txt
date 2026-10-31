@@ -1,0 +1,45 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+final-1-001      eos           8.5s text 113 chip 3791 calls 1 lock_error None
+final-1-002      eos           7.4s text 121 chip 3511 calls 1 lock_error None
+final-1-003      eos           9.9s text 189 chip 3968 calls 1 lock_error None
+final-2-001      eos          66.9s text 1484 chip 26088 calls 1 lock_error None
+final-2-002      eos         106.1s text 2421 chip 36028 calls 1 lock_error None
+final-2-003      eos         129.8s text 2906 chip 45910 calls 4 lock_error None
+final-3-001      eos          19.2s text 468 chip 3869 calls 1 lock_error None
+final-3-002      eos          26.3s text 648 chip 5686 calls 1 lock_error None
+final-3-003      eos          13.0s text 296 chip 3339 calls 1 lock_error None
+final-4-001      eos          97.4s text 2380 chip 22475 calls 9 lock_error None
+final-4-002      eos          57.7s text 1310 chip 20161 calls 8 lock_error None
+final-4-003      eos          96.8s text 2397 chip 20924 calls 9 lock_error None
+done
+v100: clock restored; released
+final-1-001      438 prompt rows: equal
+final-1-002      426 prompt rows: equal
+final-1-003      448 prompt rows: equal
+final-2-001      438 prompt rows: equal
+final-2-002      447 prompt rows: equal
+final-2-003      436 prompt rows: equal
+final-3-001      460 prompt rows: equal
+final-3-002      479 prompt rows: equal
+final-3-003      434 prompt rows: equal
+final-4-001      625 prompt rows: equal
+final-4-002      557 prompt rows: equal
+final-4-003      565 prompt rows: equal
+PROMPT ROWS EQUAL on every fixture
+final-1-001       84 Qwen positions | split disagree   0 (first -, margin 0.00; >=1.0: 0) | control disagree   0
+final-1-002       84 Qwen positions | split disagree   0 (first -, margin 0.00; >=1.0: 0) | control disagree   0
+final-1-003      129 Qwen positions | split disagree   0 (first -, margin 0.00; >=1.0: 0) | control disagree   0
+final-2-001     1460 Qwen positions | split disagree   1 (first 458, margin 0.00; >=1.0: 0) | control disagree   2
+final-2-002     2394 Qwen positions | split disagree   3 (first 1321, margin 0.00; >=1.0: 0) | control disagree   5
+final-2-003     2801 Qwen positions | split disagree   2 (first 8, margin 0.00; >=1.0: 0) | control disagree   3
+final-3-001      437 Qwen positions | split disagree   0 (first -, margin 0.00; >=1.0: 0) | control disagree   1
+final-3-002      624 Qwen positions | split disagree   1 (first 548, margin 0.00; >=1.0: 0) | control disagree   2
+final-3-003      269 Qwen positions | split disagree   1 (first 243, margin 0.00; >=1.0: 0) | control disagree   1
+final-4-001     2164 Qwen positions | split disagree  10 (first 6, margin 0.00; >=1.0: 0) | control disagree  10
+final-4-002     1126 Qwen positions | split disagree   1 (first 1286, margin 0.00; >=1.0: 0) | control disagree   2
+final-4-003     2174 Qwen positions | split disagree  10 (first 15, margin 0.00; >=1.0: 0) | control disagree   7
+pooled over 13746 positions: split 99.79%  control 99.76%  (rule: split >= control - 1.0); questions with a split disagreement at margin >= 1.0: 0 (rule: <= 2)
+PREMISE PASS
+b0f08db8bdaaeb198006afc2958163598e9dcf422ea0a37a5f2839ff3ce5852f  qwen-half-f16.gguf
+9383c5668a1cecebfc1ce6845890150c2c72f2540fe2abbe059e25fb0976eab3  qwen_half_helper

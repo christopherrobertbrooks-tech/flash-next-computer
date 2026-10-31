@@ -17,7 +17,8 @@ def main():
     bad = 0
     for f in man["fixtures"]:
         fx = torch.load(d / f"{f['id']}.pt", weights_only=False)
-        hf, ex = fx["prefill_rows"], fx["executor_prompt_rows"].to(hf.dtype)
+        hf = fx["prefill_rows"]
+        ex = fx["executor_prompt_rows"].to(hf.dtype)
         assert hf.shape == ex.shape == (len(fx["prompt_ids"]), hf.shape[1]), (hf.shape, ex.shape)
         ne = (hf != ex)
         rows = ne.any(1).nonzero().flatten().tolist()
