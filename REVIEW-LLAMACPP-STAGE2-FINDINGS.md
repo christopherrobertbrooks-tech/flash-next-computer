@@ -342,3 +342,141 @@ validated full-run protocol. No new GPU jobs were used. A final read-only
 nvidia-smi check showed the V100 at 13 MiB with no listed compute process;
 shared 4070 processes were untouched. No main/source branch or deployment edit
 is part of this review.
+
+## Confirm
+
+Merged `origin/llamacpp-port` at `345ab8be6b22808a53d2ffb10a66acc8bc7c89b7`
+into this review branch and followed `REVIEW-LLAMACPP-STAGE2-CONFIRM.md`.
+Re-ran the requested independent counterexamples before reading the history
+production/oracle files, results narrative and full registration changes.
+No stage-3 invocation, model load or GPU job was performed.
+
+### Findings 1–5
+
+**All five original findings are closed**, with the numerical/history scope
+remaining explicitly limited to the development fixtures and recorded histories.
+
+1. **CLOSED — helper/history controls.** On CPU, the exact stage-0 gate accepts
+   the saved bf16-head replies and rejects a copy whose argmax is EOS everywhere.
+   The registered launcher now reruns the comparison and gate with the actual
+   helper/GGUF immediately before the long run, with shell pipefail/set-e.
+   The new history oracle compares the HF chip-layer path against the split's
+   actual history, rather than stopping at the old fixture's first divergence.
+   Independently verified hashes of all 12 history and 12 oracle files, their
+   matching IDs, EOS/no-lock-error status, prompt and text positions/counts,
+   ownership lengths, and every row/choice comparison. Reproduced **23956 rows
+   (5753 prompt + 18203 text)** and **189771 circuit-owned choices**. The supplied
+   comparison program and its three negative controls all pass; a separate
+   synthetic post-divergence corruption is rejected too. This closes the
+   earlier suffix blind spot without claiming that the 160 unseen trajectories
+   have already been validated.
+
+2. **CLOSED — memory scope.** The repeated-PID/two-GPU counterexample now gives
+   the V100-only sum. Sampler tests distinguish missing helper during run
+   (unavailable) from shutdown (expected exit), retain simultaneous sums and
+   timestamps, and finish with a joined thread/final sample. Main keeps the
+   sampler alive during bounded helper close, then finalizes it in finally.
+   The phase transition is before close, not after it. This is sampled memory,
+   not a continuous allocation peak; C's historical peak is not compared.
+
+3. **CLOSED — pipe/throughput wording.** The corrected page explicitly says
+   the unmatched measurements do not isolate pipe overhead or the residual
+   computer-side cost. Storage is now GiB, bandwidth attribution is qualified,
+   and text-bucket versus whole-question time is distinguished.
+
+4. **CLOSED — scoring S.** Ran `test_score_arms.py` locally: S,C scores both
+   real 12-question subsets, gives S_minus_C=-0.0833 and pairs 8/1/2/1;
+   unknown arms, absent comparators and unsupported first arms fail. Both
+   historical complete score objects (inside-4b and stage 1) reproduce exactly.
+   Source now includes S in scoring and chain diagnostics, and S-first timing
+   uses S's median. This remains a pilot regression, not a stage-3 result.
+
+5. **CLOSED — lock error invalidates the run.** A lock error with right-looking
+   `ANSWER: 4` text now returns invalid design after saving exactly one row,
+   with no later questions; main converts that status into nonzero exit.
+   Exceptions remain incomplete. Independently suppressed the final lock-stop
+   return in an in-memory mutation: the new runner control fails and exits 1,
+   while the unchanged controls pass. This is evidence that the validity test
+   can detect the original regression. The saved row's `run.stop` still says
+   eos when its last token is EOS, but the explicit design status and mismatch
+   record override it; the run is not accepted.
+
+Runner controls were exercised locally with the production functions extracted
+unchanged and tokenizer/reference-machine dependencies replaced by small fakes;
+this avoids remote writes and unavailable local torch dependencies. They cover
+run validity, context preflight, sampler and artifact verification, not GPU
+integration. The history comparison/gate runs used the real saved tensors and
+existing CPU torch runtime on the gateway, with CUDA hidden and no writes.
+
+### Registration and remaining findings
+
+6. **REDLINE — finish freezing the analysis identity before starting stage 3.**
+   Plan v3 says stage3-artifacts.json includes “the scorer” and that the runner
+   checks “them all.” Its actual 106-file list, and make_stage3_artifacts.py,
+   include neither stage5/score.py nor its imported computer/stage4_requests.py.
+   The original C comparison records are also referenced by path rather than
+   frozen in this manifest. This is an analysis-provenance gap, not a remaining
+   numerical or execution defect in the split. All 106 listed runtime files
+   currently match; that does not verify an unlisted scorer/comparator.
+
+   Smallest fix: explicitly freeze the analysis checkout at commit
+   `345ab8be6b22808a53d2ffb10a66acc8bc7c89b7` (covering scorer, parser and saved C),
+   or list their full hashes in a separate frozen analysis section. Require
+   verification before scoring. Distinguish those analysis identities from the
+   runtime files checked by --expect; correct the claim that the current
+   runtime list already includes the scorer. Freeze the launcher as well, or
+   pin it via that same source commit. No additional GPU experiment is needed
+   for this correction, and it should happen before any stage-3 outcomes exist.
+
+   Useful checked identities:
+   - stage5/score.py:
+     `519d925482be205e931b358773f23391953ed169d3ee2f1dd1ccae16677b14e9`
+   - original C compressed replies:
+     `6269d5b8a141007e2cec4fa7889d2c460ede7616e5280db3db57cd93dc459c44`
+   - llamacpp/stage3.sh:
+     `818f98f1ee7381c81f35938a8429774bc6da6d4687b985d40e431caf11d219b0`
+
+7. **NIT — harden history comparison against malformed metadata.**
+   compare() accepts an empty step_pos even when there are text rows, since it
+   compares that list with a range of its own length. Similarly, truncated owner
+   metadata can vacuously skip ownership checks. main() also does not check the
+   file hashes it reads from the manifests. Add structural checks tying row,
+   position and owner counts to prompt/generated tokens, IDs, EOS/lock status,
+   and verify both manifests' file hashes. My independent audit performed these
+   checks for the supplied artifacts and they all pass, so this does not reopen
+   finding 1 or require another GPU oracle run for these histories.
+
+8. **NIT — history field named gguf_sha256 hashes only the first MiB.**
+   record_split_history.py reads `1 << 20` bytes for this field. Independently
+   confirmed the saved value `49cc30ed...` equals that prefix hash, not the
+   registered whole-file `643e78a9...`. Rename it to gguf_first_mib_sha256 or use
+   the streaming full-file hash; record the helper identity in the history
+   manifest too. The full stage-3 artifact manifest correctly uses the whole
+   GGUF hash, so the forthcoming runtime identity check is not affected.
+
+### Stage-3 assessment
+
+The substantive execution, scoring, memory and history corrections are sound.
+The history oracle uses the independent upstream HF chip path with correct
+prompt processing, snapshot injection and chip-cache reset, along the split's
+own tokens. The one upstream patch is the disclosed direct-to-device loader
+change; SplitChat does not invoke that full-checkpoint loader.
+
+The v3 scientific protocol is otherwise appropriate: bf16 head chosen on
+explicit development data, fixed 160 questions/order and budgets, separate
+reference-record cap, S-minus-C paired Newcombe interval/±5-point margins,
+S-relative median rule, one disclosed infrastructure restart from the beginning,
+no per-question retries, and no unsupported C memory comparison.
+
+**Stage 3 may proceed after the small analysis-identity correction in finding 6
+is committed, and only with its registered live preflight passing.** The original
+five findings do not require another GPU development run. Nits 7–8 do not
+invalidate the independently checked saved oracle. This review has not started
+preflight or stage 3.
+
+Validation: all 106 runtime hashes match current gateway files; the committed
+and deployed manifest bytes match SHA256
+`90f9fa54d2b39e84f00d0f0877535a57fe387262a522adc04de2ae48ed3391e8`.
+Reviewed local runner/split/client bytes match the frozen entries. The launcher
+passes bash syntax checking; it was read, never executed. Source and findings
+were checked with git diff --check. Only this review branch is being pushed.
