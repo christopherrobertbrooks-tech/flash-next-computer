@@ -1,66 +1,88 @@
-"""Inside-4B: the plain Qwen3.5-4B (the base Qwenputer was built from: its Qwen weights are unchanged apart from the
-norm rescale for the wider residual) on stage-5 questions, in the same Hugging Face runtime and decoding as
-run_qwenputer.py: greedy, thinking off, the same chat template and prompt ids, one token per step.
+"""Inside-4B: the plain Qwen3.5-4B (the base Qwenputer was built from) on stage-5 questions, in the same Hugging Face
+runtime and decoding as run_qwenputer.py: greedy, thinking off, the same chat template and prompt ids, one token per
+step, exact bf16 matmul reductions (chipformer.q35.fast.exact_matmuls, as upstream's RvChat sets them).
 
   --arm A   alone: no tools in the prompt.
-  --arm R   beside, RISC-V: the same as B, but the value comes from upstream's Python RV32 reference machine running
-            the same calc firmware as Qwenputer's circuit (same limits, same response tokens); only where the CPU lives
-            differs (a Python program beside the model, not the model's weights).
-  --arm B   beside: the calc tool in the prompt (as Qwenputer has it). When the model writes </tool_call>, host Python
-            computes the value and the runner writes the response into the stream **exactly as Qwenputer's firmware
-            does** (calc.c BRIDGE: one token per byte, "\\n<tool_response>\\nVALUE\\n</tool_response>\\n<think>\\n\\n
-            </think>\\n"; the model writes the newline after it). The expression is read as the firmware reads it (what
-            follows the second '>' up to the next '<', newlines dropped, at most 80 captured tokens of 16 bytes each),
-            then upstream's exact Python calculator (calc.expected, surrounding spaces skipped) gives VALUE. So B
-            differs from Qwenputer only in who computes: host Python here, the circuit in the weights there.
+  --arm R   beside, RISC-V: the calc tool in the prompt (as Qwenputer has it). At </tool_call>, upstream's Python RV32
+            reference machine runs the same calc firmware (calc-bridge.elf) on the call's tokens, and **every text
+            token it writes** goes into the stream (the HALT-echo newline included, as Qwenputer's circuit writes it).
+  --arm B   beside, ordinary Python: firmware-style framing (the firmware's capture of the expression, ported exactly,
+            and the same response frame including the final newline), but the value comes from upstream's Python
+            calculator (calc.expected). It doesn't model the firmware's register/stack limits ("too complex").
 
-Budget: at most --max-new text tokens per question, counting the tool-response tokens, as upstream's generate counts.
-Rows are stage 5's replies.jsonl format (graded by the frozen stage5/score.py).
+Budgets, the same for R and Qwenputer: at most --max-new text tokens per question (tool-response tokens included, as
+upstream counts), and at most --max-trace computer trace tokens per question, cumulative over its calls (Qwenputer's
+max_chip counts the same thing). R's reference machine also gets a per-call record allowance equal to what's left of
+that budget (each record is one or more trace tokens, so it never binds first).
 
+Rows are stage 5's replies.jsonl format (graded by stage5/score.py).
 usage (riscv dir on PYTHONPATH, the qwenputer venv, V100 visible, inside the V100 lock):
-    python run_plain.py BASE_MODEL_DIR QUESTIONS.jsonl OUT_DIR --arm A|B [--max-new 8192]
+    python run_plain.py BASE_MODEL_DIR QUESTIONS.jsonl OUT_DIR --arm A|B|R [--max-new 8192] [--max-trace 2000000]
 """
-import argparse, hashlib, json, os, re, sys, time
+import argparse, hashlib, json, os, sys, time
 from pathlib import Path
 
 import torch
-from transformers import AutoTokenizer, Qwen3_5ForCausalLM
 from safetensors import safe_open
+from transformers import AutoTokenizer, Qwen3_5ForCausalLM
 
+from chipformer.q35.fast import exact_matmuls
 from chipformer.rv import bridge as BR
 from chipformer.rv import calc
 from chipformer.rv import chat as CH
 from chipformer.rv import elf, ref
 from chipformer.rv import spec as S
 
+sys.path.insert(0, str(Path(__file__).parent))
+import frames  # noqa: E402
+
+EOS = {248046, 248044}
 FIRMWARE = Path(calc.__file__).parents[2] / "tests" / "data" / "rv" / "calc-bridge.elf"
-MAX_RECORDS = 2_000_000
 
 
-def emulator_response(T, call_ids):
-    """Arm R: upstream's Python RV32 reference machine runs the same calc firmware on the call, exactly as the circuit
-    in Qwenputer's weights would; returns (the response's text tokens it writes, its CPU records)."""
+def sha(path):
+    return hashlib.sha256(open(path, "rb").read()).hexdigest()
+
+
+# ---- arm R: the reference machine runs the firmware ---------------------------------------------------------
+def emulator_response(T, call_ids, max_records):
+    """(every text token the machine writes after </tool_call>, trace tokens, records). call_ids: <tool_call> ...
+    </tool_call>. Raises RuntimeError if the run doesn't halt within max_records."""
     m = ref.Machine.from_program(elf.program(FIRMWARE))
     BR.park(m)
     sess = BR.Session(T, m)
     k = len(sess.toks)
-    sess.qwen(call_ids, max_records=MAX_RECORDS)           # <tool_call> ... </tool_call>: the run starts at the end
-    tcc = k + len(call_ids) - 1                            # where </tool_call> sits in the stream
-    toks, own = sess.toks[tcc + 1:], sess.own[tcc + 1:]
-    text = [t - S.TEXT_TOKEN for t, o in zip(toks, own) if S.is_text(t) and o]   # the circuit-owned text tokens
-    records = sum(1 for t in toks if not S.is_text(t))
-    return text, records
+    sess.qwen(call_ids, max_records=max_records)
+    after = sess.toks[k + len(call_ids):]                   # everything the run pushed after </tool_call>
+    text = [t - S.TEXT_TOKEN for t in after if S.is_text(t)]
+    trace = sum(1 for t in after if not S.is_text(t))
+    return text, trace, m.steps
 
-EOS = {248046, 248044}
+
+# ---- arm B: the firmware's capture and frame, Python's value -------------------------------------------------
+def capture_rows(T, call_tokens):
+    """The text buffer as Session.qwen fills it: row k (1..CAP_MAX) holds the k-th token after <tool_call> (16 bytes,
+    NUL-padded); later tokens all overwrite row CAP_MAX."""
+    rows = [bytes(S.TEXT_ROW)] * S.TEXT_ROWS
+    for cap, q in enumerate(call_tokens, start=1):
+        rows[min(cap, S.CAP_MAX)] = T.row_bytes(q)
+    return rows
 
 
 def firmware_expression(T, call_tokens):
-    """The firmware's gather(): (expression, error) from the tokens between <tool_call> and </tool_call>."""
+    """calc.c's gather(), ported exactly: (expression, error). Rows 1..80; a row stops at its first NUL; an empty row
+    ends the call; the value is what follows the second '>' up to the next '<', newlines dropped, at most 255 chars;
+    no '<' after all 80 rows -> "too long"."""
+    rows = capture_rows(T, call_tokens)
     n, gt, out = 0, 0, []
-    # the capture: row k holds the k-th token after <tool_call>; tokens past 80 all land in row 80 (the last wins)
-    rows = call_tokens if len(call_tokens) <= 80 else call_tokens[:79] + call_tokens[-1:]
-    for q in rows:                                        # text rows 1..80, 16 bytes each
-        for c in T.bytes[q][:16]:
+    i = 1
+    while i <= S.CAP_MAX:
+        r = rows[i]
+        c = r[0]
+        if not c:
+            break
+        k = 0
+        while k < S.TEXT_ROW and c:
             if gt < 2:
                 gt += c == ord(">")
             elif c == ord("<"):
@@ -68,80 +90,89 @@ def firmware_expression(T, call_tokens):
             elif c != ord("\n") and n < 255:
                 out.append(c)
                 n += 1
+            k += 1
+            c = r[k] if k < S.TEXT_ROW else 0
+        i += 1
     if gt < 2:
         return None, "error"
-    return (None, "error (too long: split it)") if len(call_tokens) > 80 else (bytes(out).decode(errors="replace"), None)
+    if i > S.CAP_MAX:
+        return None, "error (too long: split it)"
+    return bytes(out).decode(errors="replace"), None
 
 
 def response_tokens(T, value_line):
-    """The firmware's response, token by token (printable[b] per byte; specials 256-259)."""
+    """The firmware's response, token by token, as Session.run pushes it: printable[b] per byte, specials 256-259, and
+    the HALT-echo newline at the end."""
     P = T.printable
     TR, TRE, TH, THE = P[256], P[257], P[258], P[259]
-    return [P[10], TR, P[10]] + [P[b] for b in value_line.encode()] + [P[10], TRE, P[10], TH, P[10], P[10], THE, P[10]]
+    return ([P[10], TR, P[10]] + [P[b] for b in value_line.encode()]
+            + [P[10], TRE, P[10], TH, P[10], P[10], THE, P[10]] + [T.NL])
 
 
+def python_value(expr):
+    try:
+        return calc.expected(expr.strip(" ")).strip()
+    except Exception:  # noqa: BLE001
+        return "error"
+
+
+# ---- generation ----------------------------------------------------------------------------------------------
 @torch.no_grad()
-def generate(model, ids, max_new, tool, T):
-    """Greedy, one token per forward step, KV cache. tool: run Python at </tool_call> and force the response."""
+def generate(model, ids, max_new, max_trace, arm, T):
+    """Greedy, one token per forward step, KV cache. Returns (generated ids, text tokens, calls, stop reason,
+    trace tokens used)."""
     out = model(input_ids=torch.tensor([ids], device="cuda"), use_cache=True)
-    cache, logits = out.past_key_values, out.logits[0, -1]
-    gen, n_text, calls, tool_s = [], 0, [], 0.0
-    forced = []
-    nxt = int(torch.argmax(logits))
-    while n_text < max_new:
-        gen.append(nxt)
-        n_text += 1
-        if not forced and nxt in EOS:
+    cache = out.past_key_values
+    gen, n_text, calls, forced, trace_used = [], 0, [], [], 0
+    nxt = int(torch.argmax(out.logits[0, -1]))
+    stop = None
+    while True:
+        if n_text >= max_new:
+            stop = "text budget"
             break
+        gen.append(nxt)
+        if not forced and nxt in EOS:                        # like upstream's generate: EOS isn't counted
+            stop = "eos"
+            break
+        n_text += 1
+        nxt_after = None
         if forced:
             nxt_after = forced.pop(0)
-        elif tool == "R" and nxt == T.TCC:
+        elif arm in ("B", "R") and nxt == T.TCC:
             ts = time.time()
             start = max(i for i, t in enumerate(gen) if t == T.TCO) if T.TCO in gen else len(gen) - 1
-            try:
-                forced, records = emulator_response(T, gen[start:])
-                rtext = T.decode_bytes(forced).decode(errors="replace")
-                value = rtext.split("<tool_response>")[-1].split("</tool_response>")[0].strip() if "<tool_response>" in rtext else rtext.strip()
-                err = None
-            except RuntimeError as e:                       # the reference run did not halt within MAX_RECORDS
-                forced, records, value, err = [], 0, None, f"emulator: {e}"
-            tool_s += time.time() - ts
-            call_text = T.decode_bytes(gen[start + 1:-1]).decode(errors="replace")
-            rec = {"expression": call_text, "result": value, "error": err, "error_kind": "budget" if err else None,
-                   "records": records, "ms": round((time.time() - ts) * 1000, 3)}
-            if value is not None and value.startswith("error"):  # what Python says, so the scorer can tell a CPU
-                fx, ferr = firmware_expression(T, gen[start + 1:-1])   # limit from a bad expression
+            call_ids = gen[start:]                          # <tool_call> ... </tool_call>
+            rec = {"call_text": T.decode_bytes(call_ids[1:-1]).decode(errors="replace"), "error": None}
+            if arm == "R":
                 try:
-                    rec["python_reference"] = ferr or calc.expected(fx.strip(" ")).strip()
-                except Exception:  # noqa: BLE001
-                    rec["python_reference"] = None
+                    forced, trace, records = emulator_response(T, call_ids, max(1, max_trace - trace_used))
+                except RuntimeError as e:                    # did not halt within what's left of the budget
+                    forced, trace, records = [], max_trace - trace_used + 1, None
+                    rec.update(error=f"emulator: {e}", error_kind="budget")
+                trace_used += trace
+                rec.update(trace_tokens=trace, records=records)
+                rtext = T.decode_bytes(forced).decode(errors="replace")
+                rec["result"] = (rtext.split("<tool_response>")[-1].split("</tool_response>")[0].strip()
+                                 if "<tool_response>" in rtext else None)
+            else:
+                expr, err = firmware_expression(T, call_ids[1:-1])
+                value = err if err else python_value(expr)
+                forced = response_tokens(T, value)
+                rec.update(expression=expr, result=value)
+            if rec.get("result") and rec["result"].startswith("error"):   # what Python says, so the scorer can tell
+                fx, ferr = firmware_expression(T, call_ids[1:-1])          # a CPU limit from a bad expression
+                rec["python_reference"] = ferr or python_value(fx)
+            rec["ms"] = round((time.time() - ts) * 1000, 3)
             calls.append(rec)
-            if not forced:
+            if trace_used > max_trace or not forced:
+                stop = "computer budget"
                 break
             forced = list(forced)
             nxt_after = forced.pop(0)
-        elif tool and nxt == T.TCC:
-            ts = time.time()
-            start = max(i for i, t in enumerate(gen) if t == T.TCO) if T.TCO in gen else len(gen) - 1
-            expr, err = firmware_expression(T, gen[start + 1:-1])
-            if err is None:
-                try:
-                    value = calc.expected(expr.strip(" ")).strip()
-                except Exception as e:  # noqa: BLE001
-                    value = "error"
-            else:
-                value = err
-            tool_s += time.time() - ts
-            calls.append({"expression": expr, "result": value, "error": None, "ms": round((time.time() - ts) * 1000, 3),
-                          **({"python_reference": value} if value.startswith("error") else {})})
-            forced = response_tokens(T, value)
-            nxt_after = forced.pop(0)
-        else:
-            nxt_after = None
         o = model(input_ids=torch.tensor([[nxt]], device="cuda"), past_key_values=cache, use_cache=True)
         cache = o.past_key_values
         nxt = nxt_after if nxt_after is not None else int(torch.argmax(o.logits[0, -1]))
-    return gen, n_text, calls, tool_s
+    return gen, n_text, calls, stop, trace_used
 
 
 def main():
@@ -151,27 +182,32 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--arm", choices=["A", "B", "R"], required=True)
     ap.add_argument("--max-new", type=int, default=8192)
+    ap.add_argument("--max-trace", type=int, default=2_000_000)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     rows_path = os.path.join(a.out, "replies.jsonl")
     if os.path.exists(rows_path):
         sys.exit(f"{rows_path} exists: never overwrite a run")
-    Path(a.out, "questions.sha256").write_text(
-        hashlib.sha256(open(a.questions, "rb").read()).hexdigest() + f"  {a.questions}\n")
+    Path(a.out, "questions.sha256").write_text(sha(a.questions) + f"  {a.questions}\n")
+    exact_matmuls()
     t0 = time.time()
     tok = AutoTokenizer.from_pretrained(a.model)
     model = Qwen3_5ForCausalLM.from_pretrained(a.model, dtype=torch.bfloat16, device_map="cuda").eval()
-    # the weights really loaded (not freshly initialised): compare one tensor with the checkpoint file
     idx = json.load(open(Path(a.model, "model.safetensors.index.json")))["weight_map"]
     name = "model.language_model.layers.0.linear_attn.A_log"
     with safe_open(str(Path(a.model, idx[name])), "pt") as f:
         assert torch.equal(f.get_tensor(name).cuda(), model.model.layers[0].linear_attn.A_log), "weights not loaded"
     T = BR.Text(Path(a.model) / "tokenizer.json")
-    Path(a.out, "startup.txt").write_text(f"model loaded in {time.time() - t0:.1f} s, arm {a.arm}, "
-                                          f"{sum(p.numel() for p in model.parameters()) / 1e9:.2f} B params, "
-                                          f"GPU {torch.cuda.memory_allocated() / 2**30:.1f} GiB\n")
+    info = {"arm": a.arm, "load_seconds": round(time.time() - t0, 1),
+            "params_b": round(sum(p.numel() for p in model.parameters()) / 1e9, 2),
+            "gpu_allocated_gib": round(torch.cuda.memory_allocated() / 2**30, 2),
+            "tokenizer_sha256": sha(Path(a.model) / "tokenizer.json"), "firmware_sha256": sha(FIRMWARE),
+            "max_new": a.max_new, "max_trace": a.max_trace,
+            "allow_bf16_reduced_precision": torch.backends.cuda.matmul.allow_bf16_reduced_precision_reduction}
+    Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
     tools = [CH.CALC_TOOL] if a.arm in ("B", "R") else None
     qs = [json.loads(l) for l in open(a.questions) if l.strip()]
+    torch.cuda.reset_peak_memory_stats()
     for n, q in enumerate(qs):
         ids = tok.apply_chat_template([{"role": "user", "content": q["prompt"]}], tools=tools,
                                       add_generation_prompt=True, enable_thinking=False, tokenize=True)
@@ -179,24 +215,29 @@ def main():
         t = time.time()
         err = None
         try:
-            gen, n_text, calls, tool_s = generate(model, ids, a.max_new, {"A": None, "B": "B", "R": "R"}[a.arm], T)
+            gen, n_text, calls, stop, trace_used = generate(model, ids, a.max_new, a.max_trace, a.arm, T)
         except Exception as e:  # noqa: BLE001
-            gen, n_text, calls, tool_s, err = [], 0, [], 0.0, f"{type(e).__name__}: {e}"
+            gen, n_text, calls, stop, trace_used, err = [], 0, [], None, 0, f"{type(e).__name__}: {e}"
         secs = round(time.time() - t, 2)
         text = tok.decode(gen, skip_special_tokens=False)
-        ended = bool(gen) and gen[-1] in EOS
-        final = re.split(r"</tool_response>", text)[-1].replace("<|im_end|>", "").replace("<|endoftext|>", "").strip()
+        fr = frames.parse(text)
         row = {"id": q["id"], "group": q["group"], "arm": a.arm, "http": 200 if err is None else None,
                "seconds": secs, "harness_error": err,
-               "raw": {"choices": [{"finish_reason": "stop" if ended else "length",
-                                    "message": {"content": final, "full_text": text}}]},
-               "tool_calls": calls, "tool_calls_open": [],
-               "plain": {"text_tokens": n_text, "prompt_tokens": len(ids), "tool_seconds": round(tool_s, 4)},
+               "raw": {"choices": [{"finish_reason": "stop" if stop == "eos" else "length",
+                                    "message": {"content": fr["final"], "full_text": text}}]},
+               "tool_calls": calls,
+               "tool_calls_open": [c for c in fr["calls"] if c["response"] is None],
+               "run": {"stop": stop, "text_tokens": n_text, "trace_tokens": trace_used,
+                       "prompt_tokens": len(ids),
+                       "prompt_sha256": hashlib.sha256(json.dumps(ids).encode()).hexdigest(),
+                       "frames_seen": len(fr["calls"])},
                "time": time.strftime("%X")}
         with open(rows_path, "a") as f:
             f.write(json.dumps(row) + "\n")
-        print(f"{n + 1:3}/{len(qs)} {q['id']:16} {secs:7.1f}s {'stop' if ended else 'LENGTH'} calls {len(calls)} "
-              f"text {n_text}{' ERROR ' + err if err else ''}", flush=True)
+        print(f"{n + 1:3}/{len(qs)} {q['id']:16} {secs:7.1f}s {stop} calls {len(calls)} text {n_text} "
+              f"trace {trace_used}{' ERROR ' + err if err else ''}", flush=True)
+    info["gpu_peak_allocated_gib"] = round(torch.cuda.max_memory_allocated() / 2**30, 2)
+    Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
     print("done")
 
 

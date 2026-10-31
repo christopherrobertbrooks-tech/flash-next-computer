@@ -1,4 +1,7 @@
-# RISC-V viewer: watch the computer work (plan, 2026-10-30; nothing built yet)
+# RISC-V viewer: watch the computer work (plan v2, 2026-10-30; nothing built yet)
+
+v2 adds Codex's review (review/codex-inside4b 124755d / 5f0972b): when a step counts as verified, the
+calculator's digit hardware, replay labels, and the live-view event contract.
 
 ## What Chris would have
 A terminal app (dark, minimal) on the gateway, run from a terminal (`ssh -t ember-gateway ...`):
@@ -58,3 +61,23 @@ Keys: space = one step, r = run/pause, + / - = speed, q = quit.
 
 ## Order
 Phase 1 now (CPU). Phase 3 after the inside-4b run (it needs the card). Phase 2 only if its premise check passes.
+
+## v2 additions (Codex)
+- **Show the digit file, not just x0-x31.** The calculator does its arithmetic with custom digit-register ops
+  (BMAC, BMSB, BLD, BGET, BSCAN, BPRD on `Machine.bn`); a plain RV32IM view would hide most of the work.
+- **A step is one record, not one token.** `Machine.record()` commits a whole instruction (or a refresh record) and
+  returns several trace tokens. The display advances only when a complete record has been checked.
+- **Phase 3: verify before showing.** Upstream's `on_token` fires before the token is checked, so the viewer buffers
+  each record's tokens, checks them against the shadow, and only then shows the committed state. On a mismatch it
+  keeps the last verified state on screen, marks "UNVERIFIED since step N" and logs it (the flag-and-log rule above).
+- **Phase 3 needs a real event design:** a bounded queue between the generating model (GPU) and the screen, with
+  backpressure; a stated choice between pausing the model and pausing only the playback; cancellation; budget,
+  partial-record, end-of-answer and resize states.
+- **Labels on screen, always visible:** the source ("reference machine", "replayed from saved call text: original
+  computer trace not recorded", or "shadow verified against Qwenputer's executor"), the program (`calc.elf` for
+  `--calc` vs `calc-bridge.elf` in chat), and the path (executor vs bf16 computer-layer modules).
+- **Record for reproducible replays:** future runs should save the original model and trace token ids, firmware and
+  tokenizer hashes, the runtime path, prompt ids, verification status and why the answer ended. Today's saved replies
+  have only text and counters, so phase-1 replay can only re-run the saved expression on the reference machine.
+- **Headless tests:** branches, loads/stores, ABI names, refresh records, the custom digit ops, a mismatch, end of
+  program, terminal resize.

@@ -1,0 +1,4 @@
+base language-model tensors: 426; missing in Qwenputer: 0
+identical in their base block: 361; differing: 65 {'input_layernorm': 32, 'post_attention_layernorm': 32, 'norm.weight': 1}
+(1+w_q)/(1+w_b) means: 0.80320 .. 0.80334; largest spread (std) 0.00392; overall min 0.79710, max 1.00000; sqrt(2560/3968) = 0.80322
+VERDICT: the base model is inside Qwenputer unchanged except the norm rescale
