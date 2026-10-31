@@ -60,7 +60,7 @@ Which multiplier a port could reach is unknown, and a different engine can also 
 precision and memory.
 
 ## What it means
-1. **Text is most of the time** (85% of C's question time in inside-4b), so it's the biggest lever if it can be sped
+1. **Text is most of the time** (84.5% of C's question time in inside-4b), so it's the biggest lever if it can be sped
    up. The next useful measurement is a **matched plain-Qwen baseline** (llama.cpp vs Hugging Face at equal prompt
    ids, lengths, history, budgets and similar precision), then a correct Qwenputer port, then a full-system benchmark.
 2. **Kernel fusion is not a small edit.** The head and FFN kernels accumulate with `tl.atomic_add` from several
@@ -76,7 +76,8 @@ precision and memory.
    batch dimension is independent machines, not time, so it can't be reused as-is.) A candidate to measure.
 
 ## Next steps (Codex's recommended order)
-1. Fix the viewer's committed-state, completion and cancellation contracts (done on viewer-live, 784bbb0).
+1. Fix the viewer's committed-state, completion and cancellation contracts (on viewer-live: snapshot, queue and
+   labels verified by Codex's re-check; the end-while-writing-a-call gap it found is fixed afterwards, not yet re-checked).
 2. A matched plain-Qwen llama.cpp baseline: the exact tool stream, budgets, prompt ids, similar numerics and caches.
 3. The Qwenputer port in correctness milestones: circuit/Qwen path selection, separate positions and caches, firmware
    state injection, circuit-owned token choice, ownership and echoes. Unquantized first; reference traces and final
