@@ -344,20 +344,23 @@ def summarise(qs, scored, arms, runs):
             S[arm]["chains_all_steps_seen_in_order"] = \
                 f"{sum(r['chain_in_order'] == r['chain_steps'] for r in ch)}/{len(ch)}"
     out = {"arms": S}
-    if "B" in arms and "C" in arms:
+    other = "B" if "B" in arms else "R"            # stage 5: C vs B; inside-4b's full run: C vs R
+    if other in arms and "C" in arms:
         ids = [q["id"] for q in qs if q["group"] in PRIMARY]
-        a, b, c, dd = paired(by, ids, "C", "B")
+        a, b, c, dd = paired(by, ids, "C", other)
         delta, lo, hi = newcombe_paired(a, b, c, dd)
-        mb, mc = S["B"]["median_seconds_primary"], S["C"]["median_seconds_primary"]
-        out["primary"] = {"questions": len(ids), "pairs": {"both right": a, "C only": b, "B only": c, "both wrong": dd},
+        mb, mc = S[other]["median_seconds_primary"], S["C"]["median_seconds_primary"]
+        out["primary"] = {"compared": f"C vs {other}", "questions": len(ids),
+                          "pairs": {"both right": a, "C only": b, f"{other} only": c, "both wrong": dd},
                           "C_minus_B": round(delta, 4), "ci95": [round(lo, 4), round(hi, 4)],
                           "verdict": verdict(lo, hi),
                           "practical": bool(mb and mc and mc <= 2 * mb and mc <= 60),
-                          "median_seconds": {"B": mb, "C": mc}}
+                          "median_seconds": {other: mb, "C": mc}}
         sids = [q["id"] for q in qs if q["group"] in SENSITIVITY]
-        a2, b2, c2, d2 = paired(by, sids, "C", "B")
+        a2, b2, c2, d2 = paired(by, sids, "C", other)
         out["sensitivity_groups_1_3_4"] = {"descriptive only": True, "questions": len(sids),
-                                           "pairs": {"both right": a2, "C only": b2, "B only": c2, "both wrong": d2}}
+                                           "pairs": {"both right": a2, "C only": b2, f"{other} only": c2,
+                                                     "both wrong": d2}}
     if "A" in arms:
         g5 = [q["id"] for q in qs if q["group"] in ("5a", "5b")]
         a_right = sum(by[i, "A"]["correct"] for i in g5)

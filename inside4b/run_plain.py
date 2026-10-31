@@ -106,9 +106,16 @@ def generate(model, ids, max_new, tool, T):
             except RuntimeError as e:                       # the reference run did not halt within MAX_RECORDS
                 forced, records, value, err = [], 0, None, f"emulator: {e}"
             tool_s += time.time() - ts
-            calls.append({"expression": T.decode_bytes(gen[start + 1:-1]).decode(errors="replace"), "result": value,
-                          "error": err, "error_kind": "budget" if err else None, "records": records,
-                          "ms": round((time.time() - ts) * 1000, 3)})
+            call_text = T.decode_bytes(gen[start + 1:-1]).decode(errors="replace")
+            rec = {"expression": call_text, "result": value, "error": err, "error_kind": "budget" if err else None,
+                   "records": records, "ms": round((time.time() - ts) * 1000, 3)}
+            if value is not None and value.startswith("error"):  # what Python says, so the scorer can tell a CPU
+                fx, ferr = firmware_expression(T, gen[start + 1:-1])   # limit from a bad expression
+                try:
+                    rec["python_reference"] = ferr or calc.expected(fx.strip(" ")).strip()
+                except Exception:  # noqa: BLE001
+                    rec["python_reference"] = None
+            calls.append(rec)
             if not forced:
                 break
             forced = list(forced)
@@ -125,7 +132,8 @@ def generate(model, ids, max_new, tool, T):
             else:
                 value = err
             tool_s += time.time() - ts
-            calls.append({"expression": expr, "result": value, "error": None, "ms": round((time.time() - ts) * 1000, 3)})
+            calls.append({"expression": expr, "result": value, "error": None, "ms": round((time.time() - ts) * 1000, 3),
+                          **({"python_reference": value} if value.startswith("error") else {})})
             forced = response_tokens(T, value)
             nxt_after = forced.pop(0)
         else:
