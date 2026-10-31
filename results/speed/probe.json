@@ -1,0 +1,100 @@
+{
+ "device": "Tesla V100-PCIE-32GB",
+ "dims": 2679,
+ "layers": 11,
+ "exprs": [
+  {
+   "expr": "123456789*987654321",
+   "trace_tokens": 1111,
+   "timed2": {
+    "1": {
+     "s_per_step": 0.00046391868591308594,
+     "tokens_per_s": 2156
+    },
+    "4": {
+     "s_per_step": 0.0005406541824340821,
+     "tokens_per_s": 7398
+    },
+    "16": {
+     "s_per_step": 0.0010279293060302735,
+     "tokens_per_s": 15565
+    },
+    "64": {
+     "s_per_step": 0.0029330339431762695,
+     "tokens_per_s": 21820
+    }
+   },
+   "round_trip": {
+    "s_per_token": 0.0004861788749694824,
+    "tokens_per_s": 2057
+   },
+   "prefill": {
+    "seconds": 0.4339327812194824,
+    "tokens_per_s": 2560,
+    "exact_positions": 1111
+   }
+  },
+  {
+   "expr": "(2**64 - 1) // 7",
+   "trace_tokens": 4248,
+   "timed2": {
+    "1": {
+     "s_per_step": 0.0004590396881103516,
+     "tokens_per_s": 2178
+    },
+    "4": {
+     "s_per_step": 0.0005442781448364258,
+     "tokens_per_s": 7349
+    },
+    "16": {
+     "s_per_step": 0.0010275487899780273,
+     "tokens_per_s": 15571
+    },
+    "64": {
+     "s_per_step": 0.0029318103790283204,
+     "tokens_per_s": 21830
+    }
+   },
+   "round_trip": {
+    "s_per_token": 0.00048355984687805173,
+    "tokens_per_s": 2068
+   },
+   "prefill": {
+    "seconds": 1.4903876781463623,
+    "tokens_per_s": 2850,
+    "exact_positions": 4248
+   }
+  },
+  {
+   "expr": "4/(-203)*962-40*31-(-37)*(-4)",
+   "trace_tokens": 14041,
+   "timed2": {
+    "1": {
+     "s_per_step": 0.00046695327758789065,
+     "tokens_per_s": 2142
+    },
+    "4": {
+     "s_per_step": 0.0005385551452636719,
+     "tokens_per_s": 7427
+    },
+    "16": {
+     "s_per_step": 0.00103488826751709,
+     "tokens_per_s": 15461
+    },
+    "64": {
+     "s_per_step": 0.00293770170211792,
+     "tokens_per_s": 21786
+    }
+   },
+   "round_trip": {
+    "s_per_token": 0.0004866361618041992,
+    "tokens_per_s": 2055
+   },
+   "prefill": {
+    "seconds": 5.005870580673218,
+    "tokens_per_s": 2805,
+    "exact_positions": 14041
+   }
+  }
+ ]
+}
