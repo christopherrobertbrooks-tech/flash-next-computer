@@ -21,10 +21,11 @@ Qwenputer or a native circuit in llama.cpp. Eight answers that ran to the text b
 | llama.cpp port, stages 0-3 | Qwenputer's language part in llama.cpp, the computer on its exact executor | 131 vs 135/160, inconclusive; 1.68x faster; 0 lock errors | `results/llamacpp-port-results.md` |
 | Inside-check | How does the computer reach the language model? | through text: Qwen's layers read only a mute marker, 0 on text | `results/inside-check.md` |
 | Fast run | The exact computer with the stock Qwen (Q8_0 primary, f16 secondary) | the headline above | `results/fast-results.md` |
+| Early stop | Can runaway answers be stopped early without cutting right ones? (fresh questions) | a frozen repetition rule: 12.2% less time (estimated), 7 of 8 runaways stopped, 0 right answers cut; kept | `results/earlystop-results.md` |
 
-The four measured comparisons (stage 5, inside-4B, port stage 3, the fast run) were registered before their runs, and
+The measured comparisons (stage 5, inside-4B, port stage 3, the fast run, the early stop) were registered before their runs, and
 every stage was reviewed by Codex in two passes (blind, then guided). Plans: `PLAN.md` (stages 1-5),
-`INSIDE4B-PLAN.md`, `VIEWER-PLAN.md`, `LLAMACPP-PLAN.md`, `FAST-PLAN.md`. The first project's log is below.
+`INSIDE4B-PLAN.md`, `VIEWER-PLAN.md`, `LLAMACPP-PLAN.md`, `FAST-PLAN.md`, `EARLYSTOP-PLAN.md`. The first project's log is below.
 
 ## History: the first project (stages 1-5)
 - 2026-10-30: **Stage 5 done: the measured answer.** 160 maths questions, frozen protocol (`STAGE5-PLAN.md` v3, tag
