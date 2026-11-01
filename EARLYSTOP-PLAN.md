@@ -71,6 +71,11 @@ change.
 5. **Validity:** as the fast run: frozen runtime and analysis identities, a preflight gate, lock errors invalidate the
    run, every attempt kept, no reruns.
 
+## The frozen rule (2026-11-01)
+`RepetitionStop(k=64, r=6)` in `llamacpp/earlystop_rule.py` (sha256 `c29310c9ee4106d42fb93f7c47bb17748dc2ca41958f05d11b4ae8277322ab6f`), chosen on the development
+data (`results/earlystop-dev.md`): rough saving 11.8% of F's time, no premature stop on any of the four arms. The
+development gate passes.
+
 ## Stop rules
 - If no candidate saves at least 5% of F's summed time on the development data without a premature stop there,
   stop and report: the gain isn't worth a fresh run.
