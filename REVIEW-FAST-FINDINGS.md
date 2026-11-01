@@ -463,3 +463,102 @@ check and refreeze its identity before the registered fast run.** A complete
 row count must not turn an invalid design into a primary accuracy verdict.
 Nothing was built or launched by this review; only findings on this review
 branch are being committed and pushed.
+
+## Build pass 2 — guided
+
+Opened REVIEW-FAST-BUILD-PASS2.md and FAST-PLAN.md v2/build status only after
+build blind commit `ef5f988` was successfully pushed. Did not run fast.sh.
+
+### 1. Development behavior and preserving registration
+
+**Keep F primary and G secondary.** Selecting G now because its development
+answers terminate more readily would change the primary after seeing relevant
+behavior. F's two budget stops are legitimate failed answers, not lock failures;
+they must remain in the registered denominator. The original EOS-only GPU
+control was stricter than the plan's legitimate budget-stop rule. Correcting
+that harness and retaining the earlier failed log is appropriate development
+work, not a reason to discard those model outcomes.
+
+The observation is usefully disclosed in the build status. The logs substantiate
+F's 8192-text stops on final-2-003 and final-4-001, no call on the latter, and
+4496 versus 1477 text requests on final-2-001. They make clear why a faster
+short-context tg128 rate need not mean a faster complete answer: F can do much
+more work. These development prompts overlap the registered benchmark; do not
+call the full 160 an untouched held-out set or treat these controls as an
+independent accuracy experiment.
+
+For the full runs, retain per-question processed text/chip counts, calls,
+stop reasons, raw outputs and outer/bucket times, and report text-budget counts
+and their time contribution. Existing scorer loop flags detect repeated tool
+expressions; they do not reliably identify a no-call textual reasoning loop.
+Label them tool-call repetition flags. A descriptive textual repetition measure
+could be added and frozen now if wanted, but it must not change answer grading,
+become a new adaptive abort rule, or justify selective reruns. No extra model
+measurement is required just to decide whether to preserve the primary.
+
+If F's premise gate fails, report that the registered primary did not run.
+If it has a design or infrastructure failure, use the corresponding invalid/
+incomplete classification. Eligible G results can still be reported as
+secondary; they never substitute for F. This is why finding 5's wrapper validity
+gate is necessary even though launcher and runner already exit nonzero.
+
+### 2. Interpreting G versus stage 1
+
+G uses the same plain-F16 GGUF as L, with the same prompt/token conventions and
+an exact calculator response interface. It is therefore reasonable to describe
+G as close to **stage 1's language path with executor-produced computer traces
+instead of bulk reference emulation**, subject to the actual budget/history and
+runtime checks. It is not another independent demonstration that the widened
+Qwenputer language half was ported unchanged.
+
+I independently verified that G's text-request and call counts match saved L
+on all 12 fixture IDs. The supplied GPU-control logs do not persist generated
+texts or token hashes, and test_split_tokens_gpu.py does not compare them with
+L, so the “word-for-word” development assertion cannot be reconstructed from
+these logs alone. Preserve a per-fixture token/text hash comparison if that
+stronger claim is used. This is a reporting limitation, not a new execution
+blocker; the registered G replies will allow a direct complete comparison with
+saved L without changing the primary protocol.
+
+Identical language outputs would not imply identical wall time. L computes the
+reference result in bulk, while G steps the compiled circuit and checks its
+trace. G-versus-C remains the registered secondary comparison of two complete
+systems with different language numerics/weights and execution arrangements;
+it is not an isolated test of circuit placement or a fresh base-model accuracy
+sample. F adds language-weight quantization and can change trajectories much
+more, as the development counts illustrate. F/G-versus-S comparisons remain
+descriptive, with historical-comparator and fixed-order caveats.
+
+### 3. Readiness
+
+The updated plan fixes the earlier unsupported exact-equivalence rationale and
+now explicitly describes stock/quantized models, finite-precision differences
+and a new analysis freeze. F/G scoring, the four comparisons and frozen C/S
+inputs are implemented and verified. The production token feed/ownership path
+and recorded development controls support this build. A new full HF residual-
+row oracle is still unnecessary at this token-only interface; the actual-token
+and reference checks remain necessary and are present.
+
+**Do not launch the registered runs yet:** fix build finding 5 so a complete but
+invalid/incomplete arm cannot receive an acceptance/primary verdict. Add the
+wrapper-level negative controls and refresh fast-analysis.json before data.
+A focused CPU re-check is sufficient for that analysis fix; no new GPU
+experiment is needed to establish it. If taking the optional fast.sh mkdir fix,
+refresh both runtime manifests and then the analysis manifest as well, because
+the launcher is hashed in each. The partial-budget reconstruction fix can be
+validated with the CPU boundary cases; it does not require reinterpreting the
+existing successful fixture histories.
+
+Do not change F/G selection or the registered answer/budget rules while making
+these plumbing corrections. The only required release hold is the analysis
+validity guard; the two build-pass nits and the G-text provenance limitation
+are recorded separately. After that guard passes its negative controls and the
+new freeze is verified, the registered per-arm live preflights must still pass
+when the operator starts the run.
+
+### Review completion
+
+Both build passes are complete. The review changed only this findings file on
+the review branch. No registered fast run, model load, GPU job, deployment edit,
+source/main merge or external publication was performed. fast.sh was inspected
+and syntax-checked, never executed.
