@@ -155,3 +155,57 @@ The local C/D controls and negative reproductions remain as recorded in pass 1. 
 
 Final review verdict: **changes requested before the unchanged/scoring/live sequence proceeds**. Three REDLINEs
 remain; no GPU execution is needed to fix or verify them. Only this findings file changed on the review branch.
+
+## Confirm — c0305f0
+
+Merged origin/earlystop (c0305f07fb972d22c09f9e0f659f7f505be4c54e) into review/codex-earlystop as requested.
+Followed REVIEW-EARLYSTOP-CONFIRM.md: counterexamples/controls first, then inspected the fix diffs and identities.
+Review only, CPU only. No earlystop.sh, model load, GPU access, or gateway writes.
+
+### Findings 1–5
+
+1. **Closed — live-run validity.** The shared run_problems gate is used before scoring and for both runs at live
+   validation. It checks completion/shutdown status, F/token mode, decision recording, baseline/live early-stop
+   settings, registered budgets, verified artifact count and the exact runtime-manifest digest. Lock, trace and
+   harness errors invalidate the run. Live question-file SHA and selected IDs are checked. Re-ran matching-token
+   counterexamples with incomplete startup, wrong arm/mode, zero verified files, another manifest, wrong budget,
+   wrong early-stop setting, lock error and harness error: each is rejected and the final verdict is withheld.
+
+2. **Closed — final-verdict gate.** Offline evaluation emits candidate_verdict and explicitly withholds the final
+   verdict. The analysis live path persists final.json with validity, per-question results and the final decision.
+   A valid matching live run can promote the candidate; every tested validation failure with a candidate keep
+   produces a withheld final verdict. No live run means no final keep verdict.
+
+3. **Closed — elapsed-time and decision validation.** The decision timestamps and total duration now use
+   time.monotonic. Evaluation rejects negative, NaN, decreasing and past-duration times, zero duration, mismatched
+   token IDs, repeated/out-of-order indices and an out-of-range index on an EOS answer. The permitted terminal
+   unappended decision is explicitly handled. The original all-minus-100-second dataset is rejected. Negative live
+   duration and invalid live decision times are rejected. Ran the actual run_questions function body on scripted
+   CPU fakes with a backward wall-clock jump: its legacy wall seconds became -200, while its new monotonic duration
+   and decision times remained valid; evaluation uses the latter, so that wall-clock jump cannot create savings.
+
+4. **Closed — explanation of misses.** The page now correctly says the missed answers lack six occurrences of the
+   same rebuilt model-owned 64-token span, with multiplicities 1, 2 and 4.
+
+5. **Closed — reconstruction precision.** The page now states aggregate counts are within 0.7%, discloses larger
+   individual discrepancies (about 2%), and says reconstruction is not exact token-ID replay.
+
+### Verification
+
+- 19 supplied evaluator/live controls (C/D) passed locally, extracting that body to avoid GPU/runtime imports and
+  keeping scratch in local /tmp. Added 11 independent checks of the earlier counterexamples and verdict behavior:
+  30 checks passed in total. The actual-runner backward-clock check above also passed.
+- Mutation test: temporarily replaced run_problems with a no-op in the local test process. The supplied negative
+  control for incomplete/shutdown-failed live runs failed immediately, detecting an incorrect final keep. Restored
+  the function; no repository source was edited. This confirms those controls can detect a disabled validity gate.
+- All 11 analysis identity hashes verify at frozen commit 9e5d5dcf660a. Repository runtime hashes match the updated
+  manifest (including the changed runner). Both v1-superseded manifests are byte-for-byte copies of the old versions.
+- Rule hash remains c29310c9ee4106d42fb93f7c47bb17748dc2ca41958f05d11b4ae8277322ab6f; fresh-question hash remains
+  c66d4729526fd57feea555d6055e1d2b204ed80e034a8f5bdfc0490c8b5866fc. Neither file changed since the original freeze.
+- bash -n earlystop.sh and git diff --check pass. The hook implementation did not change, so its previously passing
+  reference-machine controls were not repeated. No GPU measurement or full gateway runtime rehash was performed;
+  the launcher's required artifact check/preflight still runs before the experiment.
+
+**Confirmation verdict: findings 1–5 closed; no new findings. earlystop.sh unchanged may proceed through its
+registered lock, artifact and preflight gates.** Then score the unchanged run and perform the registered live check;
+only a valid passing check can release the final verdict. This review did not start any part of that sequence.
