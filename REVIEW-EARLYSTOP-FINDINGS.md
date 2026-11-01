@@ -209,3 +209,89 @@ Review only, CPU only. No earlystop.sh, model load, GPU access, or gateway write
 **Confirmation verdict: findings 1–5 closed; no new findings. earlystop.sh unchanged may proceed through its
 registered lock, artifact and preflight gates.** Then score the unchanged run and perform the registered live check;
 only a valid passing check can release the final verdict. This review did not start any part of that sequence.
+
+## Results pass 1 — blind (78143f3)
+
+Merged origin/earlystop (78143f3e40d4ed0896c32feaaefaf1389e95b755). Followed REVIEW-EARLYSTOP-RESULTS.md without
+opening the results write-up, results pass-2 brief, or commit messages after c0305f0. CPU-only review and read-only
+gateway access; all scratch is local /tmp. No model load, GPU job, launcher execution or changes to experiment data.
+
+### Registration and validity
+
+No findings. All 11 analysis hashes verify. Independently rehashed all 112 gateway runtime files (8,565,121,934 bytes)
+against the frozen manifest: zero mismatches, manifest SHA
+ dbaecec17fc2f0816c4ff478510586048abbf2ad88078bcf7af7ac430428094f.
+Both startups bind that digest, report F/token mode, the correct baseline/live flags, 8,192 text / 2,000,000 chip /
+16,384 context budgets, the V100 UUID, normal completion and helper shutdown. Neither run has a lock/trace/harness
+error. The saved unchanged run contains 2,278,434 chip tokens checked by the reference lock.
+
+Gateway hashes match the committed/decompressed startup, replies, decisions and question hashes for both runs;
+the unchanged memory samples, preflight report and selected live question file also match. The 160 unchanged IDs
+are complete, unique and in the frozen question order; its question-file hash matches. The live file is exactly the
+five selected original records, in original question order, and its run question hash matches.
+
+Read both gateway logs: one unchanged attempt (160 sequential rows) and one live attempt (5 sequential rows), each
+inside the V100 lock at 1380 MHz, each with 112 artifacts matched and normal lock release. The visible es-* inventory
+contains those two run directories and their ancillary files/logs; no visible rerun. This is evidence about the
+retained records and inspected locations, not proof that an unrecorded invocation was impossible.
+
+The unchanged token-mode preflight passed. Re-ran its saved gate read-only on CPU with CUDA hidden and bytecode
+writes disabled: the same 13,746 positions, split/control agreement 99.687%/99.796%, zero high-margin disagreement
+questions, PREMISE PASS. No model was loaded. The registered freeze/selection rule and fresh inputs remain unchanged.
+
+### Independent scoring and offline replay
+
+The frozen scorer reproduces the full saved scores JSON exactly: 131/160 correct, with groups 69/70, 10/10, 31/40,
+21/40. Separately implemented the repetition rule by counting length-64 windows in the recorded model-chosen token
+sequence and locating the sixth occurrence. Checked decision token/index correspondence, ordered nonnegative times
+bounded by each monotonic duration, and generated-token correspondence, including eight budget-terminal unappended
+decisions. Inspected 219,951 decisions and 2,513,130 generated tokens. Every independent per-question result equals
+the saved evaluation; the frozen evaluator also reproduces its entire JSON exactly.
+
+| Quantity | Independently reproduced result |
+|---|---|
+| Correct unchanged / with rule | 131/160 / 131/160 |
+| Premature stops | 0 |
+| Rule stops / failures stopped | 7 / 7 |
+| Text-budget failures stopped | 7 of 8 |
+| Unchanged summed monotonic seconds | 4013.452869 |
+| With-rule estimated summed seconds | 3522.302487 |
+| Estimated seconds saved | 491.150382 |
+| Estimated summed saving | 12.2376018% |
+| Median unchanged / with-rule estimate | 8.2675865 / 8.0241845 seconds |
+| Registered candidate | keep |
+
+The stopped IDs and estimated seconds saved are fresh-1-031 (148.558111), fresh-4-009 (28.296410), fresh-4-019
+(67.264604), fresh-4-023 (63.959361), fresh-4-031 (85.150500), fresh-4-035 (24.902836), fresh-4-040 (73.018560).
+All seven were already wrong due to the normal text budget. The missed budget failure is fresh-4-007 (120.249603 s).
+The eight budget failures consume 957.881162 s, 23.87% of baseline time; the estimated saving removes 51.27% of that
+failed-answer time. The rule changes no question from wrong to right.
+
+### Independent live check
+
+Recomputed selection by ID, not by reading the saved pick list: first two stops fresh-1-031/fresh-4-009; only one
+untriggered budget failure fresh-4-007 (registered shortfall 1); median/longest untriggered EOS answers
+fresh-3-024/fresh-2-004. The selected records match exactly.
+
+| ID | Generated tokens equal expected prefix/full output | Early-stop flag | Live seconds | Offline estimate | Upper limit |
+|---|---|---|---|---|---|
+| fresh-1-031 | 42,313 / 42,313 | true | 46.413584 | 45.196651 | 49.7163161 |
+| fresh-4-009 | 85,690 / 85,690 | true | 120.671769 | 120.664420 | 132.730862 |
+| fresh-4-007 | 55,003 / 55,003 | false | 120.265999 | 120.249603 | 132.2745633 |
+| fresh-3-024 | 3,598 / 3,598 | false | 6.452577 | 6.439132 | 8.439132 |
+| fresh-2-004 | 83,063 / 83,063 | false | 125.180397 | 125.461691 | 138.0078601 |
+
+All tokens match, flags match, durations pass, and both runs are valid. The frozen checker reproduces final.json
+exactly: live_check_passed true, no validity problems, final verdict keep. The first live trigger is 1.217 s slower
+than the recorded stop estimate; all other differences are within 0.282 s. These differences include run-to-run
+variation and cannot be attributed solely to rule overhead.
+
+### Interpretation before reading the write-up
+
+The registered operational keep criterion passes on this fresh same-generator sample: an estimated 12.24% reduction
+in summed question time with zero observed lost right answers, supported by five matching live outputs. This is a
+successful narrow early-stop experiment. It removes failed tail generation; the median decreases only about 2.94%.
+It does not improve model correctness, establish zero future accuracy cost, or measure a full 160-question stopped
+run. The 491-second/12.24% saving remains a recorded-boundary estimate excluding rule overhead/cleanup, not an exact
+measured end-to-end speedup. One fresh seed with shared templates is not evidence across different problem families.
+No additional run is needed to report the registered result with those limits.
