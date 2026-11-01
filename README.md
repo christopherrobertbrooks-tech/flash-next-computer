@@ -1,16 +1,33 @@
 # flash-next-computer
 
-Can an exact, deterministic computer (from [Qwenputer](https://github.com/divagr18/qwenputer)) work with
-Qwen3.8-Flash-Next Coder served by Strata on Chris's Tesla V100, and does it beat the same model alone and the same
-model with an ordinary Python tool?
+Experiments on one Tesla V100 with an **exact computer** for language models: the RV32 computer that
+[Qwenputer](https://github.com/divagr18/qwenputer) compiles into Qwen3.5-4B's weights, its fp32 circuit executor, and
+its calculator firmware, with every computer token checked against the RV32 reference machine.
 
-**Finish line:** Flash-Next Coder on the V100 able to call an exact computer, with a measured answer to whether it does
-better than Flash-Next alone and Flash-Next with host Python (accuracy, latency, memory).
+## Headline result (2026-11-01)
+**Qwenputer's exact computer with the stock Qwen3.5-4B (Q8_0) in llama.cpp answered a registered 160-question maths
+set with a 2.33x lower median latency than the original Qwenputer (7.19 vs 16.77 s; 2.40x in summed time).** All
+1,447,753 emitted chip trace tokens matched the RV32 reference. Accuracy is still inconclusive: 131/160 vs 135/160,
+paired 95% interval -8.3 to +3.2 points. That's one run per configuration, and it's not an exact-weight conversion of
+Qwenputer or a native circuit in llama.cpp. Eight answers that ran to the text budget took a quarter of the time.
+`results/fast-results.md`.
 
-The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseline it builds on is the private
-`qwenputer-v100` project (Qwenputer runs exactly on this V100 in bf16 on both computer paths; 195/200 x2).
+## What was measured, in order
+| Experiment | Question | Result | Page |
+|---|---|---|---|
+| Stages 1-5 | Can the computer serve Qwen3.8-Flash-Next (Strata) as a tool, vs Python? | 156 vs 155/160 with Python: practically equivalent, 1.6x slower | `results/stage5-results.md` |
+| Inside-4B | The computer inside the model (Qwenputer) vs the same firmware beside plain Qwen | 135 vs 130/160, inconclusive; 1.94x the time | `results/inside4b-results.md` |
+| Viewer | Watch the computer run, checked token by token | a terminal viewer (`viewer/`), live on the V100 | `VIEWER-PLAN.md` |
+| llama.cpp port, stages 0-3 | Qwenputer's language part in llama.cpp, the computer on its exact executor | 131 vs 135/160, inconclusive; 1.68x faster; 0 lock errors | `results/llamacpp-port-results.md` |
+| Inside-check | How does the computer reach the language model? | through text: Qwen's layers read only a mute marker, 0 on text | `results/inside-check.md` |
+| Fast run | The exact computer with the stock Qwen (Q8_0 primary, f16 secondary) | the headline above | `results/fast-results.md` |
+| Early stop | Can runaway answers be stopped early without cutting right ones? (fresh questions) | a frozen repetition rule: 12.2% less time (estimated), 7 of 8 runaways stopped, 0 right answers cut; kept | `results/earlystop-results.md` |
 
-## Status
+The measured comparisons (stage 5, inside-4B, port stage 3, the fast run, the early stop) were registered before their runs, and
+every stage was reviewed by Codex in two passes (blind, then guided). Plans: `PLAN.md` (stages 1-5),
+`INSIDE4B-PLAN.md`, `VIEWER-PLAN.md`, `LLAMACPP-PLAN.md`, `FAST-PLAN.md`, `EARLYSTOP-PLAN.md`. The first project's log is below.
+
+## History: the first project (stages 1-5)
 - 2026-10-30: **Stage 5 done: the measured answer.** 160 maths questions, frozen protocol (`STAGE5-PLAN.md` v3, tag
   `stage5-freeze`): Flash-Next alone 81, with Python 155, with the computer 156. Computer vs Python: **practically
   equivalent** (+0.6 points, 95% interval -3.0 to +4.4), 1.6x slower (practical by the agreed rule), no reference
@@ -51,9 +68,8 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
   plan's source notes describe) -> `mapping/`.
 
 ## Rules
-Private until Chris says otherwise. No model downloads, posts or merges without his OK. Read-only on the live Strata
-setup until a test is agreed; tests run as their own launch, never by changing llama-swap's live config. Sprocket's
-voice stays on the 4070. Codex reviews are two-pass (blind first).
+Public since 2026-10-31. No model downloads, posts or merges without Chris's OK. Sprocket's voice stays on the 4070;
+experiments use the V100 through its lock. Codex reviews are two-pass (blind first).
 
 ## Credits and citation
 This project builds on **Qwenputer** by Divyansh Agrawal (<https://github.com/divagr18/qwenputer>, MIT): the
