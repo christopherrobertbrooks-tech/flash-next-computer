@@ -1,0 +1,57 @@
+{
+ "arm": "F",
+ "lm_input": "tokens",
+ "path": "a stock Qwen in llama.cpp (qwen_half_helper token mode); the computer on upstream's fp32 executor (Executor2), checked against the RV32 reference; the checkpoint's bf16 computer layers are not executed; no HF checkpoint loaded",
+ "load_seconds": 10.4,
+ "gguf": "qwen35-4b-q8_0.gguf",
+ "gguf_sha256": "1a04536feb3885a5d8cd8041a6047a1cb925a59082564b00580d20e9e223e577",
+ "helper_sha256": "acc89740c6e34d96ff9b27424e67769e203e8a709dbddac34967431885f44fc0",
+ "tokenizer_sha256": "e19093118788e378d474b0a7f6d7f7c321da1fabcc6fd5ef6c68c3c28cf79e66",
+ "firmware_sha256": "b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d",
+ "runner_sha256": "3bc7e9edbb0265e2321a34708567bab6d67f04d71ff22ddcad5ac773d518b7a6",
+ "split_chat_sha256": "08bc51e5725021747f70542608aa7a6c911e19ab5d00037b14e176d9771c7555",
+ "run_qwenputer_sha256": "4a41bd1a9374c1cf57ccf8ca2c016770934fa530e75765cf212dce0f2eec8388",
+ "client_sha256": "e37db65808b3184ba83301dcb870673424ebd636c7834c01948ab700c58212a0",
+ "artifacts_verified": 112,
+ "expect_sha256": "dbaecec17fc2f0816c4ff478510586048abbf2ad88078bcf7af7ac430428094f",
+ "record_decisions": true,
+ "early_stop": true,
+ "max_new": 8192,
+ "max_chip": 2000000,
+ "lock_max_records_per_call": 2000000,
+ "n_ctx": 16384,
+ "gpu_mib_parent_before_helper": 1612,
+ "gpu_mib_after_load": {
+  "t": 1793531110.974,
+  "phase": "run",
+  "mib": {
+   "parent": 1612,
+   "helper": 7284
+  },
+  "sum": 8896
+ },
+ "memory": {
+  "gpu_uuid": "GPU-9c9e042a-edd4-dbf9-b6a4-c0d88b33a796",
+  "pids": {
+   "parent": "4078910",
+   "helper": "4079033"
+  },
+  "samples": 841,
+  "samples_unavailable": 0,
+  "sampled_max_sum_mib": 9026,
+  "sampled_max_sum_mib_by_phase": {
+   "run": 9026,
+   "shutdown": 1664
+  },
+  "sampled_max_each_mib": {
+   "parent": 1664,
+   "helper": 7362
+  },
+  "every_s": 0.5,
+  "actual_interval_s_median": 0.5,
+  "method": "nvidia-smi compute-apps used_memory on the V100's UUID, both processes summed per sample, through the helper's shutdown; a sampled footprint, not an allocation peak"
+ },
+ "parent_torch_peak_allocated_gib": 1.24,
+ "status": "ok",
+ "reason": null
+}

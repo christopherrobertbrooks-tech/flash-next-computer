@@ -1,0 +1,33 @@
+{
+ "arms": {
+  "F": {
+   "by_group": {
+    "1": "69/70",
+    "2": "10/10",
+    "3": "31/40",
+    "4": "21/40",
+    "5a": "0/0",
+    "5b": "0/0"
+   },
+   "primary": "131/160",
+   "layers": {
+    "backend": 3,
+    "budget": 8,
+    "call format": 4,
+    "final answer": 11,
+    "reasoning": 3
+   },
+   "recovered": 20,
+   "loops_flagged": 4,
+   "median_seconds_primary": 8.27,
+   "cold_start_seconds": null,
+   "group5_tool_calls": 0,
+   "mismatches": 0,
+   "tool_ms_total": 0,
+   "computer_tokens_per_s": 1728.2,
+   "tool_rss_peak_mib": 0,
+   "generated_tokens_total": 0,
+   "chains_all_steps_seen_in_order": "8/40"
+  }
+ }
+}
