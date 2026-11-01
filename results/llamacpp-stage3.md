@@ -3,10 +3,13 @@
 **Answer:** Qwenputer with its Qwen half in llama.cpp (bf16-head GGUF) and its computer on upstream's fp32 executor
 (arm **S**) scored **131/160** vs inside-4b's original **C** at **135/160**: S minus C = **-2.5 points**, 95%
 interval **-8.8 to +3.7** (inconclusive under the ±5 margin: neither a difference nor equivalence is established).
-The computer stayed exact: **0 lock errors in 1,552,141 checked chip tokens**. The median question took **10.0 s vs
+All **1,552,141 emitted chip trace tokens matched the RV32 reference** (0 lock errors); that's
+the observed stream on these questions, not a proof over every input, and not a claim that every answer or tool
+request was right. The median question took **10.0 s vs
 16.8 s (1.68x faster)**; summed time **5,148 vs 7,621 s (1.48x)**; the text-step bucket ran at **48.0 vs 28.4
-tokens/s**. This is port-versus-original evidence (engine, precision and process split changed together). Not yet
-reviewed by Codex.
+tokens/s**. This is port-versus-original evidence (engine, precision and process split changed together). Reviewed
+by Codex (review/codex-llamacpp-stage3 af2b8ce / a033aba): every number reproduces, no blocking findings; its two
+wording corrections are applied below.
 
 Protocol: `LLAMACPP-PLAN.md` v3, registered before the run (runtime identity `results/llamacpp/stage3-artifacts.json`,
 106 files, checked at startup: all matched; analysis identity `results/llamacpp/stage3-analysis.json`, verified
@@ -29,13 +32,17 @@ rows). Scored with `llamacpp/stage3_analysis.py score` (`stage5/score.py --compa
 | GPU memory | 17,254 MiB sampled max, both processes (helper 15,540, parent 1,714) | not compared (C's 18.98 GiB is PyTorch's allocated peak) |
 
 - **Accuracy:** inconclusive, as inside-4b and stage 1 were. The observed -2.5 points sits inside an interval that
-  reaches past -5, so a small loss isn't ruled out, and neither is equivalence. Group 4 (dependent chains) shows the
+  reaches past -5: a loss greater than five points remains compatible with it, and neither a difference nor
+  equivalence is established. Group 4 (dependent chains) shows the
   largest observed gap (18 vs 24 of 40); the registered analysis doesn't test groups separately.
-- **Same inputs:** prompt-id hashes identical on 160/160; full generated text identical on 81/160. The free runs
-  differ where the split takes the other side of a tie (stage 2's checks); these runs don't isolate each divergence's
-  cause.
+- **Same inputs:** prompt-id hashes identical on 160/160. Full generated text is identical on 81/160 questions.
+  Stage 2's nine divergent fixture runs first differed at an HF tie; this full-run comparison doesn't isolate the
+  cause of each divergence.
 - **Speed:** the latency rule (median S <= 2x median C and <= 60 s) holds; the observed speed-up is 1.68x at the
   median and 1.48x in summed time, one run each (repeatability not measured). The text bucket's rate is 1.69x C's;
-  the chip bucket is unchanged, as expected (the same executor). Inner buckets aren't comparable with outer times.
-- **Memory:** S's footprint by the registered method (V100 UUID, both processes, every 0.5 s through shutdown;
-  10,302 samples, 0 unavailable). No memory comparison with C is claimed.
+  the chip bucket is similar (1,730 vs 1,712/s), as expected (the same executor). Inner buckets aren't comparable with outer times.
+- **Memory:** the maximum observed combined footprint was 17,254 MiB (V100 UUID, both processes). There were no
+  failed queries, but a 132-second startup gap (the runtime identity check) separates the initial after-load sample
+  from periodic sampling; generation and shutdown were sampled about every 0.5 s (10,302 samples). No memory
+  comparison with C is claimed. The startup's 30.6 s `load_seconds` is model load and warm-up, not total startup
+  (the identity hashing came after it).
