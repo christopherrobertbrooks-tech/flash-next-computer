@@ -1,14 +1,16 @@
 """EARLYSTOP-PLAN v2: the frozen analysis identity for the early-stop experiment. `freeze` writes the sha256 of the
 scorer and its parser, this tool, the evaluator, the live check, the frozen rule, the fresh questions and the
 generator, the launcher and the runtime manifest, plus the repo commit; `verify` checks them.
-`score RUN_DIR OUT_DIR`: verify, score the unchanged run (stage5/score.py, arm F alone, on the fresh questions),
-check the run's validity (status ok, arm F, token mode, decisions recorded, no lock/trace/harness error), apply the
-rule offline (earlystop_eval.py) and write the live-check question file. `live UNCHANGED_RUN EVAL.json LIVE_RUN`:
-verify, then the live check.
+`score RUN_DIR OUT_DIR`: verify; check the unchanged run's validity (earlystop_live_check.run_problems: status ok,
+arm F, token mode, decisions recorded, early stop off, the registered budgets, the frozen runtime manifest by sha256,
+no lock/trace/harness error); score it (stage5/score.py, arm F alone, on the fresh questions); apply the rule offline
+(earlystop_eval.py, which validates every recorded time and index) and write the live-check question file. The
+verdict there is only a candidate. `live UNCHANGED_RUN OUT_DIR LIVE_RUN`: verify, then the live check, which
+validates both runs and writes OUT_DIR/final.json with the final verdict (withheld unless the check passes).
 
 usage (repo root): python llamacpp/earlystop_analysis.py freeze|verify results/earlystop/earlystop-analysis.json
                    python llamacpp/earlystop_analysis.py score results/earlystop/earlystop-analysis.json RUN_DIR OUT_DIR
-                   python llamacpp/earlystop_analysis.py live results/earlystop/earlystop-analysis.json RUN EVAL LIVE_RUN
+                   python llamacpp/earlystop_analysis.py live results/earlystop/earlystop-analysis.json RUN OUT_DIR LIVE_RUN
 """
 import hashlib, json, subprocess, sys
 from pathlib import Path
@@ -34,22 +36,7 @@ def verify(path):
     print(f"{len(want['files'])} analysis files match (frozen at {want['commit'][:12]})")
 
 
-def validity(run_dir):
-    info = json.loads((run_dir / "startup.json").read_text())
-    probs = []
-    if info.get("status") != "ok":
-        probs.append(f"status {info.get('status')} ({info.get('reason')})")
-    if info.get("arm") != "F" or info.get("lm_input") != "tokens" or not info.get("record_decisions"):
-        probs.append("not arm F in token mode with recorded decisions")
-    man = json.loads((ROOT / "results/earlystop/earlystop-artifacts.json").read_text())
-    if info.get("artifacts_verified") != len(man["files"]):
-        probs.append("artifacts not all verified")
-    for l in open(run_dir / "replies.jsonl"):
-        r = json.loads(l)
-        if (r.get("inside") or {}).get("lock_error") or r.get("harness_error") or \
-                any(c.get("error_kind") == "trace_mismatch" for c in r.get("tool_calls") or []):
-            probs.append(f"{r['id']}: lock, trace or harness error")
-    return probs
+MANIFEST = ROOT / "results/earlystop/earlystop-artifacts.json"
 
 
 def main():
@@ -67,7 +54,8 @@ def main():
         verify(path)
         run_dir, out = Path(sys.argv[3]), Path(sys.argv[4])
         out.mkdir(parents=True, exist_ok=False)
-        probs = validity(run_dir)
+        import earlystop_live_check as LC
+        probs = LC.run_problems(run_dir, MANIFEST, early_stop=False)
         (out / "validity.json").write_text(json.dumps({"valid": not probs, "problems": probs}, indent=1) + "\n")
         if probs:
             sys.exit(f"WITHHELD: {probs[:3]}")
@@ -88,13 +76,16 @@ def main():
     elif cmd == "live":
         verify(path)
         import earlystop_live_check as LC
-        results, shortfall = LC.check(*sys.argv[3:6])
-        for qid, ok, why in results:
-            print(f"{'ok ' if ok else 'BAD'} {qid}: {why}")
-        print("shortfall by category:", shortfall)
-        good = results and all(ok for _, ok, _ in results)
-        print("LIVE CHECK", "PASSED" if good else "FAILED")
-        sys.exit(0 if good else 1)
+        unchanged, out, live = Path(sys.argv[3]), Path(sys.argv[4]), Path(sys.argv[5])
+        final = LC.check(unchanged, out / "eval.json", out / "live-questions.jsonl", live, MANIFEST)
+        (out / "final.json").write_text(json.dumps(final, indent=1) + "\n")
+        for p in final["validity_problems"]:
+            print("INVALID", p)
+        for r in final["results"]:
+            print(f"{'ok ' if r['ok'] else 'BAD'} {r['id']}: {r['detail']}")
+        print("LIVE CHECK", "PASSED" if final["live_check_passed"] else "FAILED", "| final verdict:",
+              final["final_verdict"])
+        sys.exit(0 if final["live_check_passed"] else 1)
     else:
         sys.exit(__doc__)
 
