@@ -89,3 +89,69 @@ when both options are absent. EOS exemption is in the actual rule.
 Did not run the full supplied A/B reference-machine controls: the local interpreter lacks PyTorch/upstream runtime.
 Did not substitute a GPU run for that limitation. Gateway access was read-only tokenizer/hash/timestamp reads under
 the house-rules skill. These are build findings before the fresh experiment; there are no fresh outcomes to score.
+
+## Pass 2 — guided (after pass 1 pushed as 8caae02)
+
+Read REVIEW-EARLYSTOP-PASS2.md, results/earlystop-dev.md and the remaining plan only after the blind commit was
+successfully pushed. No experiment run was started.
+
+### Guided answers
+
+1. **The development choice is acceptable and disclosed.** The post-grid choice criterion is stated explicitly:
+   maximize estimated F saving subject to zero premature stops on all four development arms. Checking every raw
+   candidate confirms exactly two qualify, (64,6) and (64,8); the former saves 376.1 vs 375.1 estimated seconds on F.
+   My blind preference for (64,8) was a different conservative tie-break, not a defect in their stated development
+   choice. This is tuning on development data, not a pre-registered discovery or four independent confirmations.
+   The 11.84% estimate rounds correctly to 11.8%, and the warning about being close to 10% is appropriate.
+
+   Replaying the actual frozen rule over the rebuilt own-token streams matches earlystop_dev.py's stop positions
+   on all 640 saved replies. The five F failure stop fractions are 6.73%, 8.04%, 12.14%, 30.03%, 44.85%, consistent
+   with the page. All three named misses are correct, but their explanation needs the small correction below.
+
+2. **The adjusted live categories are sound.** A pure repetition rule cannot exercise a new lower-budget boundary.
+   Selecting untriggered normal-budget failures tests its non-trigger behavior, alongside two actual triggers and
+   median/long EOS completions. The procedure was frozen before fresh outcomes. Shortfalls are disclosed; no
+   unregistered substitute category is needed. The actual fresh file is in lexicographic ID order, so taking the
+   first two in run order implements the stated ID order for this set. These checks do not replace run validity.
+
+3. **Fresh numbers in the same templates are enough for the stated narrow test.** Confirmed zero identical prompts
+   and zero identical answer strings against inside4b/final-primary.jsonl, with 160 unique new prompts and answers.
+   Regeneration matches the saved seed-5003 records, and all chain finals equal their final intermediates. This
+   evaluates the frozen rule on another sample from the same generator; it does not test unseen problem families
+   or supply a population accuracy guarantee. The plan's disclosure and operational verdict are appropriately
+   scoped.
+
+4. **Hold the experiment sequence pending pass-1 redlines 1–3.** The stop-rule choice, question freshness and rule
+   freeze are not blockers. Fix validity, timing validation and the final-verdict gate before spending the fresh
+   run; add the corresponding failing controls and refresh the affected analysis/runtime identities. Keep the
+   selected rule and fresh question file unchanged. Updating infrastructure identities before any outcomes exist
+   does not require retuning the rule or generating another question set. A passing live check should authorize
+   an *estimated* saving claim; it does not make that estimate an exact, repeatable live speedup or guarantee a
+   10% realized reduction on future workloads. Do not run earlystop.sh as part of this review.
+
+### Additional findings
+
+4. **NIT — the misses have too few repetitions, not necessarily none.**
+   Draft: development page calls the three misses “long answers without an exact 64-token repeat”.
+   Evidence: among rebuilt own-token spans, final-1-060 has maximum multiplicity 1, final-2-003 has 2, and
+   final-4-039 has 4. The rule needs 6. Replace with: “long answers without six occurrences of the same 64-token
+   span in the rebuilt model-owned token stream.” This does not change the catches or the gate.
+
+5. **NIT — qualify the token-count closeness as aggregate and round upward.**
+   Draft: “the rebuilt counts are within 0.6% of the recorded ones”.
+   Evidence: F/G/S/C aggregate deficits are 0.528%/0.505%/0.533%/0.647%; individual discrepancies are larger
+   (e.g. F final-3-015 loses 163 of 8,192 recorded text tokens, about 1.99%). Replace with:
+   “The rebuilt aggregate counts are within 0.7% of the recorded totals; individual replies can differ more.”
+   Aggregate agreement is not evidence of exact token-ID reconstruction.
+
+### Additional CPU checks
+
+After pass 1, ran the six supplied reference-machine hook controls (section A) read-only on the gateway's existing
+runtime, with CUDA_VISIBLE_DEVICES empty and PYTHONDONTWRITEBYTECODE=1. Extracted only the non-writing test body:
+no scratch directory, no model load, no earlystop.sh. Both modes pass recording invariance, exact ownership/index
+checks (41 decisions in each), and stopping at the expected prefix without another helper call. This strengthens
+the hook validation beyond pass 1's minimal fakes; the full scratch-writing A/B/C/D script was not run there.
+The local C/D controls and negative reproductions remain as recorded in pass 1. bash -n earlystop.sh also passes.
+
+Final review verdict: **changes requested before the unchanged/scoring/live sequence proceeds**. Three REDLINEs
+remain; no GPU execution is needed to fix or verify them. Only this findings file changed on the review branch.
