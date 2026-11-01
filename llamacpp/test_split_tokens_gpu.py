@@ -49,12 +49,13 @@ class Rec:
         raise AssertionError("rows sent in token mode")
 
 
-def reconstruct(T, v0, prompt, gen):
+def reconstruct(T, v0, prompt, gen, budget_stop=False):
     """The text inputs a correct run feeds Qwen, from the reference alone: feed it the generated tokens that aren't
-    part of a run it produced (Qwen's own text), and take every text token of its stream after the prompt."""
+    part of a run it produced (Qwen's own text) and check every run it produces against the stream. At a registered
+    budget stop (text or computer budget) the stream may end inside a run: then only a matching prefix of the
+    reference's run is accepted (Codex fast build review, finding 6). Returns every text token processed (EOS not)."""
     ses = BR.Session(T, parked())
     ses.history(prompt)
-    k0 = len(ses.toks)
     stream = [t - v0 if t >= v0 else BR.text_token(t) for t in gen]
     i = 0
     while i < len(stream):
@@ -63,9 +64,14 @@ def reconstruct(T, v0, prompt, gen):
         k = len(ses.toks)
         ses.qwen([t - S.TEXT_TOKEN])
         added = ses.toks[k + 1:]
-        assert stream[i + 1:i + 1 + len(added)] == added, f"the run after {i} differs from the reference's"
+        rest = stream[i + 1:i + 1 + len(added)]
+        if len(rest) < len(added) and budget_stop:          # the run was cut by the budget: a prefix must match
+            assert rest == added[:len(rest)], f"the cut run after {i} differs from the reference's"
+            i = len(stream)
+            break
+        assert rest == added, f"the run after {i} differs from the reference's"
         i += 1 + len(added)
-    full = [x - S.TEXT_TOKEN for x in ses.toks[k0:] if S.is_text(x)]
+    full = [x - S.TEXT_TOKEN for x in stream if S.is_text(x)]
     return full[:-1] if full and full[-1] in EOS else full
 
 
@@ -106,7 +112,7 @@ def main():
             same = all(torch.equal(a, b) and torch.equal(c, d) for (a, c), (b, d) in zip(s_rows, s_tok))
             r, rec = run(ids, h)
             gen = r["tokens"]
-            want = reconstruct(chat.T, chat.v0, ids, gen)
+            want = reconstruct(chat.T, chat.v0, ids, gen, budget_stop=not (gen and gen[-1] in EOS))
             P = len(ids)
             sent_ok = rec.sent[0] == (list(range(P)), ids) and \
                 [x for x in rec.sent[1:]] == [([P + k], [t]) for k, t in enumerate(want)]

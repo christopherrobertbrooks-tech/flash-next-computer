@@ -8,12 +8,12 @@ cd /mnt/nvme/flashnext-test/llamacpp || exit 1
 OUT=$1
 P=/mnt/nvme/qwenputer/.venv/bin/python
 export PYTHONPATH=/mnt/nvme/qwenputer/qwenputer/experimental/riscv TRANSFORMERS_VERBOSITY=error HOME=/mnt/nvme/qwenputer
-[ -e "$OUT" ] && { echo "$OUT exists: never overwrite a run"; exit 1; }
-mkdir "$OUT"
+mkdir "$OUT" || { echo "can't create $OUT (it may exist): never overwrite a run"; exit 1; }   # atomic: the gate
 declare -A GGUF=([F]=qwen35-4b-q8_0.gguf [G]=/mnt/nvme/qwen35-4b/gguf/qwen35-4b-f16.gguf)
 rc=0
 for ARM in F G; do
-  A="$OUT/$ARM"; mkdir "$A"
+  A="$OUT/$ARM"
+  mkdir "$A" || { echo "can't create $A: arm $ARM not attempted"; rc=1; continue; }
   (
     set -eo pipefail
     echo "== arm $ARM: identity check $(date +%r)"
