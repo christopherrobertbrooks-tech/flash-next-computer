@@ -295,3 +295,54 @@ It does not improve model correctness, establish zero future accuracy cost, or m
 run. The 491-second/12.24% saving remains a recorded-boundary estimate excluding rule overhead/cleanup, not an exact
 measured end-to-end speedup. One fresh seed with shared templates is not evidence across different problem families.
 No additional run is needed to report the registered result with those limits.
+
+## Results pass 2 — guided (after results pass 1 pushed as bfb39b6)
+
+Read REVIEW-EARLYSTOP-RESULTS-PASS2.md and results/earlystop-results.md only after the blind results commit was
+successfully pushed. Compared the page with the independent reconstruction above. No new runs or source edits.
+
+### Guided answers
+
+1. **The kept verdict, estimate and observed accuracy wording are supported.** The registered rule passes both
+   thresholds and the live check. 12.2% is the correctly rounded estimate; 4,013/3,522 s, 8.27/8.02 s, all seven
+   stopped IDs/times/generated-token indices, and all five live rows agree with the raw data. “On these 160
+   questions it never cut an answer F got right” is properly bounded; it is not a claim about future answers. The
+   same-template/fresh-number disclosure, failure accounting and operational scope are appropriate. The one
+   remaining reporting issue is the overhead attribution below.
+
+2. **Yes: reasonable to make the rule the operational default for F on this workload, as a reversible choice.**
+   A second test is not required by the registered keep criterion, and changing that criterion after a pass would
+   undermine its purpose. Suggested wording: “We adopt this frozen rule as the operational default for F: on one
+   fresh 160-question sample from the same generator, it met the pre-set keep criterion with 12.2% estimated
+   summed-time savings and no observed premature stops. This does not guarantee zero losses on future answers.”
+   Keep an explicit off setting and record the setting/rule identity in outputs. Preserve the ability to run the
+   registered unchanged F baseline; do not silently relabel stopped runs as that baseline, or apply the default to
+   other arms. This is a recommendation, not an implementation change in this review.
+
+3. **Before merging: correct the overhead wording; no experiment rerun is required.** The data, frozen identities,
+   registration and final keep verdict stand. After the report correction, this experiment is ready to merge when
+   Chris authorizes it. The results page's “Not yet reviewed by Codex” can then be replaced with the review branch
+   and its findings link. Default activation can be a separately explicit, tested change rather than an implied
+   consequence of this results merge.
+
+### Finding
+
+1. **REDLINE (report wording only) — timing differences do not isolate rule overhead.**
+   Spec: the plan treats saved runtime as an estimate and uses a small live check to confirm boundaries/tolerance;
+   one run per configuration does not isolate other run-to-run timing variation.
+   Draft: “the rule's overhead is small (at most 1.2 s over the estimate here)” and, under Limits, “the live check
+   confirms the boundary and the small overhead on 5 questions”.
+   Evidence: live minus offline durations are +1.216933, +0.007349, +0.016396, +0.013445 and -0.281294 s
+   (the last is fresh-2-004). These differences combine the extra stop-rule work with runtime variation; the
+   negative difference itself shows they are not direct measurements of overhead. They do verify the registered
+   tolerance, not an isolated upper bound on rule overhead.
+   Smallest replacements:
+   - “The live stopped answers are token-for-token the offline prefixes. Across the five checks, live durations
+     differed from the offline estimates by -0.28 to +1.22 s, and all passed the registered tolerance. Those
+     differences include rule overhead and run-to-run variation; they do not isolate overhead.”
+   - “The saving is estimated from recorded stop points; the live check confirms the boundary and passes the
+     registered timing tolerance on five questions. A full stopped-run saving was not measured.”
+
+Final results verdict: **registered KEEP reproduced; one report correction requested before merging.** No changes
+to the rule, questions, scoring, saved results or manifests are needed. No additional GPU work is needed to make
+that correction. Only this findings file was edited for the review.
