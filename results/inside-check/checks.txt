@@ -1,0 +1,26 @@
+input_layernorm.weight             32 layers | reads computer dims none | writes max 0 | norm w on computer dims max |w| 0
+linear_attn.A_log                  24 layers | reads computer dims none | writes max 0
+linear_attn.conv1d.weight          24 layers | reads computer dims none | writes max 0
+linear_attn.dt_bias                24 layers | reads computer dims none | writes max 0
+linear_attn.in_proj_a.weight       24 layers | reads computer dims {'2776(mu)': 16.25} | writes max 0
+linear_attn.in_proj_b.weight       24 layers | reads computer dims {'2776(mu)': 16.25} | writes max 0
+linear_attn.in_proj_qkv.weight     24 layers | reads computer dims none | writes max 0
+linear_attn.in_proj_z.weight       24 layers | reads computer dims {'2776(mu)': 16.25} | writes max 0
+linear_attn.norm.weight            24 layers | reads computer dims none | writes max 0
+linear_attn.out_proj.weight        24 layers | reads computer dims none | writes max 0
+mlp.down_proj.weight               32 layers | reads computer dims none | writes max 0
+mlp.gate_proj.weight               32 layers | reads computer dims none | writes max 0
+mlp.up_proj.weight                 32 layers | reads computer dims none | writes max 0
+post_attention_layernorm.weight    32 layers | reads computer dims none | writes max 0 | norm w on computer dims max |w| 0
+self_attn.k_norm.weight             8 layers | reads computer dims none | writes max 0
+self_attn.k_proj.weight             8 layers | reads computer dims {'2776(mu)': 0.214} | writes max 0
+self_attn.o_proj.weight             8 layers | reads computer dims none | writes max 0
+self_attn.q_norm.weight             8 layers | reads computer dims none | writes max 0
+self_attn.q_proj.weight             8 layers | reads computer dims {'2776(mu)': 16.25} | writes max 0
+self_attn.v_proj.weight             8 layers | reads computer dims none | writes max 0
+final norm gain (1+w) nonzero on computer dims: [('code', 1048577.0), ('tau', 1.152921504606847e+18)] (22 dims)
+rows Qwen received on the fixtures: 20486; with mu != 0: 0
+
+agreement with Qwenputer's HF choices: 13728/13746 = 99.869%
+per question: [('final-1-001', 84, 0), ('final-1-002', 84, 0), ('final-1-003', 129, 0), ('final-2-001', 1460, 0), ('final-2-002', 2394, 1), ('final-2-003', 2801, 2), ('final-3-001', 437, 2), ('final-3-002', 624, 1), ('final-3-003', 269, 0), ('final-4-001', 2164, 6), ('final-4-002', 1126, 2), ('final-4-003', 2174, 4)]
+Qwenputer's margins at the disagreements: max 0.25, >= 1.0: 0, exact ties: 12
