@@ -22,10 +22,21 @@ Qwenputer or a native circuit in llama.cpp. Eight answers that ran to the text b
 | Inside-check | How does the computer reach the language model? | through text: Qwen's layers read only a mute marker, 0 on text | `results/inside-check.md` |
 | Fast run | The exact computer with the stock Qwen (Q8_0 primary, f16 secondary) | the headline above | `results/fast-results.md` |
 | Early stop | Can runaway answers be stopped early without cutting right ones? (fresh questions) | a frozen repetition rule: 12.2% less time (estimated), 7 of 8 runaways stopped, 0 right answers cut; kept | `results/earlystop-results.md` |
+| Fused executor (premise only) | Would fusing the executor's kernels speed the computer up? | no: launch gaps are ~1% of a step; the time is head/FFN kernel work | `results/fused-premise.md` |
 
 The measured comparisons (stage 5, inside-4B, port stage 3, the fast run, the early stop) were registered before their runs, and
 every stage was reviewed by Codex in two passes (blind, then guided). Plans: `PLAN.md` (stages 1-5),
 `INSIDE4B-PLAN.md`, `VIEWER-PLAN.md`, `LLAMACPP-PLAN.md`, `FAST-PLAN.md`, `EARLYSTOP-PLAN.md`. The first project's log is below.
+
+## Status: closed (2026-11-01)
+This line of work is closed. What the exact computer is good for, as measured here:
+- **Where it helps:** exact large-number arithmetic for a model that would otherwise guess (Flash-Next alone 81/160,
+  with the computer 156/160), with every computer token checked against the RV32 reference.
+- **Where it doesn't:** against an ordinary Python tool it's equally accurate and slower, so it doesn't beat it. As a
+  general CPU it's far too slow for write-run-fix coding (an 18-line MicroPython snippet takes about 6 minutes on the
+  circuit), which is why a planned coding loop was dropped at its premise check.
+- **Speed ceilings:** the remaining speed levers are small. Launch fusion is worth ~1%. A device-side loop is worth
+  at most ~3% of a question. Faster head/FFN kernels might give up to ~13%, and that would be research.
 
 ## History: the first project (stages 1-5)
 - 2026-10-30: **Stage 5 done: the measured answer.** 160 maths questions, frozen protocol (`STAGE5-PLAN.md` v3, tag

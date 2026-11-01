@@ -83,3 +83,6 @@ rule overhead and run-to-run variation; they don't isolate overhead. `results/ea
   is on only for arm F in token mode; every run records the setting and the rule's sha256; the registered launchers
   (`fast.sh`, `earlystop.sh`) pass it explicitly ('off' for baselines). Their earlier frozen manifests no longer
   match the changed runner, so an old launcher can't run silently under the new default.
+- **Re-checking this experiment's scoring:** its frozen analysis identity (`results/earlystop/earlystop-analysis.json`)
+  includes `llamacpp/earlystop.sh`, which now passes `--early-stop` explicitly. So the identity verifies at its pinned
+  commit (9e5d5dc), not on later main, the same as stage 3's.
