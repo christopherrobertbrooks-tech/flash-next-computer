@@ -1,0 +1,38 @@
+{
+ "candidate_verdict": "candidate keep",
+ "live_check_passed": true,
+ "validity_problems": [],
+ "results": [
+  {
+   "id": "fresh-1-031",
+   "ok": true,
+   "detail": "tokens equal (42313 vs 42313), early stop live True / offline True, 46.414 s vs estimate 45.197 (limit 49.716)"
+  },
+  {
+   "id": "fresh-4-009",
+   "ok": true,
+   "detail": "tokens equal (85690 vs 85690), early stop live True / offline True, 120.672 s vs estimate 120.664 (limit 132.731)"
+  },
+  {
+   "id": "fresh-4-007",
+   "ok": true,
+   "detail": "tokens equal (55003 vs 55003), early stop live False / offline False, 120.266 s vs estimate 120.250 (limit 132.275)"
+  },
+  {
+   "id": "fresh-3-024",
+   "ok": true,
+   "detail": "tokens equal (3598 vs 3598), early stop live False / offline False, 6.453 s vs estimate 6.439 (limit 8.439)"
+  },
+  {
+   "id": "fresh-2-004",
+   "ok": true,
+   "detail": "tokens equal (83063 vs 83063), early stop live False / offline False, 125.180 s vs estimate 125.462 (limit 138.008)"
+  }
+ ],
+ "shortfall": {
+  "rule_stops": 0,
+  "text_budget": 1,
+  "eos": 0
+ },
+ "final_verdict": "keep"
+}
