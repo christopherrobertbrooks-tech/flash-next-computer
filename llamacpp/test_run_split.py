@@ -5,7 +5,9 @@
 - parse_apps keeps only the V100's entries (a pid on two GPUs, another GPU's processes);
 - MemSampler: a missing pid during "run" is unavailable (never 0); the helper's absence during "shutdown" is
   expected; finish() joins and takes a final sample; the report's max is the max of per-sample sums;
-- verify_artifacts refuses a changed file.
+- verify_artifacts refuses a changed file;
+- the early-stop setting: 'default' is on only for arm F in token mode, explicit on/off win, and the registered
+  launchers pass it explicitly.
 
 usage (riscv dir on PYTHONPATH, the qwenputer venv): python test_run_split.py QWENPUTER_MODEL_DIR SCRATCH
 """
@@ -113,6 +115,19 @@ def main():
     check(f"verify_artifacts refuses a changed file ({got[:50]})", "identity check failed" in got)
     e.write_text(json.dumps({"files": {str(f): RS.RQ.sha(f)}}))
     check("verify_artifacts accepts the right hash", RS.verify_artifacts(e) == 1)
+    # the early-stop default (adopted for arm F after results/earlystop-results.md)
+    cases = [(("default", "F", "tokens"), True), (("default", "G", "tokens"), False), (("default", "S", "rows"), False),
+             (("default", "F", "rows"), False), (("off", "F", "tokens"), False), (("on", "G", "tokens"), True),
+             (("on", "S", "rows"), True)]
+    got = [(c, RS.resolve_early_stop(*c)) for c, _ in cases]
+    check(f"early-stop setting: default on only for F in token mode; explicit on/off win ({got})",
+          all(RS.resolve_early_stop(*c) == w for c, w in cases))
+    here = Path(RS.__file__).parent
+    for name in ("fast.sh", "earlystop.sh"):
+        lines = [l for l in (here / name).read_text().splitlines() if "run_split.py" in l or "--lm-input" in l]
+        runs = [l for l in lines if "--lm-input" in l]
+        check(f"{name}: every run passes --early-stop explicitly ({len(runs)} run lines)",
+              runs and all("--early-stop on" in l or "--early-stop off" in l for l in runs))
     shutil.rmtree(scratch)
     print("RUN_SPLIT CONTROLS", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)

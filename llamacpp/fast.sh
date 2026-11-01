@@ -23,7 +23,7 @@ for ARM in F G; do
     CUDA_VISIBLE_DEVICES= $P stage0_gate.py fixtures-v1 "$A/preflight.json" plain-hf-v2.json plain-llama.json | tee "$A/preflight-gate.txt"
     echo "== arm $ARM: 160 questions $(date +%r)"
     $P run_split.py /mnt/nvme/qwenputer/model "${GGUF[$ARM]}" ./qwen_half_helper final-primary.jsonl "$A/run" \
-      --lm-input tokens --arm $ARM --expect fast-artifacts-$ARM.json
+      --lm-input tokens --arm $ARM --early-stop off --expect fast-artifacts-$ARM.json
   ) > "$A/arm.out" 2>&1
   st=$?
   echo "== arm $ARM: exit $st $(date +%r)" | tee -a "$A/arm.out"

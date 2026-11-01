@@ -20,12 +20,12 @@ if [ "$PART" = unchanged ]; then
   CUDA_VISIBLE_DEVICES= $P stage0_gate.py fixtures-v1 "$OUT/preflight.json" plain-hf-v2.json plain-llama.json | tee "$OUT/preflight-gate.txt"
   echo "== unchanged F, 160 fresh questions $(date +%r)"
   $P run_split.py /mnt/nvme/qwenputer/model $GGUF ./qwen_half_helper fresh-questions.jsonl "$OUT/run" \
-    --lm-input tokens --arm F --record-decisions --expect earlystop-artifacts.json
+    --lm-input tokens --arm F --early-stop off --record-decisions --expect earlystop-artifacts.json
 elif [ "$PART" = live ]; then
   LIVEQ=$3
   echo "== live check: F with the rule, $(wc -l < "$LIVEQ") questions $(date +%r)"
   $P run_split.py /mnt/nvme/qwenputer/model $GGUF ./qwen_half_helper "$LIVEQ" "$OUT/run" \
-    --lm-input tokens --arm F --early-stop --record-decisions --expect earlystop-artifacts.json
+    --lm-input tokens --arm F --early-stop on --record-decisions --expect earlystop-artifacts.json
 else
   echo "usage: earlystop.sh unchanged|live OUT_DIR [LIVE_QUESTIONS]"; exit 1
 fi
