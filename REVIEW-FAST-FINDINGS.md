@@ -562,3 +562,90 @@ Both build passes are complete. The review changed only this findings file on
 the review branch. No registered fast run, model load, GPU job, deployment edit,
 source/main merge or external publication was performed. fast.sh was inspected
 and syntax-checked, never executed.
+
+## Confirm
+
+Merged `origin/inside-check` at `96c22f9` into this review branch and followed
+REVIEW-FAST-CONFIRM.md. Re-ran the independent counterexamples and mutations
+before reading the requested 2e36f0a..96c22f9 registration/identity diff.
+CPU only; fast.sh was never executed.
+
+### Findings 5–7: closed
+
+**5 — CLOSED: invalid/incomplete arms no longer receive comparison verdicts.**
+Replayed the original final-question lock-error case with all 160 rows present,
+correct frozen arm/mode/GGUF metadata, and F status “invalid design.” The actual
+verify-then-score CLI exits **4**, emits F's withheld validity result, creates
+neither F-vs-C nor F-vs-S score output, and still creates both eligible G
+comparisons. G is not promoted to primary. The original counterexample no
+longer produces an F primary verdict.
+
+Ran all six test_fast_analysis.py controls: both valid arms score all four
+comparisons; a final-row lock error, incomplete helper shutdown with all rows,
+missing startup and wrong GGUF each withhold F while scoring G; ordinary text
+budget stops do not invalidate an otherwise completed arm. The new gate checks
+row lock/mismatch/harness failures independently of startup status, so a
+right-looking status cannot hide the final-row trace mismatch. Existing scorer
+completeness and question-identity checks remain in the comparison path.
+
+Independent in-memory mutation: replaced arm_problems with an always-valid
+answer. **Four negative controls fail and the control suite exits 1.** This
+proves the new gate tests detect the original regression, rather than merely
+observing successful scorer output. All test records were temporary copies of
+real data with synthetic labels/status; no F/G measurements were generated.
+
+**6 — CLOSED: legal budget prefixes are accepted without accepting corruption.**
+Replayed the exact original max_new=27 token-mode case: the stream ends at
+</tool_call>, text_tokens=27, no lock error. Reconstruction now accepts it with
+the explicit budget flag and returns precisely its processed text inputs.
+The new controls pass for complete EOS, cuts at tool close, within a chip span,
+and immediately after a forced echo. They reject the same truncations without
+a budget stop, changed chip/forced-echo tokens, and a missing HALT newline.
+
+Independent mutation: removed the condition requiring budget_stop for a partial
+reference run. The **three unregistered-truncation checks fail and the suite
+exits 1**. The real code still checks every available prefix token against the
+reference; returning text from the validated input stream does not make that
+computer-span check circular. The GPU caller's final stop check separately
+requires a permitted stop, so merely passing the reconstruction flag does not
+accept an unexplained early end.
+
+**7 — CLOSED: directory creation is now the atomic preservation gate.**
+The top-level mkdir failure exits before any arm/log writes. An arm mkdir
+failure records failure and continues to the other arm without redirecting into
+the existing directory. Tested the two exact guard statements in isolated local
+shell snippets: pre-existing/raced root and F directories retain a sentinel
+arm.out unchanged; the isolated G guard can still succeed and overall status
+remains nonzero. This executed only the guards, **not fast.sh or its job body**.
+The full launcher also passes bash -n syntax checking.
+
+### Frozen identities and wording
+
+- Each runtime manifest still lists 110 files. Compared with 2e36f0a, **only
+  /mnt/nvme/flashnext-test/llamacpp/fast.sh changes hash** in either file;
+  all other entries and arm/GGUF/mode metadata are identical.
+- Independently hashed all listed current gateway runtime files (111 unique
+  files across the two arms): **zero mismatches**. Deployed manifest hashes
+  match the committed versions, F `ff3a631b...`, G `bd5daae8...`.
+- The new **12-file analysis identity verifies**, and every listed byte hash
+  matches its pinned commit `0f31f2662802619453118aadb1c5d90db2ef1a51`.
+  The previous identity is preserved exactly as
+  fast-analysis-v1-superseded.json. The comparisons/roles and scientific
+  registration have not been switched in response to development behavior.
+- FAST-PLAN now accurately claims matching G/L request and call counts, not
+  unpreserved identical texts. It labels loop flags as tool-call repetition,
+  adds no new adaptive abort rule, and states the analysis validity/withholding
+  policy now implemented. Raw outcomes, token counts, stops and timings remain
+  required for both arms.
+
+### Readiness
+
+**The hold is cleared: fast.sh may run as registered**, with F primary, G
+secondary, both attempted in their fixed order subject to their own live
+identity/preflight gates. Invalid/incomplete F must remain withheld; eligible
+G stays secondary. There is no remaining release blocker from findings 5–7,
+and these CPU-only fixes do not require another development GPU run.
+
+This is a readiness verdict, not a launch: no registered run, GPU/model load,
+deployment edit or source/main merge was performed. Only the confirmation in
+this review branch is committed and pushed.
