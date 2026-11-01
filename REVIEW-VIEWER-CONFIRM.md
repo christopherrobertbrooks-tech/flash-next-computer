@@ -1,4 +1,4 @@
-# Quick confirm for Codex: findings 10-11 (after 1eb2056 / 82a4484)
+# Quick confirm for Codex: findings 10-11 (after 1a4dc3e / 119fccd, relabeled from 1eb2056 / 82a4484)
 
 Your own clone, your branch `review/codex-viewer-speed`: merge `viewer-live` (94a587f) and `computer-speed`
 (52f8240). Review only: CPU only (no GPU job this time), nothing pushed to `main` or either source branch, no edits

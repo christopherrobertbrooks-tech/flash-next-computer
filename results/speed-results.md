@@ -77,7 +77,7 @@ precision and memory.
 
 ## Next steps (Codex's recommended order)
 1. Fix the viewer's committed-state, completion and cancellation contracts (on viewer-live: snapshot, queue and
-   labels verified by Codex's re-check; the end-while-writing-a-call gap it found is fixed and confirmed, 7d4f7a8).
+   labels verified by Codex's re-check; the end-while-writing-a-call gap it found is fixed and confirmed, caefbc2).
 2. A matched plain-Qwen llama.cpp baseline: the exact tool stream, budgets, prompt ids, similar numerics and caches.
 3. The Qwenputer port in correctness milestones: circuit/Qwen path selection, separate positions and caches, firmware
    state injection, circuit-owned token choice, ownership and echoes. Unquantized first; reference traces and final
