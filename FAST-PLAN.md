@@ -65,6 +65,30 @@ Development evidence for choosing these, teacher-forced on the 12 fixtures (`res
     executor/firmware, both tokenizer/config/template identities and text-id compatibility, the questions, budgets
     and context, and the fixed arm order.
 
+## Build status (2026-10-31, before any registered run)
+- **Built:** token-mode `split_generate` and `run_split.py --lm-input tokens --arm F|G`, arms F and G in the scorer,
+  `llamacpp/fast_analysis.py` (the four registered comparisons), `llamacpp/make_fast_artifacts.py`,
+  `llamacpp/fast.sh`.
+- **Controls:**
+  - `test_split_chat.py` 28 CPU controls, including token-mode parity with upstream and three mutations;
+  - `test_run_split.py` 8;
+  - `test_score_fast.py` 11 (F,C, G,C, F,S, G,S; refusals; earlier scores re-score identically);
+  - `test_split_tokens_gpu.py` 13 per arm on the V100, all passing (`results/fast/controls/`): the executor state
+    equals the row path's, there are no lock errors, the helper's token requests equal the history the RV32
+    reference reconstructs on its own, and A, B, ..., A holds.
+- **Frozen:**
+  - runtime identities `results/fast/fast-artifacts-F.json` and `-G.json` (110 files each, text-id compatibility
+    checked);
+  - analysis identity `results/fast/fast-analysis.json`.
+  Stage 3's analysis identity is unchanged, but the scorer file has changed since, so stage 3 re-scores from its
+  pinned commit (a335797). `test_score_fast.py` also shows the current scorer re-scores stage 3 identically.
+- **A development observation, after the arms were registered:**
+  - On the 12 fixture questions, F (Q8_0) hit the 8,192-token text budget on 2 (final-2-003, final-4-001; the
+    second with no call), and its answers ran longer elsewhere too (final-2-001: 4,496 vs 1,477 text tokens).
+  - G (f16) ended EOS on all 12, with texts identical to stage 1's plain run.
+  - This doesn't change the registration: F stays primary, G secondary, and both are run and reported. Choosing
+    the primary arm again after seeing these runs would be the post-hoc selection the registration rules out.
+
 ## The registration (as stage 3, except where noted)
 - **Questions:** inside-4b's 160 (`e3f98862...`), in order; one run of F, then one of G, in that fixed order; no
   reruns or substitutions. **Both arms are attempted**, each subject to its own preflight: a gate failure,
