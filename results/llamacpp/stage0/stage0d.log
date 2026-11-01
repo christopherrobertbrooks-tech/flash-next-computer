@@ -1,0 +1,45 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+== split 09:14:35 AM
+final-1-001 114
+final-1-002 122
+final-1-003 190
+final-2-001 1485
+final-2-002 2422
+final-2-003 2907
+final-3-001 469
+final-3-002 649
+final-3-003 297
+final-4-001 2381
+final-4-002 1311
+final-4-003 2398
+reset check (A, B, ..., A): {'id': 'final-1-001', 'same': True}
+== plain llama 09:20:37 AM
+final-1-001 114
+final-1-002 122
+final-1-003 190
+final-2-001 1485
+final-2-002 2422
+final-2-003 2907
+final-3-001 469
+final-3-002 649
+final-3-003 297
+final-4-001 2381
+final-4-002 1311
+final-4-003 2398
+reset check (A, B, ..., A): {'id': 'final-1-001', 'same': True}
+== plain hf 09:24:18 AM
+final-1-001 114
+final-1-002 122
+final-1-003 190
+final-2-001 1485
+final-2-002 2422
+final-2-003 2907
+final-3-001 469
+final-3-002 649
+final-3-003 297
+final-4-001 2381
+final-4-002 1311
+final-4-003 2398
+== done 09:30:43 AM
+v100: clock restored; released

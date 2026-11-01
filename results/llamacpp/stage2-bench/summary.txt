@@ -1,0 +1,28 @@
+== llama-bench qwen-half-f16.gguf 02:04:37 PM
+== helper steps qwen-half-f16.gguf
+qwen-half-f16.gguf: prefill 447 rows 140.8 ms (3176 rows/s); 500 steps: median 22.02 ms, mean 22.03 ms (45.4 steps/s)
+== llama-bench qwen-half-f16-bf16head.gguf 02:06:01 PM
+== helper steps qwen-half-f16-bf16head.gguf
+qwen-half-f16-bf16head.gguf: prefill 447 rows 136.4 ms (3278 rows/s); 500 steps: median 19.85 ms, mean 19.87 ms (50.4 steps/s)
+== bf16 head: stage-0 split comparison 02:07:06 PM
+== bf16 head: sched debug
+== done 02:14:28 PM
+final-1-001       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-002       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-003      129 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-2-001     1460 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-2-002     2394 positions | split disagree   5 (>= 1.0 logit: 0) | control disagree   4
+final-2-003     2801 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-001      437 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-3-002      624 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-003      269 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-4-001     2164 positions | split disagree   8 (>= 1.0 logit: 0) | control disagree   7
+final-4-002     1126 positions | split disagree   2 (>= 1.0 logit: 0) | control disagree   4
+final-4-003     2174 positions | split disagree  10 (>= 1.0 logit: 0) | control disagree   6
+hard checks: all passed. Over 13746 Qwen-chosen positions (greedy argmax, lowest id at a tie): split 99.782%, control 99.796% (rule: split >= control - 1.0); questions with a split disagreement at margin >= 1.0: 0 (rule: <= 2)
+PREMISE PASS
+643e78a920c52bce7b32c14f5cfe2781e639aa2ff4bccbdffe971b1eeea7add4
+acc89740c6e34d96ff9b27424e67769e203e8a709dbddac34967431885f44fc0
+     14 SPLIT #0: CPU
+     14 SPLIT #1: CUDA0
+node #1927 (   MUL_MAT):        result_output ( 970K) [CUDA0         ] use=0,c=1:    token_embd.weight (3758M) [CUDA0         ]          result_norm (  15K) [CU

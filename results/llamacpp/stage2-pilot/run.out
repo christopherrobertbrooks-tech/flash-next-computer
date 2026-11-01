@@ -1,0 +1,20 @@
+== pilot 01:48:19 PM
+  1/12 final-1-001          6.6s eos calls 1 chip 3791 lock_error None
+  2/12 final-1-002          5.2s eos calls 1 chip 3511 lock_error None
+  3/12 final-1-003          7.1s eos calls 1 chip 3968 lock_error None
+  4/12 final-2-001         50.0s eos calls 1 chip 26088 lock_error None
+  5/12 final-2-002         97.0s eos calls 1 chip 36028 lock_error None
+  6/12 final-2-003        124.1s eos calls 3 chip 43572 lock_error None
+  7/12 final-3-001         13.1s eos calls 1 chip 3869 lock_error None
+  8/12 final-3-002         29.4s eos calls 1 chip 5686 lock_error None
+  9/12 final-3-003          8.3s eos calls 1 chip 3339 lock_error None
+ 10/12 final-4-001        115.7s eos calls 14 chip 43250 lock_error None
+ 11/12 final-4-002         58.8s eos calls 6 chip 15843 lock_error None
+ 12/12 final-4-003         20.6s eos calls 0 chip 0 lock_error None
+done
+== sched debug, 1 question 01:59:00 PM
+  1/3 final-1-001          3.0s text budget calls 0 chip 0 lock_error None
+  2/3 final-1-002          1.3s text budget calls 0 chip 0 lock_error None
+  3/3 final-1-003          1.3s text budget calls 0 chip 0 lock_error None
+done
+== done 02:01:09 PM

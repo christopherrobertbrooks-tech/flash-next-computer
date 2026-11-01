@@ -1,0 +1,31 @@
+{
+ "arm": "S",
+ "path": "Qwen half in llama.cpp (qwen_half_helper row mode, mixed F16/F32 GGUF); the computer on upstream's fp32 executor (Executor2), checked against the RV32 reference; the checkpoint's bf16 computer layers are not executed; no HF checkpoint loaded",
+ "load_seconds": 37.4,
+ "gguf": "qwen-half-f16.gguf",
+ "gguf_sha256": "b0f08db8bdaaeb198006afc2958163598e9dcf422ea0a37a5f2839ff3ce5852f",
+ "helper_sha256": "acc89740c6e34d96ff9b27424e67769e203e8a709dbddac34967431885f44fc0",
+ "tokenizer_sha256": "e19093118788e378d474b0a7f6d7f7c321da1fabcc6fd5ef6c68c3c28cf79e66",
+ "firmware_sha256": "b643ad61291a947fa6c7498de9170b1d4da062dc1f34810feba9c4eebdec862d",
+ "runner_sha256": "cf0ffd7bb4f46519ff49bb28775e75e6a4eb9e9566767f83d270ffad7439e162",
+ "split_chat_sha256": "847684ab1480350221ec3fa148c6bf97ef23b944914d2df77ccfa3019f75e2e5",
+ "run_qwenputer_sha256": "4a41bd1a9374c1cf57ccf8ca2c016770934fa530e75765cf212dce0f2eec8388",
+ "client_sha256": "e37db65808b3184ba83301dcb870673424ebd636c7834c01948ab700c58212a0",
+ "max_new": 8192,
+ "max_chip": 2000000,
+ "lock_max_records_per_call": 2000000,
+ "gpu_mib_baseline_parent": 1612,
+ "gpu_mib_after_load_sum": 18964,
+ "memory": {
+  "sampled_max_sum_mib": 19108,
+  "sampled_max_each_mib": {
+   "3661861": 1690,
+   "3661973": 17418
+  },
+  "samples": 1030,
+  "samples_unavailable": 0,
+  "every_s": 0.5,
+  "method": "nvidia-smi compute-apps used_memory, both processes, summed per sample; a sampled footprint, not an allocation peak"
+ },
+ "parent_torch_peak_allocated_gib": 1.25
+}

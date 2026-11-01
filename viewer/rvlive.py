@@ -17,7 +17,7 @@ Only the calculator program runs (calc-bridge.elf, the one firmware Qwenputer ca
 Keys: space = one record, r = run/pause, + / - = speed, q = quit (stops the model). Pausing pauses playback; the model
 keeps generating until the bounded queue (4,096 tokens) is full, then waits.
 """
-import argparse, collections, json, queue, sys, threading, time
+import argparse, collections, functools, json, queue, sys, threading, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -230,15 +230,30 @@ def stop_producer(q, stop, th, timeout=15.0):
     return not th.is_alive()
 
 
-def start_model(model_dir, question, max_new, max_chip):
+def start_model(model_dir, question, max_new, max_chip, backend="hf", gguf=None, helper=None, llamacpp_dir=None):
+    """backend "hf": upstream's RvChat (the HF checkpoint) on the executor path. backend "llama": Qwen's half in
+    llama.cpp (llamacpp/split_chat.py, LLAMACPP-PLAN stage 2), the computer on the same executor; the helper process
+    lives as long as the generation and is always ended."""
     from chipformer.rv import chat as CH
-    chat = CH.RvChat(model_dir, executor=True)
+    if backend == "llama":
+        sys.path.insert(0, str(llamacpp_dir))
+        import split_chat as SC
+        from helper_client import Helper
+        chat = SC.SplitChat(model_dir)
+    else:
+        chat = CH.RvChat(model_dir, executor=True)
     ids = chat.prompt_ids([{"role": "user", "content": question}])
+
+    def run(m, on_token):
+        if backend != "llama":
+            return chat.generate(ids, m, max_new, max_chip=max_chip, on_token=on_token)
+        with Helper(helper, gguf, 16384, stderr=sys.stderr, n_vocab=chat.v0) as h:
+            return SC.split_generate(chat, h, ids, m, max_new, max_chip=max_chip, on_token=on_token)
 
     def generate(on_token):
         m = ref.Machine.from_program(elf.program(FIRMWARE))
         BR.park(m)
-        r = chat.generate(ids, m, max_new, max_chip=max_chip, on_token=on_token)
+        r = run(m, on_token)
         toks = r["tokens"]
         reason = ("eos" if toks and toks[-1] in chat.eos else
                   "computer budget" if r.get("chip_tokens", 0) >= max_chip else
@@ -350,8 +365,18 @@ def main():
     ap.add_argument("--headless", action="store_true")
     ap.add_argument("--cols", type=int, default=120)
     ap.add_argument("--rows", type=int, default=40)
+    ap.add_argument("--backend", choices=["hf", "llama"], default="hf",
+                    help="llama: Qwen's half in llama.cpp, the computer on the same executor (LLAMACPP-PLAN stage 2)")
+    ap.add_argument("--gguf", default="/mnt/nvme/flashnext-test/llamacpp/qwen-half-f16.gguf")
+    ap.add_argument("--helper", default="/mnt/nvme/flashnext-test/llamacpp/qwen_half_helper")
+    ap.add_argument("--llamacpp-dir", default="/mnt/nvme/flashnext-test/llamacpp")
     args = ap.parse_args()
-    (headless if args.headless else tui)(args)
+    global PROGRAM
+    if args.backend == "llama":
+        PROGRAM = "bf16 layers NOT run; Qwen in llama.cpp"
+    start = functools.partial(start_model, backend=args.backend, gguf=args.gguf, helper=args.helper,
+                              llamacpp_dir=args.llamacpp_dir)
+    (headless if args.headless else tui)(args, start=start)
 
 
 if __name__ == "__main__":

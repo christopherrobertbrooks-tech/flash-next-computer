@@ -1,0 +1,16 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+  1/12 final-1-001          1.8s eos calls 1 text 113 trace 3791
+  2/12 final-1-002          1.7s eos calls 1 text 121 trace 3511
+  3/12 final-1-003          2.7s eos calls 1 text 189 trace 3968
+  4/12 final-2-001         20.2s eos calls 1 text 1477 trace 26088
+  5/12 final-2-002         44.7s eos calls 1 text 3269 trace 36028
+  6/12 final-2-003         58.3s eos calls 3 text 4259 trace 43552
+  7/12 final-3-001          6.3s eos calls 1 text 456 trace 3869
+  8/12 final-3-002         15.3s eos calls 1 text 1119 trace 5686
+  9/12 final-3-003          3.7s eos calls 1 text 263 trace 3339
+ 10/12 final-4-001         65.6s eos calls 14 text 4778 trace 44161
+ 11/12 final-4-002         29.3s eos calls 6 text 2140 trace 15843
+ 12/12 final-4-003         12.1s eos calls 0 text 879 trace 0
+done
+v100: clock restored; released
