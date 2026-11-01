@@ -89,13 +89,24 @@ def to_f32(hc):
 
 @torch.no_grad()
 def split_generate(self, helper, ids, machine, max_new=4000, max_chip=60000, lock=None, on_token=None,
-                   prompt_rows=exec_prompt_rows, verbose=False):
+                   prompt_rows=exec_prompt_rows, verbose=False, lm_input="rows"):
     """Upstream's RvChat.generate (executor path) with the prompt prefill and the Qwen steps on `helper`.
-    Lines differing from upstream are marked SPLIT."""
+    Lines differing from upstream are marked SPLIT.
+
+    lm_input "rows" (stages 2-3): the helper runs Qwenputer's widened Qwen half fed the rows Qwen's layers would get.
+    lm_input "tokens" (FAST-PLAN): the helper runs a stock Qwen fed token ids: the prompt at 0..P-1, then every
+    processed text input (forced echoes and the HALT newline included) at P, P+1, ...; chip tokens and EOS are never
+    sent. The executor's prompt initialization is upstream's own ExecRow.start, and everything on the computer side
+    (snapshot, executor steps, _exec_hc for circuit_token, ownership, the lock, budgets) is unchanged."""
+    assert lm_input in ("rows", "tokens"), lm_input
     core.snapshot(self.c, machine)
     helper.reset()                                                      # SPLIT: fresh caches and position
-    rows = prompt_rows(self, ids)                                       # SPLIT: the prompt's rows (and ExecRow.start)
-    pids, _ = helper.rows(list(range(len(ids))), to_f32(rows))          # SPLIT: the prefill on the helper
+    if lm_input == "rows":
+        rows = prompt_rows(self, ids)                                   # SPLIT: the prompt's rows (and ExecRow.start)
+        pids, _ = helper.rows(list(range(len(ids))), to_f32(rows))      # SPLIT: the prefill on the helper
+    else:
+        self._exec_start(ids)                                           # SPLIT: upstream's ExecRow.start, as is
+        pids, _ = helper.tokens(list(range(len(ids))), ids)             # SPLIT: the prompt's ids on the helper
     pos = len(ids)  # the next text token's RoPE position
     gen, n_text, n_chip_tok = [], 0, 0
     # the prompt's last position: Qwen predicts (nothing captured yet)
@@ -144,7 +155,8 @@ def split_generate(self, helper, ids, machine, max_new=4000, max_chip=60000, loc
                 raise RuntimeError("the circuit gave up a chip position")
         else:
             n_text += 1
-            qids, _ = helper.rows([pos], to_f32(hc[None]))             # SPLIT: Qwen's layers on the helper
+            qids, _ = (helper.rows([pos], to_f32(hc[None])) if lm_input == "rows"   # SPLIT: Qwen's layers on the
+                       else helper.tokens([pos], [nxt]))                        # helper (row or the text id)
             pos += 1
             ct = self.circuit_token(hc)
             nxt = ct if ct is not None else int(qids[0])               # SPLIT: argmax over the text vocabulary

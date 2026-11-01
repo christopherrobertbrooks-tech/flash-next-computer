@@ -1,0 +1,14 @@
+ok  final-1-001: executor state = row path's; EOS True, lock None, 1 calls, 113 text requests = the reference-reconstructed history
+ok  final-1-002: executor state = row path's; EOS True, lock None, 1 calls, 121 text requests = the reference-reconstructed history
+ok  final-1-003: executor state = row path's; EOS True, lock None, 1 calls, 189 text requests = the reference-reconstructed history
+ok  final-2-001: executor state = row path's; EOS True, lock None, 1 calls, 1477 text requests = the reference-reconstructed history
+ok  final-2-002: executor state = row path's; EOS True, lock None, 1 calls, 3269 text requests = the reference-reconstructed history
+ok  final-2-003: executor state = row path's; EOS True, lock None, 3 calls, 4259 text requests = the reference-reconstructed history
+ok  final-3-001: executor state = row path's; EOS True, lock None, 1 calls, 456 text requests = the reference-reconstructed history
+ok  final-3-002: executor state = row path's; EOS True, lock None, 1 calls, 1119 text requests = the reference-reconstructed history
+ok  final-3-003: executor state = row path's; EOS True, lock None, 1 calls, 263 text requests = the reference-reconstructed history
+ok  final-4-001: executor state = row path's; EOS True, lock None, 14 calls, 4778 text requests = the reference-reconstructed history
+ok  final-4-002: executor state = row path's; EOS True, lock None, 6 calls, 2140 text requests = the reference-reconstructed history
+ok  final-4-003: executor state = row path's; EOS True, lock None, 0 calls, 879 text requests = the reference-reconstructed history
+ok  reset: the first fixture again after all the others gives the same tokens
+TOKEN-MODE GPU CONTROLS PASSED

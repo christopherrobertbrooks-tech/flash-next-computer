@@ -40,11 +40,11 @@ def main():
                     reads[D0 + c] = max(reads.get(D0 + c, 0), t[:, D0 + c].abs().max().item())
             if t.dim() == 2 and t.shape[0] == 3968:
                 writes = max(writes, t[D0:].abs().max().item())
-            if t.dim() == 1 and t.shape[0] == 3968:
-                norm = t[D0:].abs().max().item()
+            if t.dim() == 1 and t.shape[0] == 3968:              # stored w (gain 1 + w): the max over all layers
+                norm = max(norm or 0.0, t[D0:].abs().max().item())
         rd = {f"{c}({lab(c)})": round(v, 3) for c, v in sorted(reads.items())}
         print(f"{n:34} {nl:2} layers | reads computer dims {rd or 'none'} | writes max {writes:.3g}"
-              + ("" if norm is None else f" | norm w on computer dims max |w| {norm:.3g}"))
+              + ("" if norm is None else f" | norm stored w on computer dims, max |w| over layers {norm:.3g} (gain 1 + w)"))
     nw = g("model.norm.weight")
     kept = [(D0 + i, lab(D0 + i), (1 + nw[D0 + i]).item()) for i in ((1 + nw[D0:]) != 0).nonzero().flatten().tolist()]
     print("final norm gain (1+w) nonzero on computer dims:", sorted({(l, v) for _, l, v in kept}), f"({len(kept)} dims)")
