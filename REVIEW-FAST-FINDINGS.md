@@ -649,3 +649,186 @@ and these CPU-only fixes do not require another development GPU run.
 This is a readiness verdict, not a launch: no registered run, GPU/model load,
 deployment edit or source/main merge was performed. Only the confirmation in
 this review branch is committed and pushed.
+
+## Results pass 1 — blind
+
+Merged `origin/inside-check` at `b5e7540` and followed REVIEW-FAST-RESULTS.md.
+The results narrative, results pass-2 brief and commit messages after 96c22f9
+were not opened before this pass was committed/pushed. No source changes,
+registered runs, GPU jobs or model loads were performed by this review.
+
+### Finding
+
+No blocker or redline against the saved runs' registered results.
+
+8. **NIT — disclose the initial sampling gaps, not just zero unavailable
+   samples.** F has a **3.503-second** gap between its initial after-load sample
+   and the first periodic sample; G has **35.663 seconds**. These precede the
+   question loop, during startup hashing, as in the stage-3 sampler behavior
+   already reviewed. After periodic sampling starts, maximum gaps are 0.505 s
+   for F and 0.506 s for G. Zero unavailable queries does not imply no sampling
+   gaps or continuous-peak coverage. Report the figures as observed sampled
+   footprints and disclose the startup gaps. No primary-answer/timing
+   invalidation follows: these are not pauses inside question generation.
+
+### Registration/provenance audit
+
+- Runtime and analysis source is unchanged from the confirmed build. All
+  **110 files in each runtime manifest** (111 unique files) currently hash
+  correctly on the gateway; deployed manifest bytes match the committed ones.
+  All **12 analysis files** verify and match pinned commit 0f31f2662802.
+- Freeze metadata places the analysis/source at 23:07:19/23:07:34 Chicago,
+  before the logged F identity check at 23:20:31. Only commit metadata was read.
+  The frozen scorer/parser, C/S comparators, model files and launchers have not
+  been silently replaced for this analysis.
+- One recorded V100 session locks clocks at 1380 MHz, performs F then G, records
+  exit 0 for each, and restores clocks/releases at the end. Each arm records
+  110 matched artifacts and its own token-mode preflight PASS before generation.
+  CPU re-evaluation of the actual gateway preflight replies passes both gates:
+  F 99.68718% versus control 99.79630%, G 99.79630% versus that control,
+  13746 Qwen-owned positions, zero high-margin disagreement questions each.
+- Both arms have 160 unique rows in the registered order. All prompt-ID hashes
+  match C; question checksums match the registered 160-question file. Startup
+  records the intended arm, token mode, exact GGUF/helper hashes, 8192-text /
+  2000000-chip budgets, the separate 2000000 reference-record cap, context 16384,
+  status ok and no reason/error. Maximum prompt+processed-text length is 8918.
+- The gateway raw replies, startup, memory samples, arm logs, gate logs and
+  question hashes match their committed uncompressed bytes. The visible
+  attempt inventory has one fast-run root with F/G. Both logs contain exactly
+  160 progress entries and completion. No restart, selective substitution or
+  hidden per-question rerun appears in this evidence; this is not a claim to
+  prove the absence of every unrecorded action.
+- Re-ran the frozen verify-then-score wrapper on owned local copies. Both arm
+  validity objects and all four **complete score objects (summary and rows)**
+  reproduce exactly. The wrapper's validity checks accept the actual metadata
+  and find no row-level lock/mismatch/harness error.
+
+### Independent accuracy/interval reconstruction
+
+Independently parsed each last ANSWER line, compared exact Fraction values,
+and applied transport/harness, unfinished/budget/open-call and trace-mismatch
+hard failures. **Every correctness decision agrees with the scorer** in all
+four comparisons (all 640 distinct F/G/C/S records; L also grades 129/160).
+No answer-classifier source was imported for this independent reconstruction.
+
+Pairs below are both right / first only / comparator only / both wrong.
+
+| Comparison | Pairs | First minus comparator | Independent 95% CI, percentage points | Result |
+|---|---|---:|---:|---|
+| **F−C, primary** | 123 / 8 / 12 / 17 | -2.50 pp | [-8.28823, +3.20706] | inconclusive |
+| G−C, secondary | 120 / 9 / 15 / 16 | -3.75 pp | [-10.00588, +2.42359] | inconclusive |
+| F−S, secondary | 121 / 10 / 10 / 19 | 0.00 pp | [-5.74519, +5.74519] | inconclusive |
+| G−S, secondary | 129 / 0 / 2 / 29 | -1.25 pp | [-3.87800, +1.22080] | within ±5 pp |
+
+Used paired Newcombe method 10 with the registered positive-covariance
+correction, evaluated independently. All four first-arm latency ceilings pass.
+G−S's ordinary interval lies within ±5 points, but that is the registered
+**descriptive secondary** comparison, without a multiplicity correction. It
+must not replace F−C as the confirmatory result. Equal F/S totals are not
+identical outcomes and do not establish equivalence: there are 20 discordant
+pairs and their interval extends outside ±5 points. Neither F nor G has
+established equivalence/noninferiority to C within the registered margin.
+
+### Recomputed totals
+
+| Quantity | F (Q8_0) | G (f16) | Saved S | Saved C |
+|---|---:|---:|---:|---:|
+| Correct | 131/160 | 129/160 | 131/160 | 135/160 |
+| Groups 1 / 2 / 3 / 4 correct | 69 / 9 / 34 / 19 | 69 / 10 / 33 / 17 | 69 / 10 / 34 / 18 | 69 / 10 / 32 / 24 |
+| Median outer seconds | 7.190 | 7.765 | 10.005 | 16.770 |
+| Sum outer seconds | 3175.92 | 3966.98 | 5147.63 | 7620.77 |
+| Text tokens | 203096 | 206509 | 200331 | 182707 |
+| Checked chip tokens | 1447753 | 1554614 | 1552141 | 1615594 |
+| Text bucket seconds | 2274.15 | 3005.65 | 4177.32 | 6438.53 |
+| Chip bucket seconds | 835.64 | 896.20 | 897.06 | 943.65 |
+| Text tokens / bucket s | 89.3063 | 68.7069 | 47.9568 | 28.3771 |
+| Chip tokens / bucket s | 1732.5080 | 1734.6731 | 1730.2533 | 1712.0691 |
+| EOS / text-budget stops | 152 / 8 | 154 / 6 | 156 / 4 | 156 / 4 |
+| Budget-stop question time | 805.26 s | 765.11 s | 700.96 s | 1342.18 s |
+| Budget-stop share of total | 25.3552% | 19.2870% | 13.6171% | 17.6121% |
+
+Observed comparator/first speed ratios:
+
+| First vs comparator | Median | Summed time |
+|---|---:|---:|
+| F vs C | 2.33241x | 2.39955x |
+| G vs C | 2.15969x | 1.92105x |
+| F vs S | 1.39152x | 1.62083x |
+| G vs S | 1.28847x | 1.29762x |
+
+These describe the single registered runs and historical comparators, not
+repeatability or an engine-only causal effect. Bucket rates include their
+registered per-text/per-chip work and are not whole-question throughput.
+
+### Errors, budgets and timing consistency
+
+Both F and G have zero lock errors, harness errors or open calls. Neither
+reaches its chip budget. Their budget failures are retained as failures, not
+removed or rerun:
+
+- F: final-1-060; final-2-003; final-3-015/027; final-4-001/007/032/039.
+  Three budget cases (4-001/007/032) make no tool call. The longest F question
+  is 4-039 (117.25 s, 8192 text, 41688 chip tokens).
+- G: final-1-060; final-4-006/007/019/027/029. The longest is 4-006
+  (150.77 s, 8192 text, 52502 chip tokens).
+
+Each arm has one scorer tool-call repetition flag; this is not a complete
+textual-loop detector. A no-call budget stop is not a circuit execution error.
+The scorer's backend-labelled failures (three F, two G) contain explicit
+`error (too long: split it)` tool responses; those diagnostic labels are not
+hidden CUDA/helper crashes or lock mismatches. Helper stderr contains no
+error/failed/non-finite/OOM entries. Its zero/infinite internal eval counters
+remain unsuitable as independent timing measurements.
+
+After accounting for the midnight rollover, adjacent completion times reconcile
+with question seconds within the log's one-second precision (F residual range
+-0.98 to +0.98 s, G -0.88 to +0.89 s). No extra multi-second inter-question
+pause appears. No unexplained early termination or sampled-query failure was
+found. Finding 8 concerns startup only.
+
+### Memory reconstruction
+
+| Quantity | F | G |
+|---|---:|---:|
+| Samples | 6355 | 7940 |
+| Unavailable queries | 0 | 0 |
+| Run / shutdown samples | 6354 / 1 | 7937 / 3 |
+| After-load sum | 8896 MiB | 12618 MiB |
+| Max simultaneous sum | 9070 MiB (8.8574 GiB) | 12784 MiB (12.4844 GiB) |
+| Parent / helper maxima | 1708 / 7362 MiB | 1710 / 11074 MiB |
+
+All per-sample sums are consistent; the UUID is the registered V100. Both final
+samples show the helper absent during shutdown and the parent still present.
+Median actual interval is 0.5 s, with the startup exceptions in finding 8.
+Relative to S's same-method observed 17254 MiB maximum, these sampled totals
+are lower by 47.43% and 25.91%, respectively. They are not continuous peaks,
+and C's historical PyTorch allocation figure is not a valid comparator.
+
+### G versus L and interpretation
+
+**All 160 G full generated texts match L exactly**, as do text counts, answer
+outcomes and six budget-stop IDs. The earlier development count-only claim can
+now be strengthened using actual registered reply bytes. This does not imply
+identical chip instruction streams: G records 26 more chip tokens in aggregate
+than L's reference-trace counter, spread over four questions; text identity
+alone is not a trace-identity proof.
+
+G is slower than L on this matched language output: G's 3966.98 seconds versus
+L's 2839.78, and median 7.765 versus 4.665. This is consistent with stepping
+and checking a compiled computer rather than producing a result by bulk
+reference emulation; the comparison does not isolate every source of overhead.
+The fast system should not be described as faster than every available
+computer-beside baseline simply because it beats C or S.
+
+The registered primary F−C accuracy result remains inconclusive, while F shows
+a substantial observed speed and sampled-footprint improvement. Its eight
+budget failures consumed a quarter of total time. Both computer traces remain
+reference-checked, but correct computer execution cannot make the model call
+the computer or reason correctly. These are stock-language-model-plus-executor
+systems, not native llama.cpp execution of the circuit or exact-weight
+Qwenputer conversions. Development selection, fixed F-then-G order, changing
+trajectories and single historical runs limit causal/generalized claims.
+
+No new measurement or GPU job was needed for this reconstruction. The recorded
+session reports clock restoration and release; this review did not acquire a
+GPU lock or stop any shared process.
