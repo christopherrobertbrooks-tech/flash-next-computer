@@ -1,0 +1,58 @@
+{
+ "questions": [
+  {
+   "id": "fresh-2-007",
+   "chip_tokens": 73343,
+   "text_tokens": 3212,
+   "lock_error": null,
+   "wall_s": 83.43,
+   "chip_bucket_s": 43.6,
+   "chip_bucket_us_per_token": 594.5,
+   "executor_steps": 76555,
+   "replay_gpu_us_median": 508.9,
+   "replay_gpu_us_mean": 510.6,
+   "chip_step_wall_us_median": 588.0,
+   "code_token_wall_us_median": 558.7
+  },
+  {
+   "id": "fresh-1-061",
+   "chip_tokens": 4905,
+   "text_tokens": 142,
+   "lock_error": null,
+   "wall_s": 4.79,
+   "chip_bucket_s": 2.87,
+   "chip_bucket_us_per_token": 585.1,
+   "executor_steps": 5047,
+   "replay_gpu_us_median": 508.9,
+   "replay_gpu_us_mean": 510.7,
+   "chip_step_wall_us_median": 578.3,
+   "code_token_wall_us_median": 549.7
+  }
+ ],
+ "back_to_back_us_per_step": 516.6,
+ "kernels_us_per_step": 511.1,
+ "kernel_launches_per_step": 42.0,
+ "kernels": {
+  "_head_kernel": {
+   "calls_per_step": 10.0,
+   "us_per_step": 254.87
+  },
+  "_ffn_kernel": {
+   "calls_per_step": 10.0,
+   "us_per_step": 192.93
+  },
+  "_apply_kernel": {
+   "calls_per_step": 20.0,
+   "us_per_step": 52.53
+  },
+  "void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<4> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<4> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1}>(long, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<4> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<4> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1})": {
+   "calls_per_step": 1.0,
+   "us_per_step": 8.13
+  },
+  "memcpy32_post": {
+   "calls_per_step": 1.0,
+   "us_per_step": 2.6
+  }
+ },
+ "gaps_us_per_step": 5.6
+}
