@@ -54,3 +54,23 @@ The working plan is `PLAN.md` (v2, 2026-10-30, as Chris supplied it). The baseli
 Private until Chris says otherwise. No model downloads, posts or merges without his OK. Read-only on the live Strata
 setup until a test is agreed; tests run as their own launch, never by changing llama-swap's live config. Sprocket's
 voice stays on the 4070. Codex reviews are two-pass (blind first).
+
+## Credits and citation
+This project builds on **Qwenputer** by Divyansh Agrawal (<https://github.com/divagr18/qwenputer>, MIT): the
+RV32 computer compiled into Qwen3.5-4B's weights, its fp32 circuit executor, the calculator firmware and the reference
+machine all come from it. Portions of its code copied here are listed with its license in `THIRD-PARTY-NOTICES.md`.
+If you use this work, please cite Qwenputer:
+
+```bibtex
+@software{agrawal2026qwenputer,
+  author  = {Agrawal, Divyansh},
+  title   = {{Qwenputer}: a computer compiled into the weights of a pretrained language model},
+  year    = {2026},
+  version = {0.1.0},
+  url     = {https://github.com/divagr18/qwenputer},
+  license = {MIT}
+}
+```
+
+The language models are Qwen3.5-4B (Apache 2.0); llama.cpp is MIT. Latest results: `results/llamacpp-port-results.md`
+(Qwenputer's language part in llama.cpp) and `results/fast-results.md` (the exact computer with the stock Qwen).
