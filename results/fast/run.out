@@ -1,0 +1,6 @@
+v100: waiting for the lock...
+v100: locked; clock 1380 MHz
+== arm F: exit 0 12:16:40 AM
+== arm G: exit 0 01:27:47 AM
+== done 01:27:47 AM
+v100: clock restored; released
