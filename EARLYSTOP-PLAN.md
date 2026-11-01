@@ -50,8 +50,9 @@ change.
      time to the stop. This **estimates** the saved runtime from the recorded stop points.
    - **The live check measures the rule's overhead and confirms the boundary.** It's a run with the rule switched on,
      on questions picked from the offline evaluation by a procedure fixed now: by question id order, the first 2
-     whose stop comes from the budget part, the first 2 from the repetition part, and the first 2 that run to
-     completion (one EOS answer of median length, one of the longest). If a category has fewer, all of them are used
+     the rule stops; the first 2 that reach the normal 8,192-token text budget without a rule stop (the frozen rule
+     has no budget part, so these check that it doesn't fire on them); and 2 that end at EOS without a rule stop
+     (one of median text length, one of the longest). Fixed in `llamacpp/earlystop_eval.py` before the fresh run. If a category has fewer, all of them are used
      and the shortfall is reported.
    - **It passes if** every live answer's tokens equal the offline prefix exactly, and each live question's elapsed
      time is within the offline time-to-stop plus 2 s or plus 10% (whichever is larger). Otherwise the offline
