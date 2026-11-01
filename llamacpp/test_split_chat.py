@@ -97,8 +97,12 @@ class FakeHelper:
         self.log.append(("rows", list(pos), [int(r[0]) for r in rows]))
         return [self.q.pop(0), 0, 1, 2, 3], [5.0, 4.0, 3.0, 2.0, 1.0]
 
+    def tokens(self, pos, ids):
+        self.log.append(("tokens", list(pos), list(ids)))
+        return [self.q.pop(0), 0, 1, 2, 3], [5.0, 4.0, 3.0, 2.0, 1.0]
 
-def run_both(T, prompt, gen, max_new=8192, max_chip=2_000_000, **wk):
+
+def run_both(T, prompt, gen, max_new=8192, max_chip=2_000_000, mode="rows", generate=None, **wk):
     def lock():
         s = BR.Session(T, machine())
         s.history(prompt)
@@ -114,11 +118,12 @@ def run_both(T, prompt, gen, max_new=8192, max_chip=2_000_000, **wk):
                 r = CH.RvChat.generate(c, prompt, machine(), max_new, max_chip=max_chip, lock=lock())
             else:
                 h = FakeHelper(q, log)
-                r = SC.split_generate(c, h, prompt, machine(), max_new, max_chip=max_chip, lock=lock(),
-                                      prompt_rows=lambda chat, ids: torch.zeros(len(ids), HID))
+                r = (generate or SC.split_generate)(c, h, prompt, machine(), max_new, max_chip=max_chip, lock=lock(),
+                                                    prompt_rows=lambda chat, ids: torch.zeros(len(ids), HID),
+                                                    lm_input=mode)
             res = {k: r[k] for k in ("tokens", "text_tokens", "chip_tokens", "lock_error")}
-        except RuntimeError as e:
-            res = {"raised": str(e)}
+        except (RuntimeError, IndexError) as e:         # IndexError: a fake's script ran out (an extra call)
+            res = {"raised": f"{type(e).__name__}: {e}"}
         out.append((res, log))
     return out
 
@@ -162,6 +167,49 @@ def main():
         if label == "a wrong chip token":
             check(f"  a wrong chip token is a lock error, not an answer ({str(rs['lock_error'])[:60]})",
                   rs["lock_error"] is not None)
+
+    # token mode (FAST-PLAN): the same results as upstream; the helper gets the prompt ids at 0..P-1, then exactly
+    # the processed text inputs at P, P+1, ... (no chip token, no EOS); upstream's ExecRow.start runs once first
+    def token_checks(rs, ls, gen):
+        sent = [x for x in ls if x[0] == "tokens"]
+        ok = ls[0] == ("reset",) and ("start", P) in ls and sent and sent[0][1] == list(range(P)) and sent[0][2] == prompt
+        steps = sent[1:]
+        text_in = [t for t in rs["tokens"] if t < V0 and t not in (248046, 248044)]
+        ok = ok and [x[1] for x in steps] == [[P + k] for k in range(len(steps))]
+        ok = ok and [x[2][0] for x in steps] == text_in[:len(steps)] and len(steps) == rs["text_tokens"]
+        ok = ok and all(x[2][0] < V0 for x in steps) and not any(x[0] == "rows" for x in ls)
+        return ok
+
+    for label, gen, kw in (("one call", one, {}), ("two calls", two, {}), ("text budget", two, {"max_new": 40}),
+                           ("computer budget", two, {"max_chip": 300}),
+                           ("a wrong chip token", one, {"corrupt_at": next(i for i, t in enumerate(one) if t >= V0) + 5}),
+                           ("the circuit gives up", one, {"give_up_at": next(i for i, t in enumerate(one) if t >= V0) + 3})):
+        mn, mc = kw.pop("max_new", 8192), kw.pop("max_chip", 2_000_000)
+        (ru, lu), (rs, ls) = run_both(T, prompt, gen, mn, mc, mode="tokens", **kw)
+        check(f"token mode, same as upstream generate: {label}", ru == rs)
+        if "raised" not in rs:
+            check(f"  token mode: reset, ExecRow.start, prompt ids at 0..{P - 1}, text inputs at P, P+1, ..., no chip "
+                  f"or EOS sent", token_checks(rs, ls, gen))
+    import types
+    src = open(SC.__file__).read()
+
+    def mutant(old, new):
+        m = types.ModuleType("mut")
+        m.__dict__.update({k: v for k, v in SC.__dict__.items() if not k.startswith("__")})
+        assert old in src, old
+        exec(compile(src.replace(old, new), "mut", "exec"), m.__dict__)
+        return m.split_generate
+
+    for label, old, new in (
+            ("a skipped position", "            pos += 1\n", "            pos += 2\n"),
+            ("the helper's choice overriding the circuit", "nxt = ct if ct is not None else int(qids[0])",
+             "nxt = int(qids[0])"),
+            ("a chip token sent", "        if chip_in:  # a chip token\n            n_chip_tok += 1\n",
+             "        if chip_in:  # a chip token\n            helper.tokens([pos], [0])\n            n_chip_tok += 1\n")):
+        g = mutant(old, new)
+        (ru, lu), (rs, ls) = run_both(T, prompt, one, mode="tokens", generate=g)
+        caught = ru != rs or "raised" in rs or not token_checks(rs, ls, one)
+        check(f"token-mode control: {label} is caught", caught)
     print("SPLIT CONTROLS", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)
 

@@ -1,0 +1,39 @@
+{
+ "commit": "0f31f2662802619453118aadb1c5d90db2ef1a51",
+ "files": {
+  "stage5/score.py": "2a7dde5b93263bce6482bd43a94d2932232afc1d628062cab79bfaa436543997",
+  "computer/stage4_requests.py": "8a22c1b0d57a67992adfcf9e0cbfeeca839a4c384e588a855884a3a84f37ed73",
+  "llamacpp/fast_analysis.py": "c1d15450034f951f7a1c658e883b77ff2e1d9bb258d98f0836d6cfe39807c235",
+  "inside4b/final-primary.jsonl": "e3f98862352ad0111c5b5428a3580d01ebc0fcec3474b8a495300e577ca7074d",
+  "results/inside4b-full/full-C/replies.jsonl.gz": "6269d5b8a141007e2cec4fa7889d2c460ede7616e5280db3db57cd93dc459c44",
+  "results/inside4b-full/full-C/questions.sha256": "00f8e09c964013efe4b8cdfce1a9ceaf83bee70842fdc76e5715fc239106c3da",
+  "results/llamacpp/stage3/replies.jsonl.gz": "db4ab7fcdb6009037a08287bccecb97e49f6864ed02eb2cf2569b8ae7ae18ab8",
+  "results/llamacpp/stage3/questions.sha256": "1c2e7db73a0bb2f37aed85d289606a7fccbe38f69904dab48caad0b801727601",
+  "llamacpp/fast.sh": "d343b7b758b26eab389ac8bbf817e96a37f17f02b5489f8dcd1c81465b56c8d2",
+  "llamacpp/make_fast_artifacts.py": "c688408e840ca00fe7af72d1130bf4171071be25930773182b5ce1702bd78901",
+  "results/fast/fast-artifacts-F.json": "ff3a631be1e16009488e27ad8ed82b5ad43ac003df72c3b499cea475916a7940",
+  "results/fast/fast-artifacts-G.json": "bd5daae8d3bcaaa3c51d895fc67f8909d4c6a38aa9fb90f3f6e3bea90c769ec1"
+ },
+ "comparisons": [
+  [
+   "F",
+   "C",
+   "primary"
+  ],
+  [
+   "G",
+   "C",
+   "secondary"
+  ],
+  [
+   "F",
+   "S",
+   "secondary"
+  ],
+  [
+   "G",
+   "S",
+   "secondary"
+  ]
+ ]
+}

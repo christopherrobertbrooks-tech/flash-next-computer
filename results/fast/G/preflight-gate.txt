@@ -1,0 +1,14 @@
+final-1-001       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-002       84 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-1-003      129 positions | split disagree   0 (>= 1.0 logit: 0) | control disagree   0
+final-2-001     1460 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-2-002     2394 positions | split disagree   3 (>= 1.0 logit: 0) | control disagree   4
+final-2-003     2801 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-001      437 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-3-002      624 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   2
+final-3-003      269 positions | split disagree   1 (>= 1.0 logit: 0) | control disagree   1
+final-4-001     2164 positions | split disagree   8 (>= 1.0 logit: 0) | control disagree   7
+final-4-002     1126 positions | split disagree   2 (>= 1.0 logit: 0) | control disagree   4
+final-4-003     2174 positions | split disagree  10 (>= 1.0 logit: 0) | control disagree   6
+hard checks: all passed. Over 13746 Qwen-chosen positions (greedy argmax, lowest id at a tie): split 99.796%, control 99.796% (rule: split >= control - 1.0); questions with a split disagreement at margin >= 1.0: 0 (rule: <= 2)
+PREMISE PASS
