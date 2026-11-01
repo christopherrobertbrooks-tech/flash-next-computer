@@ -156,3 +156,107 @@ establish timing repeatability from one historical pair of runs.
 The saved result is valid for those claims. No additional GPU rerun was needed
 for this review; none was started. The preflight/clock-release evidence above
 comes from the recorded run, not newly launched inference.
+
+## Pass 2 — guided
+
+Opened `REVIEW-LLAMACPP-STAGE3-PASS2.md` and the results narrative only after
+blind commit `af2b8ce` was successfully pushed. The page's primary scores,
+paired counts, interval, medians, totals, stop counts, chip/text rates and memory
+maximum all reproduce. Independently confirmed 81/160 identical full generated
+texts as well. No new blocker or redline.
+
+### 1. Wording and scope
+
+Finding 1 applies to the page's memory bullet: “every 0.5 s through shutdown;
+10302 samples, 0 unavailable” needs the startup-gap disclosure. The sample
+maximum is correct; zero failed queries does not mean zero sampling gaps.
+
+2. **NIT — keep the tie explanation within its tested scope.** The page says
+   “The free runs differ where the split takes the other side of a tie (stage
+   2's checks),” then says each divergence's cause isn't isolated. The latter
+   qualification is right, but the first clause can still imply that all 79
+   different full-run texts have an established tie explanation. Stage 2 checked
+   nine divergent development fixtures, not every full-run first divergence.
+   Smallest replacement: “Full generated text is identical on 81/160 questions.
+   Stage 2's nine divergent fixture runs first differed at an HF tie; this
+   full-run comparison does not isolate the cause of each divergence.”
+
+“The computer stayed exact” is fair shorthand only with its accompanying scope:
+zero lock errors over the **observed** 1552141 checked chip tokens. Prefer the
+literal statement “All 1552141 emitted chip trace tokens matched the RV32
+reference.” This is not a universal proof over every possible input and does
+not mean the final answers or all tool requests were correct.
+
+The 1.68x median, 1.48x summed and 48.0 vs 28.4 text-bucket lines are supported.
+Retain their current labels and one-run caveat; do not turn them into “every
+question is 1.7x faster” or an engine-only effect. Chip bucket throughput is
+similar (1730 vs 1712), rather than numerically identical. Group 4's 18/40 versus
+24/40 is worth reporting as descriptive; it is not a registered subgroup test
+or evidence of an identified failure mechanism. For accuracy, explicitly say
+“a loss greater than five points remains compatible with the interval,” rather
+than mentioning only a possible small loss.
+
+### 2. Proposed public paragraph — draft only
+
+> I tested a split Qwenputer runner on a V100: Qwen's layers run in llama.cpp
+> (f16 with a bf16 output head), while the computer uses the existing fp32
+> executor. Across 160 questions, all 1,552,141 emitted chip trace tokens matched
+> the RV32 reference. Against the saved HF-bf16 executor baseline, median
+> question latency fell from 16.77 to 10.005 seconds (1.68x), and summed time
+> from 7,621 to 5,148 seconds (1.48x). Accuracy was 131/160 versus 135/160; the
+> paired 95% interval for the difference was -8.8 to +3.7 percentage points,
+> establishing neither an accuracy difference nor equivalence. This is one run
+> per configuration, combining engine, precision and process-split changes;
+> the circuit itself has not been ported natively into llama.cpp.
+
+This is an appropriate qualified version of “the port works.” It is a draft
+for Chris's word-for-word approval, not a message that has been posted or sent.
+No upstream issue or comment was created.
+
+### 3. Stage-4 write-up
+
+Include the frozen protocol/source and both identity manifests, exact hardware
+and locked clocks (both C and S logs specify 1380 MHz), commands and raw data,
+question/order checksum and prompt-ID matches, preflight results, complete
+paired table/interval, stop/failure layers, and timing boundaries. Distinguish
+model load/warm-up from the additional identity-verification/startup time and
+preserve the memory-gap caveat.
+
+State that the bf16 head was selected on development data before the full run;
+its unchanged stored values and fixture argmax agreement do not prove equal
+free-running outputs. Original C used BF16 Qwen layers, while S uses the widened
+Qwen half converted to F16 plus the BF16 head. The circuit remains upstream's
+fp32 executor, checked against the RV32 reference; its checkpoint bf16 circuit
+layers are not being executed in this benchmark. The disclosed upstream loader
+patch loads directly to the GPU to fit host RAM; its source identity is frozen,
+and SplitChat does not use that full-HF loader.
+
+Keep C's historical PyTorch allocation peak out of any process-memory savings
+claim. Report S's sampled footprint on its own. Explain that the historical
+comparison and differing trajectories leave repeatability and causal
+engine-versus-precision attribution unresolved. A successful execution port
+and inconclusive answer accuracy are compatible outcomes.
+
+### 4. Further measurements
+
+**No further measurement is necessary for this registered result and its
+qualified write-up.** Do not selectively rerun difficult or disagreeing answers
+to alter the primary data. A repeat of a few questions could support a new,
+limited timing-variability claim, but cannot repair or establish accuracy
+equivalence on the registered set.
+
+If a separate timing follow-up is wanted, choose its questions and repetitions
+before running it, repeat both configurations under the same conditions in a
+counterbalanced order, and record output/token checksums, startup treatment and
+variability. A fixed-history teacher-forced comparison would answer a different
+question about matched-work throughput. Neither follow-up is required to publish
+the present observed ratios with the one-run caveat, and neither was launched
+in this review.
+
+### Disposition
+
+The registered numerical result is reproducible and the saved run is valid for
+the scoped claims above. Address the two wording/reporting nits in the final
+write-up; no source fix, data substitution or additional GPU run is required.
+Both passes were CPU/read-only review work. Nothing was posted externally or
+merged into the source/main branch.
