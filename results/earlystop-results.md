@@ -78,5 +78,8 @@ rule overhead and run-to-run variation; they don't isolate overhead. `results/ea
 - **Adoption:** we adopt this frozen rule as the operational default for F: on one fresh 160-question sample from the
   same generator, it met the pre-set keep criterion with 12.2% estimated summed-time savings and no observed
   premature stops. This doesn't guarantee zero losses on future answers. It stays switchable (`--early-stop`), the
-  unchanged baseline stays runnable, and it applies to arm F only. Making it the runner's default is a separate,
-  tested change.
+  unchanged baseline stays runnable, and it applies to arm F only.
+- **Now the runner's default for F** (branch earlystop-default): `run_split.py --early-stop default|on|off`. 'default'
+  is on only for arm F in token mode; every run records the setting and the rule's sha256; the registered launchers
+  (`fast.sh`, `earlystop.sh`) pass it explicitly ('off' for baselines). Their earlier frozen manifests no longer
+  match the changed runner, so an old launcher can't run silently under the new default.

@@ -25,8 +25,10 @@ usage (riscv dir on PYTHONPATH, the qwenputer venv, the V100 visible, inside the
 --lm-input tokens (FAST-PLAN arms F, G): the GGUF is a stock Qwen fed token ids; the computer side is unchanged.
 --record-decisions (EARLYSTOP-PLAN): for every question, the time at which the language model decides each next
 token, with that token and its index, and the question's total duration, both on a monotonic clock from the
-question's start (time.monotonic, which the wall clock's adjustments can't move), in decisions.jsonl. --early-stop: the frozen rule (earlystop_rule.RepetitionStop) runs live on those decisions; a stopped
-answer ends with stop "early stop" (a failed answer). Without either option nothing changes.
+question's start (time.monotonic, which the wall clock's adjustments can't move), in decisions.jsonl. --early-stop on|off|default: the frozen rule (earlystop_rule.RepetitionStop) runs live on the model's
+decisions; a stopped answer ends with stop "early stop" (a failed answer). 'default' is on for arm F in token mode
+(adopted after results/earlystop-results.md) and off for every other arm; registered baselines pass 'off'
+explicitly. The setting and the rule's sha256 are recorded in startup.json.
 """
 import argparse, functools, hashlib, json, os, subprocess, sys, threading, time
 from pathlib import Path
@@ -194,6 +196,14 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
     return "ok", None
 
 
+def resolve_early_stop(setting, arm, lm_input):
+    """The early-stop setting for a run: explicit 'on'/'off' win; 'default' is on only for arm F in token mode (the
+    configuration it was measured on, results/earlystop-results.md)."""
+    if setting in ("on", "off"):
+        return setting == "on"
+    return arm == "F" and lm_input == "tokens"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("model"); ap.add_argument("gguf"); ap.add_argument("helper")
@@ -206,8 +216,11 @@ def main():
     ap.add_argument("--gpu-uuid", default=V100_UUID)
     ap.add_argument("--lm-input", choices=["rows", "tokens"], default="rows")
     ap.add_argument("--record-decisions", action="store_true")
-    ap.add_argument("--early-stop", action="store_true")
+    ap.add_argument("--early-stop", choices=["default", "on", "off"], default="default",
+                    help="the frozen early-stop rule (earlystop_rule.py): 'default' = on for arm F in token mode "
+                         "(adopted after results/earlystop-results.md), off otherwise")
     a = ap.parse_args()
+    a.early_stop = resolve_early_stop(a.early_stop, a.arm, a.lm_input)
     n_checked = verify_artifacts(a.expect) if a.expect else 0
     expect_sha = RQ.sha(a.expect) if a.expect else None
     os.makedirs(a.out, exist_ok=True)
@@ -248,7 +261,9 @@ def main():
                         "client_sha256": RQ.sha(sys.modules["helper_client"].__file__),
                         "artifacts_verified": n_checked, "expect_sha256": expect_sha,
                         "record_decisions": a.record_decisions,
-                        "early_stop": a.early_stop, "max_new": a.max_new, "max_chip": a.max_chip,
+                        "early_stop": a.early_stop,
+                        "early_stop_rule_sha256": RQ.sha(HERE / "earlystop_rule.py") if a.early_stop else None,
+                        "max_new": a.max_new, "max_chip": a.max_chip,
                         "lock_max_records_per_call": a.max_chip, "n_ctx": a.n_ctx,
                         "gpu_mib_parent_before_helper": base, "gpu_mib_after_load": mem.samples[-1]}
                 Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
