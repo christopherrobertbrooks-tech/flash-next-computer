@@ -30,6 +30,26 @@ def run(h, fx, zero):
     return out
 
 
+def by_owner(fdir, man, res):
+    """The same comparison split by who chooses the next token (the stage-0 ownership mask): Qwen-chosen positions
+    (the prompt's last and text steps the circuit doesn't own) vs circuit-owned ones (their output is the circuit's,
+    deliberately changed by zeroing the code dims)."""
+    out = {o: {"positions": 0, "same_argmax": 0, "same_top5_ids": 0, "max_gap_difference_where_top5_same": 0.0}
+           for o in ("qwen", "circuit")}
+    for f in man["fixtures"]:
+        fx = torch.load(fdir / f"{f['id']}.pt", weights_only=False)
+        own = ["qwen"] + ["qwen" if s["circuit"] is None else "circuit" for s in fx["steps"]]
+        for j, ((ia, va), (ib, vb)) in enumerate(zip(res[f["id"]]["as_recorded"], res[f["id"]]["chip_dims_zeroed"])):
+            e = out[own[j]]
+            e["positions"] += 1
+            e["same_argmax"] += ia[0] == ib[0]
+            if ia == ib:
+                e["same_top5_ids"] += 1
+                d = max(abs((va[0] - x) - (vb[0] - y)) for x, y in zip(va[1:], vb[1:]))
+                e["max_gap_difference_where_top5_same"] = max(e["max_gap_difference_where_top5_same"], d)
+    return out
+
+
 def main():
     helper, gguf, fdir, outp = sys.argv[1:5]
     fdir = Path(fdir)
@@ -50,8 +70,8 @@ def main():
                     gap_max = max(gap_max, max(abs(x - y) for x, y in zip(ga, gb)))
                     n_cmp += 1
             print(f["id"], len(a), flush=True)
-    s = {"positions": tot, "same_argmax": same_arg, "same_top5_ids": same_top5,
-         "max_gap_difference_where_top5_same": gap_max}
+    s = {"all_positions": {"positions": tot, "same_argmax": same_arg, "same_top5_ids": same_top5,
+                           "max_gap_difference_where_top5_same": gap_max}, "by_owner": by_owner(fdir, man, res)}
     Path(outp).write_text(json.dumps({"summary": s, "rows": res}) + "\n")
     print(json.dumps(s))
 
