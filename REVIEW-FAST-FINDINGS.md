@@ -321,3 +321,145 @@ teacher-forced full-HF oracle or GPU measurement is required to approve this
 **plan**; the future implementation and its controls still need their promised
 review before launching F or G. Neither was built or run here. No GPU job was
 used, no deployment was changed, and only this review branch is being pushed.
+
+## Build pass 1 — blind
+
+Merged `origin/inside-check` at `2e36f0a` into the review branch. Read only the
+allowed code, identity files and control outputs for this pass; neither the
+build-status section nor the build pass-2 brief nor commit messages after
+b8b6deb was opened. Did not execute fast.sh, including with fake commands, and
+did not launch model inference. CPU checks and gateway reads only.
+
+### New findings
+
+5. **REDLINE — analysis ignores arm validity when all rows exist.**
+   The registration distinguishes invalid-design/incomplete arms from completed
+   measurements. fast_analysis.py verifies frozen analysis code and input
+   checksums, then only checks whether replies.jsonl exists before scoring; it
+   never reads the arm's startup status or rejects any lock error globally.
+   A lock error on the last question leaves all 160 rows present, so ordinary
+   completeness checking cannot enforce the design-validity rule.
+
+   CPU reproduction: use genuine stage-3 records relabelled F/G in owned
+   temporary folders, put a trace mismatch and inside.lock_error on F's last
+   question, and write F startup status “invalid design.” The frozen analysis
+   verifier passes; all four comparisons exit 0; the wrapper exits 0 and emits
+   a primary F-vs-C verdict (131 becomes 130 correct), rather than withholding
+   it. This is a synthetic analysis test, not new F/G experimental data. A
+   nonzero helper exit after 160 successful answers has the same completeness
+   problem if startup marks the arm incomplete.
+
+   Smallest fix: validate each new arm before invoking its comparisons: require
+   its startup status ok, correct arm/token mode and frozen runtime/GGUF identity,
+   zero row lock errors/mismatch records/harness errors, and the registered
+   completeness checks. Emit an explicit withheld/not-run outcome for invalid
+   or incomplete arms, preserve their data, still report eligible G comparisons,
+   and return a nonzero overall status without promoting G to primary. Ordinary
+   budget failures remain scored failed questions and do not invalidate the
+   whole arm. Add wrapper-level regressions for a final-question lock error,
+   failed helper shutdown with all rows, missing startup and a valid control;
+   refresh the frozen analysis identity after the fix.
+
+6. **NIT — independent history reconstruction rejects a legal partial run.**
+   test_split_tokens_gpu.py permits text-budget stops, but reconstruct() insists
+   that a tool call's entire reference-generated run is already present in gen.
+   CPU counterexample: run the real scripted token path with max_new=27, exactly
+   through the first </tool_call>. It stops with text_tokens=27 and no lock
+   error, before appending GO. This is upstream's valid budget behavior, but
+   reconstruct() raises “the run after 26 differs from the reference's.” A
+   text-budget stop in a forced echo can have the same issue.
+
+   Smallest fix: pass explicit stop/count information to reconstruction and
+   accept only a correctly matching prefix of the reference run at a registered
+   budget boundary; return the text inputs actually processed before that cut.
+   Continue rejecting missing/mutated tokens in a completed EOS run. Add cutoff
+   controls at tool-close, inside a chip span and inside a forced echo. The saved
+   F budget-stop fixtures end outside such a partial run and pass; this does
+   not invalidate their recorded controls or the production loop.
+
+7. **NIT — fail immediately if attempt-directory creation fails.**
+   fast.sh checks existence, then ignores failure of `mkdir "$OUT"` and
+   `mkdir "$A"`. In particular, a directory created between check and mkdir
+   could let the script continue and truncate an existing arm.out via `>`.
+   This is defensive preservation of attempts, not evidence of an actual
+   overwrite. Use an atomic successful mkdir as the gate (`mkdir ... || exit`),
+   and never proceed into an arm directory whose creation failed. Syntax was
+   checked; the launcher itself was not run.
+
+### Token path and controls
+
+The production delta is small and correct: after snapshot and helper.reset,
+token mode calls unchanged `_exec_start(ids)` before sending prompt IDs at
+0..P-1. On each processed text input it sends exactly nxt at pos, advances pos
+once, then lets circuit_token override the helper. Chip inputs advance only
+the executor; EOS is checked before either token feed or executor step. Forced
+byte echoes and the HALT newline remain text inputs. `_exec_hc` is retained for
+ownership; the original row path is preserved. Lock and budget ordering have
+not moved. Main's token-mode warm-up is followed by the per-question reset.
+
+Ran the hash-matched deployed CPU test_split_chat.py with CUDA hidden: row and
+token modes agree with upstream on one/two calls, both budgets, bad chip trace
+and given-up ownership. All three deliberate mutations are caught: skipped
+positions, helper overriding circuit ownership, and an extra feed during a
+chip step. This tests actual production split_generate using scripted model/
+executor choices, not loaded model weights.
+
+The GPU checker reconstructs the computer's portion independently: it gives
+the reference only the model's free text, recomputes each run, validates that
+against the generated chip/echo span, then builds expected language requests.
+It is materially stronger than just filtering its recorded requests or gen.
+A separate CPU reproduction on a real reference call accepts the complete
+stream and rejects a corrupted forced HALT newline. Its budget-prefix limit
+is finding 6. Initial executor S/history comparison and the final A,B,...,A
+check support prompt initialization/reset. Numerical helper validity remains
+the separate exact-artifact preflight gate, not the mere fact a run reaches EOS.
+
+The allowed gateway log tokens-gpu.out records an **earlier F control failure**:
+its old harness required EOS, so two valid text-budget stops were marked BAD;
+G then completed all fixtures successfully. The later tokens-gpu-F.out and
+checked-in F log use the corrected stop criterion and pass, including those
+two 8192-text stops. The request counts agree between attempts. This is a
+visible development control correction, not a registered 160-question rerun.
+The checked-in G log uses the older EOS wording, but all its cases ended EOS,
+so the later broadened criterion does not weaken any observed G result.
+No new GPU run was necessary in this review.
+
+### Scorer, identities and launcher
+
+- Ran test_score_fast.py locally: all four 160-row comparison checks, signed
+  differences, unknown/missing-arm handling, duplicate/missing-ID rejection,
+  and exact historical stage-3/stage-1/inside-4b score-object regression pass.
+  The relabelled test inputs are explicitly synthetic and prove wiring, not
+  experimental accuracy of F/G. F/G are now in scoring, chain diagnostics and
+  first-arm support; this closes the earlier missing-arm implementation gap.
+- fast_analysis.py verify passes for all **12 analysis files**, whose hashes
+  also match its pinned commit 10899f3752006ec470dd689add358be7068ec951. It
+  freezes the new scorer/parser/wrapper, C/S comparator bytes and question
+  hashes, question file, launcher/builder and both runtime manifests. That
+  closes the earlier stale-analysis-identity omission. It does not freeze
+  future F/G outcomes, and currently does not validate their run status or
+  provenance before scoring (finding 5).
+- Both deployed runtime manifests match the committed bytes and every listed
+  current file: **110 files per arm, 111 unique files** in their union, with
+  only the selected GGUF differing. They bind helper/libraries, new token loop
+  and runner, launcher, executor/firmware, prompt and tokenizer/config assets,
+  gate inputs and the per-arm stock-model file. Both record text-ID
+  compatibility, token mode and the correct arm. The checker verifies listed
+  bytes; the frozen launcher supplies the matching CLI choices. Arbitrary
+  manual CLI arguments are not automatically validated against manifest
+  metadata.
+- By source inspection, F's set-e/pipefail scope is confined to its subshell.
+  Parent status capture records a nonzero F exit and continues to G; a sticky
+  rc makes the overall launcher nonzero if either fails. Each arm has its own
+  preflight, helper log, run folder and arm.out, and the top-level root refuses
+  an existing path. The directory-creation edge is finding 7. No launcher test
+  required actually running fast.sh; it was not executed.
+
+### Build-pass disposition
+
+Token-mode execution and the recorded controls support the intended build,
+with the secondary control/preservation nits above. **Fix the analysis validity
+check and refreeze its identity before the registered fast run.** A complete
+row count must not turn an invalid design into a primary accuracy verdict.
+Nothing was built or launched by this review; only findings on this review
+branch are being committed and pushed.
