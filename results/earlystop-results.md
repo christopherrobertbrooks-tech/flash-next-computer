@@ -7,7 +7,9 @@ the [README](../README.md#credits-and-citation).
 the 6th time) is **kept** under the registered criterion. On 160 fresh questions, applied to unchanged arm F (the
 exact computer with the stock Qwen3.5-4B Q8_0), it **stopped 7 of the 8 answers that ran to the text budget** and
 **no answer F got right** (0 premature stops; 131/160 either way). It **saved an estimated 12.2% of the summed time**
-(4,013 to 3,522 s). The live check passed, and with it the final verdict. Not yet reviewed by Codex.
+(4,013 to 3,522 s). The live check passed, and with it the final verdict. Reviewed by Codex (review/codex-earlystop bfb39b6 /
+a53ee69): every number, the replay and the live check reproduce; the KEEP verdict stands; one wording correction
+applied below.
 
 Protocol: `EARLYSTOP-PLAN.md` v2.
 - **The rule:** `llamacpp/earlystop_rule.py`, sha256 `c29310c9...`. It was chosen on development data
@@ -57,8 +59,9 @@ They ran with the rule switched on. Both runs passed the validity checks.
 | fresh-3-024 | equal (3,598) | no / no | 6.45 vs 6.44 s (8.44) |
 | fresh-2-004 | equal (83,063) | no / no | 125.18 vs 125.46 s (138.01) |
 
-The live stopped answers are token-for-token the offline prefixes, and the rule's overhead is small (at most 1.2 s
-over the estimate here). `results/earlystop/eval/final.json`.
+The live stopped answers are token-for-token the offline prefixes. Across the five checks, live durations differed
+from the offline estimates by -0.28 to +1.22 s, and all passed the registered tolerance. Those differences include
+rule overhead and run-to-run variation; they don't isolate overhead. `results/earlystop/eval/final.json`.
 
 ## What it means
 - **The rule works as designed on this test set.** It ends most of the runaway answers, often very early (fresh-4-031
@@ -66,7 +69,14 @@ over the estimate here). `results/earlystop/eval/final.json`.
 - **Limits:**
   - One run, one question sample from the same generator, so it isn't a guarantee for other question families or
     future answers.
-  - The saving is estimated from the recorded stop points; the live check confirms the boundary and the small
-    overhead on 5 questions.
+  - The saving is estimated from recorded stop points; the live check confirms the boundary and passes the
+    registered timing tolerance on five questions. A full stopped-run saving wasn't measured.
   - The keep criterion (at least 10% saved, at most 1 premature stop) is an operational decision on this set.
-- **Stopped answers are failures:** the rule doesn't fix those answers; it stops spending time on them.
+- **Stopped answers are failures:** the rule doesn't fix those answers; it stops spending time on them. The eight
+  budget failures took 957.9 s (23.9% of the time); the rule removes about half of that (51.3%). The median moves
+  only about 3% (8.27 to 8.02 s): the saving is in the failed tail.
+- **Adoption:** we adopt this frozen rule as the operational default for F: on one fresh 160-question sample from the
+  same generator, it met the pre-set keep criterion with 12.2% estimated summed-time savings and no observed
+  premature stops. This doesn't guarantee zero losses on future answers. It stays switchable (`--early-stop`), the
+  unchanged baseline stays runnable, and it applies to arm F only. Making it the runner's default is a separate,
+  tested change.
