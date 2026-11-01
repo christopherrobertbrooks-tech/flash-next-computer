@@ -85,7 +85,9 @@ Development evidence for choosing these, teacher-forced on the 12 fixtures (`res
 - **A development observation, after the arms were registered:**
   - On the 12 fixture questions, F (Q8_0) hit the 8,192-token text budget on 2 (final-2-003, final-4-001; the
     second with no call), and its answers ran longer elsewhere too (final-2-001: 4,496 vs 1,477 text tokens).
-  - G (f16) ended EOS on all 12, with texts identical to stage 1's plain run.
+  - G (f16) ended EOS on all 12, with the same text-request and call counts as stage 1's plain run (L) on every
+    question. The control didn't save the texts, so "identical texts" isn't claimed; the registered G replies will
+    allow the direct comparison with L.
   - This doesn't change the registration: F stays primary, G secondary, and both are run and reported. Choosing
     the primary arm again after seeing these runs would be the post-hoc selection the registration rules out.
 
@@ -107,6 +109,13 @@ Development evidence for choosing these, teacher-forced on the 12 fixtures (`res
 - **Validity:** any lock error invalidates that arm (its run stops); an exception or OOM stops it as incomplete; one
   disclosed restart from the beginning per arm for infrastructure interruption. Memory by stage 3's method; no
   comparison with C's PyTorch figure.
+- **Reported for every arm:** per-question text and chip counts, calls, stop reasons, raw outputs and outer/bucket
+  times; the text-budget count and its share of the time. The scorer's loop flags are **tool-call repetition
+  flags** (repeated tool expressions), not a detector of textual loops; no new loop measure or abort rule is added.
+- **Scoring validity (Codex build review, finding 5):** `fast_analysis.py` scores an arm only if its run is valid
+  (status ok, the right arm and mode, the frozen GGUF, every artifact verified, no lock error, trace mismatch or
+  harness error). Otherwise its comparisons are withheld and reported as such, and the other arm's are still
+  scored, never promoted.
 - **Framing:** F and G are "Qwenputer's exact computer with the stock Qwen language model": a new system, not an
   exact-weight conversion of Qwenputer into llama.cpp, and F's language model is quantized.
 
