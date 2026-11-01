@@ -1,5 +1,8 @@
 # Qwenputer's computer with the stock Qwen in llama.cpp: results (2026-10-31, 11:20 pm to 1:28 am)
 
+Builds on [Qwenputer](https://github.com/divagr18/qwenputer) by Divyansh Agrawal (MIT); please cite it as given in
+the [README](../README.md#credits-and-citation).
+
 **Answer (registered primary, F vs C):** Qwenputer's exact computer (upstream's fp32 executor) with the **stock
 Qwen3.5-4B at Q8_0** in llama.cpp (arm **F**) scored **131/160** vs the original Qwenputer's **135/160**: F minus C =
 **-2.5 points**, 95% interval **-8.3 to +3.2** (inconclusive under the ±5 margin; a loss greater than five points

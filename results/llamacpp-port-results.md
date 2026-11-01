@@ -1,5 +1,8 @@
 # Qwenputer's language part in llama.cpp: results (2026-10-31)
 
+Builds on [Qwenputer](https://github.com/divagr18/qwenputer) by Divyansh Agrawal (MIT); please cite it as given in
+the [README](../README.md#credits-and-citation).
+
 **What you have:** Qwenputer-4B answering maths questions on the V100 with its **Qwen half running in llama.cpp**
 and its **computer on upstream's exact fp32 executor**. Every computer token is checked against the RV32 reference
 machine, and you can watch it in the live viewer (`viewer/rvlive.py --backend llama`). The 18.8 GB HF checkpoint isn't
