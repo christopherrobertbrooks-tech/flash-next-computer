@@ -18,9 +18,10 @@ from stage4_requests import final_answer, value  # noqa: E402  (the exact ANSWER
 PRIMARY = ["1", "2", "3", "4"]
 SENSITIVITY = ["1", "3", "4"]       # descriptive only: the primary set without the limit-seeking group 2
 MARGIN = 0.05                       # equivalence margin, 5 points
-# R: inside-4b's emulator-beside arm; L: R in llama.cpp; S: Qwenputer split (Qwen half in llama.cpp, the executor)
-KNOWN_ARMS = ("A", "B", "C", "R", "L", "S", "Brep")
-FIRST_ARMS = ("C", "L", "S")
+# R: inside-4b's emulator-beside arm; L: R in llama.cpp; S: Qwenputer split (Qwen half in llama.cpp, the executor);
+# F, G: Qwenputer's executor with the stock Qwen in llama.cpp (Q8_0, f16; FAST-PLAN)
+KNOWN_ARMS = ("A", "B", "C", "R", "L", "S", "F", "G", "Brep")
+FIRST_ARMS = ("C", "L", "S", "F", "G")
 
 
 class DataError(Exception):
@@ -264,7 +265,7 @@ def score_one(q, row):
     out["layer"] = layer
     out["recovered"] = (out["fault_kinds"] or out["computer_error_results"]) if out["correct"] else []
     # 4. chains (B and C only): how many steps were seen in order in the tool results
-    if q["group"] == "4" and row["arm"] in ("B", "C", "R", "L", "S"):
+    if q["group"] == "4" and row["arm"] in ("B", "C", "R", "L", "S", "F", "G"):
         results = [str(x.get("result")) for x in calls if x.get("error") is None]
         k = 0
         for r in results:

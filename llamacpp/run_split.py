@@ -20,7 +20,9 @@ joined before the report is written. It's a sampled footprint, not an allocation
 
 usage (riscv dir on PYTHONPATH, the qwenputer venv, the V100 visible, inside the V100 lock):
     python run_split.py MODEL_DIR GGUF HELPER QUESTIONS.jsonl OUT_DIR [--max-new 8192] [--max-chip 2000000]
-        [--n-ctx 16384] [--expect HASHES.json] [--gpu-uuid UUID]
+        [--n-ctx 16384] [--expect HASHES.json] [--gpu-uuid UUID] [--lm-input rows|tokens] [--arm S|F|G]
+
+--lm-input tokens (FAST-PLAN arms F, G): the GGUF is a stock Qwen fed token ids; the computer side is unchanged.
 """
 import argparse, functools, hashlib, json, os, subprocess, sys, threading, time
 from pathlib import Path
@@ -182,6 +184,7 @@ def main():
     ap.add_argument("--arm", default="S")
     ap.add_argument("--expect", help="JSON {files: {path: sha256}}; every one must match before anything loads")
     ap.add_argument("--gpu-uuid", default=V100_UUID)
+    ap.add_argument("--lm-input", choices=["rows", "tokens"], default="rows")
     a = ap.parse_args()
     n_checked = verify_artifacts(a.expect) if a.expect else 0
     os.makedirs(a.out, exist_ok=True)
@@ -204,12 +207,17 @@ def main():
             h = Helper(a.helper, a.gguf, a.n_ctx, stderr=herr, n_vocab=chat.v0)
             try:
                 h.reset()
-                h.rows([0], SC.to_f32(torch.zeros(1, chat.hidden)))     # wait until the model is loaded
+                if a.lm_input == "rows":                                   # wait until the model is loaded
+                    h.rows([0], SC.to_f32(torch.zeros(1, chat.hidden)))
+                else:
+                    h.tokens([0], [chat.T.TCO])
                 mem = MemSampler(a.gpu_uuid, {"parent": me, "helper": h.p.pid})
                 mem.sample()
-                info = {"arm": a.arm, "path": "Qwen half in llama.cpp (qwen_half_helper row mode); the computer on "
-                        "upstream's fp32 executor (Executor2), checked against the RV32 reference; the checkpoint's "
-                        "bf16 computer layers are not executed; no HF checkpoint loaded",
+                lm = ("Qwen half in llama.cpp (qwen_half_helper row mode)" if a.lm_input == "rows" else
+                      "a stock Qwen in llama.cpp (qwen_half_helper token mode)")
+                info = {"arm": a.arm, "lm_input": a.lm_input, "path": f"{lm}; the computer on upstream's fp32 "
+                        "executor (Executor2), checked against the RV32 reference; the checkpoint's bf16 computer "
+                        "layers are not executed; no HF checkpoint loaded",
                         "load_seconds": round(time.time() - t0, 1), "gguf": a.gguf, "gguf_sha256": RQ.sha(a.gguf),
                         "helper_sha256": RQ.sha(a.helper), "tokenizer_sha256": RQ.sha(Path(a.model) / "tokenizer.json"),
                         "firmware_sha256": RQ.sha(RQ.FIRMWARE), "runner_sha256": RQ.sha(__file__),
@@ -221,8 +229,8 @@ def main():
                 Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
                 mem.start()
                 torch.cuda.reset_peak_memory_stats()
-                status, reason = run_questions(chat, h, qs, a.out, a.max_new, a.max_chip, a.n_ctx, SC.split_generate,
-                                               a.arm)
+                gen = functools.partial(SC.split_generate, lm_input=a.lm_input)
+                status, reason = run_questions(chat, h, qs, a.out, a.max_new, a.max_chip, a.n_ctx, gen, a.arm)
             finally:
                 if mem is not None:
                     mem.phase = "shutdown"
