@@ -23,6 +23,10 @@ usage (riscv dir on PYTHONPATH, the qwenputer venv, the V100 visible, inside the
         [--n-ctx 16384] [--expect HASHES.json] [--gpu-uuid UUID] [--lm-input rows|tokens] [--arm S|F|G]
 
 --lm-input tokens (FAST-PLAN arms F, G): the GGUF is a stock Qwen fed token ids; the computer side is unchanged.
+--record-decisions (EARLYSTOP-PLAN): for every question, the time at which the language model decides each next
+token, with that token and its index, and the question's total duration, both on a monotonic clock from the
+question's start (time.monotonic, which the wall clock's adjustments can't move), in decisions.jsonl. --early-stop: the frozen rule (earlystop_rule.RepetitionStop) runs live on those decisions; a stopped
+answer ends with stop "early stop" (a failed answer). Without either option nothing changes.
 """
 import argparse, functools, hashlib, json, os, subprocess, sys, threading, time
 from pathlib import Path
@@ -108,7 +112,7 @@ def verify_artifacts(expect_path):
     return len(want)
 
 
-def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm="S"):
+def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm="S", record=False, early_stop=False):
     """The question loop. Returns (status, reason): status "ok", "invalid design" (a lock error) or "incomplete"
     (an exception or a preflight failure). Every attempted question's row is saved before stopping."""
     rows_path = os.path.join(out, "replies.jsonl")
@@ -125,15 +129,27 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
         lock.qwen = functools.partial(lock.qwen, max_records=max_chip)
         t = time.time()
         err = None
+        decisions, extra = [], {}
+        tm = time.monotonic()
+        if record or early_stop:
+            import earlystop_rule
+            rule = earlystop_rule.RepetitionStop() if early_stop else None
+
+            def on_decide(i, tok):
+                decisions.append([i, tok, round(time.monotonic() - tm, 6)])
+                return rule.refuse(tok) if rule is not None else False
+
+            extra = {"on_decide": on_decide}
         try:
-            r = generate(chat, helper, ids, m, max_new, max_chip=max_chip, lock=lock)
+            r = generate(chat, helper, ids, m, max_new, max_chip=max_chip, lock=lock, **extra)
         except Exception as e:  # noqa: BLE001
             r, err = {"tokens": []}, f"{type(e).__name__}: {e}"
         secs = round(time.time() - t, 2)
+        secs_mono = round(time.monotonic() - tm, 6)
         toks = r["tokens"]
         text = chat.text_of(toks) if toks else ""
         ended = bool(toks) and toks[-1] in chat.eos
-        stop = ("eos" if ended else "lock error" if r.get("lock_error") else
+        stop = ("eos" if ended else "early stop" if r.get("early_stop") else "lock error" if r.get("lock_error") else
                 "computer budget" if (r.get("chip_tokens") or 0) >= max_chip else
                 "text budget" if (r.get("text_tokens") or 0) >= max_new else None if err else "other")
         fr = frames.parse(text)
@@ -164,6 +180,10 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
                "time": time.strftime("%X")}
         with open(rows_path, "a") as f:
             f.write(json.dumps(row) + "\n")
+        if record or early_stop:
+            with open(os.path.join(out, "decisions.jsonl"), "a") as f:
+                f.write(json.dumps({"id": q["id"], "early_stop": bool(r.get("early_stop")), "decisions": decisions,
+                                    "tokens": r.get("tokens") or [], "seconds_monotonic": secs_mono}) + "\n")
         ins = row["inside"]
         print(f"{n + 1:3}/{len(qs)} {q['id']:16} {secs:7.1f}s {stop} calls {len(calls)} chip {ins['chip_tokens']} "
               f"lock_error {ins['lock_error']}{' ERROR ' + err if err else ''}", flush=True)
@@ -185,8 +205,11 @@ def main():
     ap.add_argument("--expect", help="JSON {files: {path: sha256}}; every one must match before anything loads")
     ap.add_argument("--gpu-uuid", default=V100_UUID)
     ap.add_argument("--lm-input", choices=["rows", "tokens"], default="rows")
+    ap.add_argument("--record-decisions", action="store_true")
+    ap.add_argument("--early-stop", action="store_true")
     a = ap.parse_args()
     n_checked = verify_artifacts(a.expect) if a.expect else 0
+    expect_sha = RQ.sha(a.expect) if a.expect else None
     os.makedirs(a.out, exist_ok=True)
     rows_path = os.path.join(a.out, "replies.jsonl")
     if os.path.exists(rows_path):
@@ -223,14 +246,17 @@ def main():
                         "firmware_sha256": RQ.sha(RQ.FIRMWARE), "runner_sha256": RQ.sha(__file__),
                         "split_chat_sha256": RQ.sha(SC.__file__), "run_qwenputer_sha256": RQ.sha(RQ.__file__),
                         "client_sha256": RQ.sha(sys.modules["helper_client"].__file__),
-                        "artifacts_verified": n_checked, "max_new": a.max_new, "max_chip": a.max_chip,
+                        "artifacts_verified": n_checked, "expect_sha256": expect_sha,
+                        "record_decisions": a.record_decisions,
+                        "early_stop": a.early_stop, "max_new": a.max_new, "max_chip": a.max_chip,
                         "lock_max_records_per_call": a.max_chip, "n_ctx": a.n_ctx,
                         "gpu_mib_parent_before_helper": base, "gpu_mib_after_load": mem.samples[-1]}
                 Path(a.out, "startup.json").write_text(json.dumps(info, indent=1) + "\n")
                 mem.start()
                 torch.cuda.reset_peak_memory_stats()
                 gen = functools.partial(SC.split_generate, lm_input=a.lm_input)
-                status, reason = run_questions(chat, h, qs, a.out, a.max_new, a.max_chip, a.n_ctx, gen, a.arm)
+                status, reason = run_questions(chat, h, qs, a.out, a.max_new, a.max_chip, a.n_ctx, gen, a.arm,
+                                               record=a.record_decisions, early_stop=a.early_stop)
             finally:
                 if mem is not None:
                     mem.phase = "shutdown"

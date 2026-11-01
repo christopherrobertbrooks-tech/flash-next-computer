@@ -3,6 +3,8 @@
 usage (on the gateway: riscv dir on PYTHONPATH, the qwenputer venv; CPU only):
        python generate.py pilot OUT.jsonl MODEL_DIR     (15 questions, seed 5001, its own task pools)
        python generate.py final OUT.jsonl MODEL_DIR     (180 questions, seed 5002; generate only after the freeze)
+       python generate.py fresh OUT.jsonl MODEL_DIR     (160 questions, groups 1-4 as in the primary set, seed 5003;
+                                                         EARLYSTOP-PLAN: generated only after its rule was frozen)
 MODEL_DIR supplies the Qwenputer tokenizer for the tools' shared input contract: every group-1 expression must pass
 it (the 80-token capture included); group 2 records whether its direct call passes ("over_capture").
 
@@ -17,8 +19,9 @@ from fractions import Fraction
 FINAL = " End your reply with one line: ANSWER: <the exact value>."
 MAXD = 62
 COUNTS = {"pilot": {"1": 3, "2": 3, "3": 3, "4": 3, "5a": 2, "5b": 1},
-          "final": {"1": 70, "2": 10, "3": 40, "4": 40, "5a": 10, "5b": 10}}
-SEEDS = {"pilot": 5001, "final": 5002}
+          "final": {"1": 70, "2": 10, "3": 40, "4": 40, "5a": 10, "5b": 10},
+          "fresh": {"1": 70, "2": 10, "3": 40, "4": 40}}
+SEEDS = {"pilot": 5001, "final": 5002, "fresh": 5003}
 
 
 def num(rng, lo, hi):
