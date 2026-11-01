@@ -21,8 +21,9 @@ change.
    - a lower text budget;
    - a repetition rule: stop when the same k-token span has occurred r times;
    - the two combined.
-   For each candidate: premature stops among F's right answers, time saved (from per-token timing, below), and
-   failures stopped. **Choose one rule and its parameters on this data, then freeze it** (code, parameters, sha256)
+   For each candidate: premature stops among F's right answers, failures stopped, and the time saved. The saved
+   answers have no per-token times, so on development data the saving is an estimate (each question's time scaled by
+   the share of its text tokens after the stop); the fresh run measures it exactly. **Choose one rule and its parameters on this data, then freeze it** (code, parameters, sha256)
    before any fresh question exists.
 2. **Fresh questions:** a new set from `stage5/generate.py` with a new seed (5003), the same groups and counts as the
    primary set (70/10/40/40), generated only after the rule is frozen. Within-group overlap with the 160 (the same
@@ -37,11 +38,15 @@ change.
    - A short live run with the rule switched on (a few fresh questions, chosen beforehand) checks that the live
      stopped answers equal the offline prefixes token for token.
 4. **Registered comparison (on the fresh set):** F-stop vs unchanged F, paired.
-   - **Accuracy:** F-stop minus F, Newcombe method 10, 95% interval, a pre-set tolerance of -2 points; the rule
-     "costs accuracy" if the interval's upper bound is below 0.
-   - **Time:** the summed-time saving (the primary efficiency figure) and the median.
-   - **Premature stops:** a count, with each question listed.
-   - **Secondary:** the same rule applied offline to arms G, S and C's saved answers on the 160, descriptive only.
+   - **Accuracy:** a stop can only turn an answer F gets right into a failure, never the reverse (a stopped answer
+     counts as wrong). So the accuracy cost is exactly the number of **premature stops**: each question is listed, and
+     F-stop's score is F's minus that count. No interval is needed for it.
+   - **Time:** the summed-time saving (the primary efficiency figure) and the median, both from the recorded token
+     times.
+   - **Registered verdict:** the rule is "worth keeping" if it saves at least 10% of F's summed time with at most 1
+     premature stop in 160. Otherwise the result is reported as it is.
+   - **Secondary:** the same rule applied offline to arms G, S and C's saved answers on the 160, descriptive only
+     (development data).
 5. **Validity:** as the fast run: frozen runtime and analysis identities, a preflight gate, lock errors invalidate the
    run, every attempt kept, no reruns.
 
