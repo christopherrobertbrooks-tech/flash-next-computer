@@ -832,3 +832,137 @@ trajectories and single historical runs limit causal/generalized claims.
 No new measurement or GPU job was needed for this reconstruction. The recorded
 session reports clock restoration and release; this review did not acquire a
 GPU lock or stop any shared process.
+
+## Results pass 2 — guided
+
+Opened REVIEW-FAST-RESULTS-PASS2.md and results/fast-results.md only after
+results blind commit `a197600` was successfully pushed. The page's primary
+numbers, four paired comparisons, speed ratios, stop-time totals and MiB table
+agree with the independent reconstruction. No source/data validity blocker.
+
+### Reporting corrections before merge
+
+9. **REDLINE — scope “fastest exact-computer system so far.”** The statement
+   is correct among the tested variants that step the compiled computer
+   (C/S/F/G), but not among all tested systems using an exact calculator. Saved
+   L has median 4.665 s and sum 2839.78 s, both below F's 7.19 / 3175.92 s.
+   The same page already acknowledges L for G, so an unqualified fastest claim
+   would be misleading.
+
+   Smallest replacement: “Among the tested configurations that step Qwenputer's
+   compiled computer on the executor, F had the lowest observed median and
+   summed question time: 2.33x and 2.40x the original C. The bulk-reference-
+   emulator baseline L was faster still. These are one-run observations.”
+   If the claim is only about the compiled-computer experiment, say that class
+   explicitly rather than claiming the broad exact-computer category.
+
+10. **REDLINE — “quantization's visible cost is length” is a causal inference
+    the registered comparison does not isolate.** The supporting contrast is
+    F's eight budget stops versus C's four, but C differs in language weights,
+    precision, engine, width and process arrangement. Stock-f16 G is the more
+    relevant descriptive precision counterpart and has six stops. Moreover F
+    generates **203096** text tokens in total versus G's **206509**, so F is not
+    uniformly longer. Eight saturated answers are a tail/budget observation,
+    not proof that quantization generally lengthens answers or has no other
+    cost. Equal F/S correct totals also do not establish an absence of accuracy
+    effects: their 20 discordant outcomes give an inconclusive interval.
+
+    Smallest replacement: “F had eight text-budget failures (805.26 s, 25.36%
+    of its total time), compared with six for stock-f16 G and four for C. This
+    shows substantial time spent on failed long answers in F. The single runs
+    and differing trajectories do not isolate how much is caused by quantization,
+    or establish accuracy equivalence.”
+
+11. **NIT — correct the memory units and ‘half’ wording.** The table's MiB
+    values are correct, but “F's 9.1 GB … S's 17.3 GB” divides MiB by 1000 and
+    calls it GB. Use **9070 MiB = 8.86 GiB** and **17254 MiB = 16.85 GiB**
+    (or 9.51 GB and 18.09 GB). F's maximum observed sum is about **52.6%** of
+    S's, or 47.4% lower: “roughly half” is fair, exact half is not. G is
+    12784 MiB = 12.48 GiB. Retain finding 8's startup-gap disclosure and the
+    sampled-footprint/no-C-comparison caveats.
+
+The phrase “like every comparison in this project” should also be removed or
+scoped to the relevant C comparisons: this very table contains the descriptive
+G−S interval inside the equivalence margin. The registered primary conclusion
+is specifically **F−C inconclusive**, with a >5-point loss still compatible.
+
+### 1. Supported claims
+
+The **2.33x median / 2.40x summed** speed statements are supported, with the
+existing one-run, historical-comparator and differing-trajectory qualifications.
+F's 1.39x/1.62x ratios versus S and the 1.86x text-bucket rate are also correct;
+do not treat those differently scoped endpoints as interchangeable.
+
+The G−S interval is contained within the registered ±5-point band, and the page
+explicitly calls this secondary/descriptive without multiplicity correction.
+That is fair. Prefer “G−S's unadjusted secondary interval lies within ±5 points”
+when summarizing it; it does not certify F or G equivalent to C, and G remains
+secondary. F and S having equal 131/160 totals is not equivalent to equal
+question-level outcomes.
+
+**G=L on 160/160 full generated texts is now directly verified**, not inferred
+from equal counts. Keep that scope (text/answers), not a claim that all internal
+chip traces or execution costs are identical. It supports the interpretation
+of the same stock language model behind two exact-computer interfaces. It does
+not imply a new semantic channel from placing the computer in checkpoint weights,
+or prove universal equivalence of whole models. The zero-lock-error counts
+refer to the observed emitted chip traces matching the RV32 reference, not to
+all free-language final answers being correct.
+
+### 2. Budget failures and a separate follow-up
+
+Keep all eight F stops in the denominator and total time. Report their IDs,
+raw outputs, call counts and **805.26 s / 25.36%** cost together. Three make no
+call; one has 16 calls. The scorer's single tool-call repetition flag cannot
+summarize these different failure modes. G's corresponding aggregate is
+765.11 s / 19.29%, S's 700.96 s / 13.62%, C's 1342.18 s / 17.61%. Thus neither
+number of stops nor time share alone is a complete workload description.
+
+A separate follow-up is worthwhile if reducing wasted work is the next goal.
+Choose one hypothesis and freeze it first—for example baseline F versus one
+specified repetition/reverification policy, or a matched F/G study to locate
+precision-driven divergences. Use a fresh preselected test set for a general
+claim, freeze thresholds/prompts/budgets and outcomes, and count any early
+termination as a failed answer rather than omitting it. Measure correctness,
+budget-stop rate and total time, with per-question output/work counts. Do not
+tune a policy on these eight IDs and then present their repaired outcomes as
+part of this registered run.
+
+For precision attribution, compare fixed identical histories and record the
+first divergent decisions, then separately test free-running consequences;
+for timing repeatability, repeat/counterbalance the frozen configurations.
+Neither is required to establish the current descriptive observations. No
+follow-up was started or added to the current registration by this review.
+
+### 3. Public summary — draft only
+
+> On 12 saved development histories, removing the computer dimensions from
+> Qwenputer's language inputs preserved all 13,746 Qwen-owned greedy choices,
+> motivating a stock-language-model replacement. In a registered 160-question
+> V100 run, stock Qwen3.5-4B Q8_0 in llama.cpp alongside Qwenputer's fp32 computer
+> executor scored 131/160 versus the original system's 135/160. Median latency
+> fell from 16.77 to 7.19 seconds (2.33x), and summed time from 7,621 to 3,176
+> seconds (2.40x). All 1,447,753 emitted chip trace tokens matched the RV32
+> reference. Accuracy remained inconclusive: the paired 95% interval was -8.3
+> to +3.2 percentage points. Eight budget failures consumed 25% of run time.
+> This is one run per configuration with different language numerics and
+> trajectories, not an exact-weight Qwenputer conversion or native circuit
+> execution in llama.cpp.
+
+This is a draft for Chris's exact-text approval. No upstream issue/comment or
+other external message was posted. If adding a “fastest” sentence, use the
+scoped version in finding 9 and preserve the reference-emulator comparison.
+
+### 4. Merge disposition
+
+The saved experiments and all four score objects are reproducible and valid
+under the frozen protocol. **Correct the fastest-system and quantization-cost
+claims, memory units and startup-sampling disclosure before merging the write-up.**
+No source fix, changed data, extra GPU run or new statistical test is required
+for these corrections. Update the “not yet reviewed” placeholder to point to
+the review commits. Preserve F as primary and all descriptive secondary results.
+
+This review has completed both results passes without executing fast.sh,
+launching inference, editing deployment/source code, merging into main or
+inside-check, or publishing externally. Only this findings file is being pushed
+on the review branch.
