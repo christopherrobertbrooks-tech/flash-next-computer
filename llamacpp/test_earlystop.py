@@ -7,10 +7,13 @@ A. split_generate's on_decide hook (scripted fakes with a real reference stream,
      set, and the helper isn't called again.
 B. run_questions: --early-stop gives stop "early stop" and a decisions.jsonl line with the ids; --record-decisions
    alone changes nothing else; neither passes no hook at all.
-C. earlystop_eval on a synthetic run: premature stops, failures stopped, the time estimate, the verdict, the live
-   selection.
-D. earlystop_live_check: a matching live run passes; a different token, a wrong early-stop flag, or a time over the
-   tolerance fails.
+C. earlystop_eval on a synthetic run: premature stops, failures stopped, the time estimate, the candidate verdict
+   (the final one withheld), the live selection; and it refuses impossible decisions (a negative, NaN, decreasing or
+   too-late time, a zero duration, a decided token that isn't the generated one, indices out of order, an index past
+   the tokens on an EOS run).
+D. earlystop_live_check: a matching valid live run passes and turns the candidate into the final verdict; it fails,
+   and the final verdict is withheld, on a different token, a wrong early-stop flag, a time over the tolerance, an
+   incomplete live run, a trace error, another runtime manifest, a negative live time.
 usage (riscv dir on PYTHONPATH, the qwenputer venv): python test_earlystop.py QWENPUTER_MODEL_DIR SCRATCH
 """
 import json, shutil, sys
@@ -129,55 +132,135 @@ def main():
         check(f"run_questions, {label}: stop {row['run']['stop']}, decisions file {f.exists()}, hook passed {got_hook}",
               ok)
 
-    # C: the evaluator on a synthetic run (4 questions)
-    d = scr / "eval"
-    d.mkdir()
+    # C: the evaluator on a synthetic run (4 questions), with its validation
+    import copy, hashlib
+    manifest = scr / "manifest.json"
+    manifest.write_text(json.dumps({"files": {"a": "0" * 64, "b": "1" * 64}}))
+    msha = hashlib.sha256(manifest.read_bytes()).hexdigest()
     rep = list(range(1000, 1064)) * 6 + [5]                # stops at its 6th repeat (own index 383)
     plain = list(range(2000, 2100)) + [248046]
     cases = [("q1", rep, True, "eos", 40.0), ("q2", rep, False, "text budget", 90.0),
              ("q3", plain, True, "eos", 10.0), ("q4", plain, False, "eos", 12.0)]
-    with open(d / "replies.jsonl", "w") as fr, open(d / "decisions.jsonl", "w") as fd:
-        for qid, toks, right, stop, secs in cases:
-            fr.write(json.dumps({"id": qid, "seconds": secs, "run": {"stop": stop},
-                                 "inside": {"text_tokens": len(toks)}}) + "\n")
-            fd.write(json.dumps({"id": qid, "early_stop": False, "tokens": toks,
-                                 "decisions": [[i, t, round(secs * (i + 1) / len(toks), 6)] for i, t in enumerate(toks)]})
-                     + "\n")
-    (d / "scores.json").write_text(json.dumps({"rows": [{"id": c[0], "correct": c[2]} for c in cases]}))
-    s, per, live = EV.evaluate(d, d / "scores.json")
+
+    def write_run(d, rows, early_stop, qfile=None, status="ok", extra_row=None, msha_=None):
+        d.mkdir()
+        with open(d / "replies.jsonl", "w") as fr, open(d / "decisions.jsonl", "w") as fd:
+            for qid, toks, right, stop, secs, decs, es in rows:
+                row = {"id": qid, "seconds": secs, "run": {"stop": stop}, "inside": {"text_tokens": len(toks)},
+                       "tool_calls": []}
+                if extra_row and qid in extra_row:
+                    row = extra_row[qid](row)
+                fr.write(json.dumps(row) + "\n")
+                fd.write(json.dumps({"id": qid, "early_stop": es, "tokens": toks, "decisions": decs,
+                                     "seconds_monotonic": secs}) + "\n")
+        (d / "startup.json").write_text(json.dumps({"status": status, "reason": None, "arm": "F", "lm_input": "tokens",
+                                                    "record_decisions": True, "early_stop": early_stop, "max_new": 8192,
+                                                    "max_chip": 2_000_000, "n_ctx": 16384, "artifacts_verified": 2,
+                                                    "expect_sha256": msha_ or msha}))
+        if qfile:
+            (d / "questions.sha256").write_text(hashlib.sha256(qfile.read_bytes()).hexdigest() + "  q\n")
+
+    def decs(toks, secs):
+        return [[i, t, round(secs * (i + 1) / (len(toks) + 1), 6)] for i, t in enumerate(toks)]
+
+    base_rows = [(c[0], c[1], c[2], c[3], c[4], decs(c[1], c[4]), False) for c in cases]
+    U = scr / "unchanged"
+    write_run(U, base_rows, False)
+    (U / "scores.json").write_text(json.dumps({"rows": [{"id": c[0], "correct": c[2]} for c in cases]}))
+    s, per, live = EV.evaluate(U, U / "scores.json")
     est = {p["id"]: p["seconds_with_rule"] for p in per}
     check(f"eval: premature {s['premature_ids']}, failures stopped {s['failures_stopped']}, budget failures stopped "
-          f"{s['budget_failures_stopped']}, verdict {s['verdict']}",
+          f"{s['budget_failures_stopped']}, candidate {s['candidate_verdict']}, final {s['final_verdict']}",
           s["premature_ids"] == ["q1"] and s["failures_stopped"] == 1 and s["budget_failures_stopped"] == 1
-          and s["verdict"] == "don't keep" and abs(est["q1"] - 40.0 * 384 / 385) < 1e-3 and est["q3"] == 10.0)
+          and s["candidate_verdict"] == "candidate don't keep" and s["final_verdict"].startswith("withheld")
+          and abs(est["q1"] - 40.0 * 384 / 386) < 1e-3 and est["q3"] == 10.0)
     check(f"eval: live selection {live}", live["rule_stops"] == ["q1", "q2"] and live["text_budget"] == []
           and live["shortfall"]["text_budget"] == 2 and set(live["eos_median_and_longest"]) <= {"q3", "q4"})
 
-    # D: the live check
-    ev_path = scr / "eval.json"
-    ev_path.write_text(json.dumps({"summary": s, "live_check_ids": live, "per_question": per}))
+    def bad_eval(label, edit):
+        d = scr / ("eval-" + label.replace(" ", "-"))
+        rows = copy.deepcopy(base_rows)
+        rows[0] = edit(list(rows[0]))
+        write_run(d, rows, False)
+        shutil.copy(U / "scores.json", d)
+        try:
+            EV.evaluate(d, d / "scores.json")
+            got = "accepted"
+        except ValueError as e:
+            got = str(e)
+        check(f"eval refuses {label} ({got[:60]})", got != "accepted")
 
-    def live_dir(name, mutate=None, slow=0.0):
+    def set_time(n, t):
+        def f(r):
+            r[5] = copy.deepcopy(r[5])
+            r[5][n][2] = t
+            return tuple(r)
+        return f
+
+    bad_eval("a negative time", set_time(3, -100.0))
+    bad_eval("a NaN time", set_time(3, float("nan")))
+    bad_eval("a decreasing time", set_time(5, 0.0001))
+    bad_eval("a time past the duration", set_time(10, 1e6))
+    bad_eval("a zero duration", lambda r: tuple(r[:4] + [0.0] + r[5:]))
+    bad_eval("a decided token that isn't the generated one",
+             lambda r: tuple(r[:5] + [[[i, (t + 1 if i == 7 else t), x] for i, t, x in r[5]]] + r[6:]))
+    bad_eval("a repeated index (times still in order)",
+             lambda r: tuple(r[:5] + [[r[5][0], [r[5][0][0], r[5][1][1], r[5][1][2]]] + r[5][2:]] + r[6:]))
+    bad_eval("an index past the tokens on an EOS run",
+             lambda r: tuple(r[:5] + [r[5] + [[len(r[1]) + 3, 9, r[4] * 0.999]]] + r[6:]))
+
+    # D: the live check and the final verdict
+    out = scr / "score-out"
+    out.mkdir()
+    for case, cand in (("dont", s), ("keep", dict(s, candidate_verdict="candidate keep"))):
+        (out / f"eval-{case}.json").write_text(json.dumps({"summary": cand, "live_check_ids": live,
+                                                           "per_question": per}))
+    sel = [i for g in ("rule_stops", "text_budget", "eos_median_and_longest") for i in live[g]]
+    lq = out / "live-questions.jsonl"
+    lq.write_text("".join(json.dumps({"id": i}) + "\n" for i in sel))
+
+    def live_run(name, mutate=None, slow=0.0, **kw):
+        rows = []
+        for p in per:
+            if p["id"] not in sel:
+                continue
+            toks = next(c[1] for c in cases if c[0] == p["id"])
+            toks = toks[:p["stop_gen_index"]] if p["rule_stops"] else toks
+            secs = p["seconds_with_rule"] + slow
+            es = p["rule_stops"]
+            stop = "early stop" if es else p["stop"]
+            d = [[i, t, round(secs * (i + 1) / (len(toks) + 2), 6)] for i, t in enumerate(toks)]
+            if es:
+                d.append([len(toks), 1000 + 0, round(secs * 0.999, 6)])   # the refused, unappended decision
+            row = [p["id"], toks, p["right"], stop, secs, d, es]
+            if mutate:
+                row = mutate(row)
+            rows.append(tuple(row))
         L = scr / name
-        L.mkdir()
-        with open(L / "replies.jsonl", "w") as fr, open(L / "decisions.jsonl", "w") as fd:
-            for p in per:
-                toks = next(c[1] for c in cases if c[0] == p["id"])
-                toks = toks[:p["stop_gen_index"]] if p["rule_stops"] else toks
-                es = p["rule_stops"]
-                if mutate:
-                    toks, es = mutate(p["id"], list(toks), es)
-                fr.write(json.dumps({"id": p["id"], "seconds": p["seconds_with_rule"] + slow}) + "\n")
-                fd.write(json.dumps({"id": p["id"], "early_stop": es, "tokens": toks}) + "\n")
+        write_run(L, rows, True, qfile=lq, **kw)
         return L
 
-    passes = lambda L: all(ok for _, ok, _ in LC.check(d, ev_path, L)[0])
-    check("live check: a matching live run passes", passes(live_dir("live-ok", slow=0.5)))
-    check("live check: one different token fails",
-          not passes(live_dir("live-tok", lambda q, t, e: (t[:-1] + [7] if q == "q1" else t, e))))
-    check("live check: a wrong early-stop flag fails",
-          not passes(live_dir("live-flag", lambda q, t, e: (t, (not e) if q == "q2" else e))))
-    check("live check: a time over the tolerance fails", not passes(live_dir("live-slow", slow=30.0)))
+    def final_of(L, case="dont"):
+        return LC.check(U, out / f"eval-{case}.json", lq, L, manifest)
+
+    f = final_of(live_run("live-ok", slow=0.5))
+    check(f"live check: a matching valid run passes; final verdict {f['final_verdict']}",
+          f["live_check_passed"] and f["final_verdict"] == "don't keep")
+    f = final_of(live_run("live-ok-keep", slow=0.5), "keep")
+    check(f"live check passes with a candidate keep: final verdict {f['final_verdict']}", f["final_verdict"] == "keep")
+    for label, L in (
+            ("one different token", live_run("live-tok", lambda r: r[:1] + [r[1][:-1] + [7]] + r[2:] if r[0] == "q3" else r)),
+            ("a wrong early-stop flag", live_run("live-flag", lambda r: r[:6] + [not r[6]] if r[0] == "q4" else r)),
+            ("a time over the tolerance", live_run("live-slow", slow=30.0)),
+            ("an incomplete live run (shutdown failed)", live_run("live-inc", status="incomplete")),
+            ("a trace error in the live rows", live_run("live-trace", extra_row={"q3": lambda row: dict(
+                row, tool_calls=[{"error_kind": "trace_mismatch"}])})),
+            ("a live run against another runtime manifest", live_run("live-man", msha_="f" * 64)),
+            ("a negative live time", live_run("live-neg", lambda r: r[:5] + [[[i, t, -1.0] for i, t, _ in r[5]]] + r[6:]
+                                                if r[0] == "q3" else r))):
+        f = final_of(L, "keep")
+        check(f"live check fails on {label}; final verdict {f['final_verdict']}",
+              not f["live_check_passed"] and f["final_verdict"].startswith("withheld"))
     shutil.rmtree(scr)
     print("EARLY-STOP CONTROLS", "PASSED" if not bad else f"FAILED ({bad})")
     sys.exit(1 if bad else 0)

@@ -23,9 +23,9 @@ usage (riscv dir on PYTHONPATH, the qwenputer venv, the V100 visible, inside the
         [--n-ctx 16384] [--expect HASHES.json] [--gpu-uuid UUID] [--lm-input rows|tokens] [--arm S|F|G]
 
 --lm-input tokens (FAST-PLAN arms F, G): the GGUF is a stock Qwen fed token ids; the computer side is unchanged.
---record-decisions (EARLYSTOP-PLAN): for every question, the time (since the question's start, the same clock as
-its "seconds") at which the language model decides each next token, with that token and its index, in
-decisions.jsonl. --early-stop: the frozen rule (earlystop_rule.RepetitionStop) runs live on those decisions; a stopped
+--record-decisions (EARLYSTOP-PLAN): for every question, the time at which the language model decides each next
+token, with that token and its index, and the question's total duration, both on a monotonic clock from the
+question's start (time.monotonic, which the wall clock's adjustments can't move), in decisions.jsonl. --early-stop: the frozen rule (earlystop_rule.RepetitionStop) runs live on those decisions; a stopped
 answer ends with stop "early stop" (a failed answer). Without either option nothing changes.
 """
 import argparse, functools, hashlib, json, os, subprocess, sys, threading, time
@@ -130,12 +130,13 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
         t = time.time()
         err = None
         decisions, extra = [], {}
+        tm = time.monotonic()
         if record or early_stop:
             import earlystop_rule
             rule = earlystop_rule.RepetitionStop() if early_stop else None
 
             def on_decide(i, tok):
-                decisions.append([i, tok, round(time.time() - t, 6)])
+                decisions.append([i, tok, round(time.monotonic() - tm, 6)])
                 return rule.refuse(tok) if rule is not None else False
 
             extra = {"on_decide": on_decide}
@@ -144,6 +145,7 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
         except Exception as e:  # noqa: BLE001
             r, err = {"tokens": []}, f"{type(e).__name__}: {e}"
         secs = round(time.time() - t, 2)
+        secs_mono = round(time.monotonic() - tm, 6)
         toks = r["tokens"]
         text = chat.text_of(toks) if toks else ""
         ended = bool(toks) and toks[-1] in chat.eos
@@ -181,7 +183,7 @@ def run_questions(chat, helper, qs, out, max_new, max_chip, n_ctx, generate, arm
         if record or early_stop:
             with open(os.path.join(out, "decisions.jsonl"), "a") as f:
                 f.write(json.dumps({"id": q["id"], "early_stop": bool(r.get("early_stop")), "decisions": decisions,
-                                    "tokens": r.get("tokens") or []}) + "\n")
+                                    "tokens": r.get("tokens") or [], "seconds_monotonic": secs_mono}) + "\n")
         ins = row["inside"]
         print(f"{n + 1:3}/{len(qs)} {q['id']:16} {secs:7.1f}s {stop} calls {len(calls)} chip {ins['chip_tokens']} "
               f"lock_error {ins['lock_error']}{' ERROR ' + err if err else ''}", flush=True)
@@ -207,6 +209,7 @@ def main():
     ap.add_argument("--early-stop", action="store_true")
     a = ap.parse_args()
     n_checked = verify_artifacts(a.expect) if a.expect else 0
+    expect_sha = RQ.sha(a.expect) if a.expect else None
     os.makedirs(a.out, exist_ok=True)
     rows_path = os.path.join(a.out, "replies.jsonl")
     if os.path.exists(rows_path):
@@ -243,7 +246,8 @@ def main():
                         "firmware_sha256": RQ.sha(RQ.FIRMWARE), "runner_sha256": RQ.sha(__file__),
                         "split_chat_sha256": RQ.sha(SC.__file__), "run_qwenputer_sha256": RQ.sha(RQ.__file__),
                         "client_sha256": RQ.sha(sys.modules["helper_client"].__file__),
-                        "artifacts_verified": n_checked, "record_decisions": a.record_decisions,
+                        "artifacts_verified": n_checked, "expect_sha256": expect_sha,
+                        "record_decisions": a.record_decisions,
                         "early_stop": a.early_stop, "max_new": a.max_new, "max_chip": a.max_chip,
                         "lock_max_records_per_call": a.max_chip, "n_ctx": a.n_ctx,
                         "gpu_mib_parent_before_helper": base, "gpu_mib_after_load": mem.samples[-1]}
